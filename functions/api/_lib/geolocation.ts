@@ -20,6 +20,70 @@ export interface CityResolution {
   city: string | null;       // CMA slug (e.g. 'toronto') or null
   province: string | null;   // ISO code, may differ from CMA's province (Gatineau-QC → Ottawa)
   method: ResolutionMethod;
+
+  // Display fields used by edge HTML rewriter (ADR-0004 NO FOUC) and by Astro
+  // pages that render geo-aware copy. `resolved` mirrors `method !== "unresolved"`
+  // for cheap branching in HTMLRewriter.
+  resolved: boolean;
+  slug: string | null;       // alias of `city` for clarity at call sites
+  name: string | null;       // 'Calgary'
+  short: string | null;      // 'Calgary, AB'
+  amvic: boolean;
+  count: number;             // listings count in CMA (Phase 2: real D1 query)
+  dealers: number;           // dealer count in CMA
+}
+
+/**
+ * Phase 1.1 hardcoded counts. Phase 2 replaces with real D1 query against
+ * the listings + dealers tables (cached in KV).
+ */
+const FALLBACK_COUNTS: Record<string, { count: number; dealers: number; amvic: boolean }> = {
+  toronto:   { count: 1284, dealers: 152, amvic: false },
+  montreal:  { count: 938,  dealers: 98,  amvic: false },
+  vancouver: { count: 871,  dealers: 89,  amvic: false },
+  calgary:   { count: 612,  dealers: 64,  amvic: true },
+  edmonton:  { count: 487,  dealers: 51,  amvic: true },
+  ottawa:    { count: 412,  dealers: 47,  amvic: false },
+};
+
+/** CMA display names — used to enrich CityResolution without a D1 hit. */
+const CMA_DISPLAY: Record<string, { name: string; province: string }> = {
+  toronto:   { name: "Toronto",   province: "ON" },
+  montreal:  { name: "Montreal",  province: "QC" },
+  vancouver: { name: "Vancouver", province: "BC" },
+  calgary:   { name: "Calgary",   province: "AB" },
+  edmonton:  { name: "Edmonton",  province: "AB" },
+  ottawa:    { name: "Ottawa",    province: "ON" },
+};
+
+function buildResolution(
+  cmaSlug: string | null,
+  province: string | null,
+  method: ResolutionMethod,
+): CityResolution {
+  if (!cmaSlug) {
+    return {
+      city: null, province, method,
+      resolved: false,
+      slug: null, name: null, short: null,
+      amvic: false, count: 0, dealers: 0,
+    };
+  }
+  const display = CMA_DISPLAY[cmaSlug];
+  const counts = FALLBACK_COUNTS[cmaSlug] ?? { count: 0, dealers: 0, amvic: false };
+  const displayProvince = province ?? display?.province ?? null;
+  return {
+    city: cmaSlug,
+    province: displayProvince,
+    method,
+    resolved: true,
+    slug: cmaSlug,
+    name: display?.name ?? cmaSlug,
+    short: display ? `${display.name}, ${displayProvince ?? display.province}` : cmaSlug,
+    amvic: counts.amvic,
+    count: counts.count,
+    dealers: counts.dealers,
+  };
 }
 
 /** Read jc_city cookie; trust only if it matches an active CMA slug. */
@@ -47,7 +111,7 @@ export async function resolveCity(
   if (cookieCity) {
     const active = await getCachedActiveCmaSlugs(env);
     if (active.has(cookieCity)) {
-      return { city: cookieCity, province: cookieProvince, method: "cookie" };
+      return buildResolution(cookieCity, cookieProvince, "cookie");
     }
   }
 
@@ -59,13 +123,13 @@ export async function resolveCity(
     if (cma) {
       const active = await getCachedActiveCmaSlugs(env);
       if (active.has(cma)) {
-        return { city: cma, province: rawProvince, method: "auto" };
+        return buildResolution(cma, rawProvince, "auto");
       }
     }
   }
 
   // 3. Unresolved — homepage will show choose-city UI.
-  return { city: null, province: null, method: "unresolved" };
+  return buildResolution(null, null, "unresolved");
 }
 
 const CACHE_KEY = "active-cma-slugs:v1";

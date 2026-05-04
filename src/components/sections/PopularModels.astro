@@ -1,0 +1,60 @@
+---
+import CarSilhouette, { type SilhouetteVariant, type SilhouetteTone } from '../atoms/CarSilhouette.astro';
+import Icon from '../atoms/Icon.astro';
+
+export interface PopularModel {
+  make: string;
+  model: string;
+  body: string;
+  years: string;
+  from: number;
+  variant: SilhouetteVariant;
+  tone: SilhouetteTone;
+  href?: string;
+}
+
+interface Props {
+  heading?: string;
+  cityName?: string;
+  models: PopularModel[];
+}
+const {
+  heading = 'Most-searched Japanese models near',
+  cityName = 'Canada',
+  models,
+} = Astro.props;
+---
+<section class="section">
+  <header style="margin-bottom:16px">
+    <h2 class="t-h-l">
+      {heading} <span data-geo="city.name">{cityName}</span>
+    </h2>
+  </header>
+  <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+    {models.map((m) => (
+      <a
+        href={m.href ?? `/used-cars/${m.make.toLowerCase()}/${m.model.toLowerCase().replace(/\s+/g, '-')}/`}
+        class="card"
+        style="overflow:hidden;display:flex;flex-direction:column;padding:14px;gap:8px;position:relative"
+      >
+        <div style="height:56px;width:100%;display:grid;place-items:center;background:var(--color-bg-muted);border-radius:6px">
+          <div style="width:96px;height:48px">
+            <CarSilhouette variant={m.variant} tone={m.tone} />
+          </div>
+        </div>
+        <div>
+          <h3 class="t-h-s" style="font-size:14px;line-height:20px">{m.make} {m.model}</h3>
+          <p class="t-body-s ink-muted" style="font-size:12px;line-height:16px;margin-top:2px">
+            {m.body} · {m.years}
+          </p>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:6px">
+            <p class="t-body-s" style="font-size:12px;color:var(--color-ink-muted)">
+              from <span class="num ink-strong" style="font-weight:600;font-size:13px;letter-spacing:-0.005em">CA${m.from.toLocaleString('en-US')}</span>
+            </p>
+            <Icon name="chevronRight" size={14} />
+          </div>
+        </div>
+      </a>
+    ))}
+  </div>
+</section>

@@ -1,0 +1,19 @@
+---
+import BrandCard from './BrandCard.astro';
+
+interface Brand {
+  slug: string;
+  name: string;
+  count: number;
+}
+interface Props {
+  brands: Brand[];
+  citySlug?: string;
+}
+const { brands, citySlug } = Astro.props;
+---
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+  {brands.map((b) => (
+    <BrandCard name={b.name} count={b.count} slug={b.slug} citySlug={citySlug} />
+  ))}
+</div>

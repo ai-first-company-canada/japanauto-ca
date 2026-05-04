@@ -1,0 +1,86 @@
+---
+interface Tone {
+  body: string;
+  glass: string;
+  wheel: string;
+  highlight: string;
+}
+
+interface Props {
+  variant?: string;
+  tone?: string;
+}
+
+const { variant = 'sedan', tone = 'graphite' } = Astro.props;
+
+const tones: Record<string, Tone> = {
+  graphite: { body: '#3A3A3D', glass: '#0A0A0A', wheel: '#1A1A1C', highlight: '#5A5A5E' },
+  pearl:    { body: '#E8E6E1', glass: '#9A9A9A', wheel: '#2A2A2C', highlight: '#FFFFFF' },
+  silver:   { body: '#A8A8AA', glass: '#3A3A3D', wheel: '#1A1A1C', highlight: '#D0D0D2' },
+  midnight: { body: '#1F2530', glass: '#0A0A0A', wheel: '#0A0A0A', highlight: '#3A4250' },
+  bronze:   { body: '#7A6A55', glass: '#2A2520', wheel: '#1A1A1C', highlight: '#9A8A75' },
+  sand:     { body: '#C9BFA8', glass: '#5A5045', wheel: '#2A2A2C', highlight: '#E0D8C5' },
+  crimson:  { body: '#8A2A30', glass: '#1A0A0E', wheel: '#0A0A0A', highlight: '#A33A40' },
+  forest:   { body: '#2F3D2F', glass: '#0A150A', wheel: '#0A0A0A', highlight: '#4A5A4A' },
+};
+
+const c = tones[tone] ?? tones.graphite;
+const bg = '#F2F2F2';
+---
+
+<svg viewBox="0 0 200 150" preserveAspectRatio="xMidYMid meet" style={`background: ${bg}; width: 100%; height: 100%`}>
+  {variant === 'sedan' && (
+    <g>
+      <ellipse cx="100" cy="118" rx="78" ry="4" fill="rgba(0,0,0,0.08)" />
+      <path d="M22 95 Q26 78 38 75 L62 70 Q70 56 90 54 L120 54 Q142 58 152 72 L172 78 Q180 82 178 95 L178 108 L22 108 Z" fill={c.body} />
+      <path d="M28 92 L172 92 L170 96 L30 96 Z" fill={c.highlight} opacity="0.25" />
+      <path d="M68 71 Q72 60 88 58 L120 58 Q138 60 148 73 L148 78 L70 78 Z" fill={c.glass} />
+      <path d="M108 60 L108 78" stroke={c.body} stroke-width="1.5" />
+      <circle cx="56" cy="108" r="13" fill={c.wheel} />
+      <circle cx="56" cy="108" r="6" fill={c.body} />
+      <circle cx="148" cy="108" r="13" fill={c.wheel} />
+      <circle cx="148" cy="108" r="6" fill={c.body} />
+    </g>
+  )}
+  {variant === 'suv' && (
+    <g>
+      <ellipse cx="100" cy="118" rx="80" ry="4" fill="rgba(0,0,0,0.08)" />
+      <path d="M20 95 Q22 70 36 68 L58 65 Q64 50 88 48 L130 48 Q150 52 158 66 L176 72 Q184 76 182 95 L182 108 L20 108 Z" fill={c.body} />
+      <path d="M26 92 L178 92 L176 96 L28 96 Z" fill={c.highlight} opacity="0.25" />
+      <path d="M64 66 Q70 53 88 52 L130 52 Q148 54 156 68 L156 74 L66 74 Z" fill={c.glass} />
+      <path d="M105 53 L105 74" stroke={c.body} stroke-width="1.5" />
+      <path d="M132 53 L132 74" stroke={c.body} stroke-width="1.5" />
+      <circle cx="54" cy="108" r="14" fill={c.wheel} />
+      <circle cx="54" cy="108" r="6" fill={c.body} />
+      <circle cx="150" cy="108" r="14" fill={c.wheel} />
+      <circle cx="150" cy="108" r="6" fill={c.body} />
+    </g>
+  )}
+  {variant === 'hatch' && (
+    <g>
+      <ellipse cx="100" cy="118" rx="74" ry="4" fill="rgba(0,0,0,0.08)" />
+      <path d="M28 96 Q32 80 44 76 L62 72 Q68 58 86 56 L116 56 Q138 58 148 70 L168 78 Q174 82 172 96 L172 108 L28 108 Z" fill={c.body} />
+      <path d="M34 92 L168 92 L166 96 L36 96 Z" fill={c.highlight} opacity="0.25" />
+      <path d="M68 72 Q72 60 86 58 L116 58 Q134 62 144 73 L144 78 L70 78 Z" fill={c.glass} />
+      <path d="M104 60 L104 78" stroke={c.body} stroke-width="1.5" />
+      <circle cx="60" cy="108" r="13" fill={c.wheel} />
+      <circle cx="60" cy="108" r="6" fill={c.body} />
+      <circle cx="142" cy="108" r="13" fill={c.wheel} />
+      <circle cx="142" cy="108" r="6" fill={c.body} />
+    </g>
+  )}
+  {variant === 'wagon' && (
+    <g>
+      <ellipse cx="100" cy="118" rx="82" ry="4" fill="rgba(0,0,0,0.08)" />
+      <path d="M20 96 Q24 78 36 74 L58 70 Q64 56 84 54 L140 54 Q160 58 168 72 L182 80 Q188 84 186 96 L186 108 L20 108 Z" fill={c.body} />
+      <path d="M26 92 L182 92 L180 96 L28 96 Z" fill={c.highlight} opacity="0.25" />
+      <path d="M64 70 Q68 58 84 56 L140 56 Q156 60 164 72 L164 78 L66 78 Z" fill={c.glass} />
+      <path d="M104 58 L104 78" stroke={c.body} stroke-width="1.5" />
+      <path d="M132 58 L132 78" stroke={c.body} stroke-width="1.5" />
+      <circle cx="56" cy="108" r="13" fill={c.wheel} />
+      <circle cx="56" cy="108" r="6" fill={c.body} />
+      <circle cx="156" cy="108" r="13" fill={c.wheel} />
+      <circle cx="156" cy="108" r="6" fill={c.body} />
+    </g>
+  )}
+</svg>

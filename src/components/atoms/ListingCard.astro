@@ -1,0 +1,68 @@
+---
+import CarSilhouette, { type SilhouetteVariant, type SilhouetteTone } from './CarSilhouette.astro';
+
+interface Props {
+  year: number;
+  make: string;
+  model: string;
+  trim?: string;
+  km: number;
+  drive: string;
+  transmission: string;
+  price: number;
+  listed: string;
+  dealer: string;
+  badge?: string;
+  reduced?: number;
+  sold?: boolean;
+  variant: SilhouetteVariant;
+  tone: SilhouetteTone;
+  href?: string;
+}
+
+const {
+  year, make, model, trim,
+  km, drive, transmission,
+  price, listed, dealer,
+  badge, reduced, sold,
+  variant, tone,
+  href = '#',
+} = Astro.props;
+
+const kmStr = km.toLocaleString('en-US');
+const priceStr = price.toLocaleString('en-US');
+const reducedStr = reduced != null ? reduced.toLocaleString('en-US') : null;
+const priceStyle = sold
+  ? 'font-size:18px;font-weight:600;color:#0A0A0A;text-decoration:line-through;opacity:0.5;letter-spacing:-0.01em'
+  : 'font-size:18px;font-weight:600;color:#0A0A0A;letter-spacing:-0.01em';
+---
+<a href={href} class="card" style="overflow:hidden;display:flex;flex-direction:column">
+  <div class="thumb">
+    <CarSilhouette variant={variant} tone={tone} />
+  </div>
+  <div style="padding:14px;display:flex;flex-direction:column;gap:6px">
+    {badge && (
+      <span class="badge" style="align-self:flex-start;margin-bottom:2px">
+        <span class="dot"></span>{badge}
+      </span>
+    )}
+    <h3 class="t-h-s" style="font-size:14px;line-height:20px;font-weight:600">
+      {year} {make} {model}{trim ? ` ${trim}` : ''}
+    </h3>
+    <p class="t-body-s ink-muted" style="font-size:12px;line-height:16px">
+      {kmStr} km · {transmission} · {drive}
+    </p>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;flex-wrap:wrap">
+      <span class="num" style={priceStyle}>CA${priceStr}</span>
+      {reducedStr && (
+        <span class="num" style="color:var(--color-accent);font-size:12px;font-weight:500;white-space:nowrap">
+          ↓ CA${reducedStr}
+        </span>
+      )}
+      {sold && <span class="badge" style="margin-left:auto">Sold</span>}
+    </div>
+    <p class="t-body-s ink-muted" style="font-size:11px;line-height:14px;margin-top:4px;color:var(--color-ink-subtle)">
+      {listed} · {dealer}
+    </p>
+  </div>
+</a>

@@ -1,0 +1,29 @@
+---
+interface CityInfo {
+  name: string;
+  province: string;
+  count?: number;
+}
+
+interface Props {
+  city: CityInfo;
+  href: string;
+  large?: boolean;
+}
+const { city, href, large = false } = Astro.props;
+const padding = large ? 20 : 16;
+const minHeight = large ? 96 : 88;
+const titleSize = large ? 18 : 17;
+const countStr = city.count != null ? city.count.toLocaleString('en-US') : null;
+---
+<a
+  href={href}
+  class="card"
+  style={`display:flex;flex-direction:column;justify-content:space-between;padding:${padding}px;min-height:${minHeight}px;cursor:pointer`}
+>
+  <h3 class="t-h-m" style={`font-size:${titleSize}px`}>{city.name}</h3>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto">
+    {countStr && <span class="t-caption" style="font-size:10px">{countStr} cars</span>}
+    <span class="t-caption t-mono" style="font-size:10px;margin-left:auto">{city.province}</span>
+  </div>
+</a>

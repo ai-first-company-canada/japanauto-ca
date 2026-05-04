@@ -1,0 +1,49 @@
+---
+import Icon from '../atoms/Icon.astro';
+
+interface Props {
+  variant?: 'full' | 'abbreviated';
+  href?: string;
+}
+const { variant = 'full', href = '/dealers/list/' } = Astro.props;
+
+const heading = variant === 'full'
+  ? 'Reach 150+ Japanese-car buyers in your city, every week.'
+  : 'Reach Japanese-car buyers in your city, every week.';
+const description = variant === 'full'
+  ? "One subscription. Unlimited listings. AMVIC-friendly onboarding. Dominate your CMA's used-Japanese-car search."
+  : 'One subscription. Unlimited listings. AMVIC-friendly onboarding.';
+const padding = variant === 'full' ? '64px 16px' : '56px 16px';
+const headingSize = variant === 'full' ? 28 : 26;
+const headingLh = variant === 'full' ? 34 : 32;
+---
+<section class="band-ink" style={`padding:${padding};text-align:center`}>
+  <div style="display:flex;justify-content:center;margin-bottom:16px">
+    <span style="width:8px;height:8px;border-radius:50%;background:var(--color-accent)"></span>
+  </div>
+  <span class="t-caption" style="color:var(--color-accent);font-size:11px">FOR DEALERS</span>
+  <h2
+    class="t-display-l"
+    style={`color:#fff;margin-top:12px;font-size:${headingSize}px;line-height:${headingLh}px`}
+  >
+    {heading}
+  </h2>
+  <p class="t-body-l" style="color:rgba(255,255,255,0.75);margin-top:16px;font-size:15px;line-height:23px">
+    {description}
+  </p>
+  <div style="margin-top:24px">
+    <a class="btn btn-lg btn-inverse btn-block" href={href}>
+      Start listing — <span class="t-mono" style="font-weight:600">CA$99/mo</span>
+      <Icon name="arrowRight" size={16} />
+    </a>
+  </div>
+  {variant === 'full' && (
+    <a
+      href="/dealers/how-it-works/"
+      style="display:inline-flex;align-items:center;gap:6px;margin-top:20px;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500"
+    >
+      How it works for dealers
+      <Icon name="chevronRight" size={16} />
+    </a>
+  )}
+</section>

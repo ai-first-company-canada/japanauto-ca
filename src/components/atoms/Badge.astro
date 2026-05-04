@@ -1,0 +1,12 @@
+---
+interface Props {
+  text: string;
+  dot?: boolean;
+  class?: string;
+}
+const { text, dot = false, class: cls = '' } = Astro.props;
+---
+<span class={`badge ${cls}`.trim()}>
+  {dot && <span class="dot"></span>}
+  {text}
+</span>

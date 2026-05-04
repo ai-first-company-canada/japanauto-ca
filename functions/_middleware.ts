@@ -122,6 +122,54 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
+  // 6. Edge HTML rewriting — inject geo into SSG HTML without FOUC (ADR-0004).
+  //    Drops the unmatched data-state branch and replaces data-geo placeholders
+  //    with values from the resolved city. HTMLRewriter is a Workers global.
+  const contentType = response.headers.get("content-type") ?? "";
+  if (
+    !isApi &&
+    !isAsset &&
+    md.geo &&
+    contentType.includes("text/html")
+  ) {
+    const geo = md.geo;
+
+    class DropElementHandler {
+      element(el: Element): void { el.remove(); }
+    }
+
+    class SetTextHandler {
+      private readonly value: string;
+      constructor(value: string) { this.value = value; }
+      element(el: Element): void { el.setInnerContent(this.value); }
+    }
+
+    const dropSelector = geo.resolved
+      ? '[data-state="unresolved"]'
+      : '[data-state="resolved"]';
+
+    const rewriter = new HTMLRewriter()
+      .on("html", {
+        element(el): void {
+          el.setAttribute("data-geo-resolved", geo.resolved ? "true" : "false");
+          el.setAttribute("data-geo-city", geo.slug ?? "");
+        },
+      })
+      .on(dropSelector, new DropElementHandler())
+      .on('[data-geo="city.name"]',     new SetTextHandler(geo.name ?? ""))
+      .on('[data-geo="city.short"]',    new SetTextHandler(geo.short ?? ""))
+      .on('[data-geo="city.province"]', new SetTextHandler(geo.province ?? ""))
+      .on('[data-geo="city.count"]',    new SetTextHandler(geo.count.toLocaleString("en-US")))
+      .on('[data-geo="city.dealers"]',  new SetTextHandler(String(geo.dealers)))
+      .on('[data-geo="city.slug"]',     new SetTextHandler(geo.slug ?? ""));
+
+    return rewriter.transform(new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    }));
+  }
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

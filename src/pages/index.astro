@@ -1,17 +1,203 @@
 ---
-import '../styles/global.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/sections/Navbar.astro';
+import MenuDrawer from '../components/sections/MenuDrawer.astro';
+import Footer from '../components/sections/Footer.astro';
+import BrandGrid from '../components/atoms/BrandGrid.astro';
+import OtherCitiesCollapse from '../components/atoms/OtherCitiesCollapse.astro';
+import Icon from '../components/atoms/Icon.astro';
+import ContextLine from '../components/sections/ContextLine.astro';
+import ListingFeed, { type FeedListing } from '../components/sections/ListingFeed.astro';
+import PopularModels, { type PopularModel } from '../components/sections/PopularModels.astro';
+import TrustStrip from '../components/sections/TrustStrip.astro';
+import PartsEntryPoint from '../components/sections/PartsEntryPoint.astro';
+import BlogExcerpt, { type BlogArticle } from '../components/sections/BlogExcerpt.astro';
+import GlossaryHighlights, { type GlossaryTerm } from '../components/sections/GlossaryHighlights.astro';
+import FaqSection, { type FaqItem } from '../components/sections/FaqSection.astro';
+import SellCta from '../components/sections/SellCta.astro';
+import ChooseCityHero from '../components/sections/ChooseCityHero.astro';
+
+// 9 Japanese brands (japanese-brands-whitelist.md). Counts are baseline-Toronto
+// scale; middleware leaves them as-is for now (Phase 2 will swap in per-CMA
+// numbers via D1 query).
+const BRANDS = [
+  { slug: 'toyota',     name: 'Toyota',     count: 78 },
+  { slug: 'honda',      name: 'Honda',      count: 64 },
+  { slug: 'nissan',     name: 'Nissan',     count: 52 },
+  { slug: 'mazda',      name: 'Mazda',      count: 41 },
+  { slug: 'subaru',     name: 'Subaru',     count: 36 },
+  { slug: 'lexus',      name: 'Lexus',      count: 28 },
+  { slug: 'acura',      name: 'Acura',      count: 22 },
+  { slug: 'infiniti',   name: 'Infiniti',   count: 17 },
+  { slug: 'mitsubishi', name: 'Mitsubishi', count: 14 },
+];
+
+const DEALER_NAMES = [
+  'Maple Auto Group', 'North Star Motors', 'Cypress Imports', 'Eastside Pre-Owned',
+  'Summit Japanese Auto', 'Westview Cars', 'Granite Motors', 'Riverbend Auto',
+];
+
+const LISTINGS_SEED: Array<Omit<FeedListing, 'dealer'>> = [
+  { year: 2021, make: 'Toyota', model: 'Camry',   trim: 'LE',       km: 58400,  drive: 'AWD', transmission: 'CVT',  price: 24900, listed: 'Listed today',       variant: 'sedan', tone: 'pearl',    badge: 'New today' },
+  { year: 2019, make: 'Honda',  model: 'CR-V',    trim: 'EX',       km: 71200,  drive: 'AWD', transmission: 'CVT',  price: 26450, listed: 'Listed 2 days ago',  variant: 'suv',   tone: 'midnight', badge: 'New today' },
+  { year: 2020, make: 'Mazda',  model: 'CX-5',    trim: 'GS',       km: 64800,  drive: 'AWD', transmission: 'Auto', price: 23900, listed: 'Listed 3 days ago',  variant: 'suv',   tone: 'crimson' },
+  { year: 2018, make: 'Subaru', model: 'Outback', trim: '2.5i',     km: 92500,  drive: 'AWD', transmission: 'CVT',  price: 19800, listed: 'Listed 4 days ago',  variant: 'wagon', tone: 'forest',   reduced: 1500 },
+  { year: 2022, make: 'Lexus',  model: 'NX 350',  trim: 'F-Sport',  km: 38900,  drive: 'AWD', transmission: 'Auto', price: 48900, listed: 'Listed 5 days ago',  variant: 'suv',   tone: 'graphite' },
+  { year: 2017, make: 'Honda',  model: 'Civic',   trim: 'LX',       km: 108200, drive: 'FWD', transmission: 'CVT',  price: 14900, listed: 'Listed 6 days ago',  variant: 'sedan', tone: 'silver' },
+  { year: 2020, make: 'Toyota', model: 'RAV4',    trim: 'XLE',      km: 67400,  drive: 'AWD', transmission: 'Auto', price: 32400, listed: 'Listed 1 week ago',  variant: 'suv',   tone: 'sand' },
+  { year: 2019, make: 'Nissan', model: 'Rogue',   trim: 'SV',       km: 81200,  drive: 'AWD', transmission: 'CVT',  price: 21300, listed: 'Listed 1 week ago',  variant: 'suv',   tone: 'pearl' },
+];
+
+const LISTINGS: FeedListing[] = LISTINGS_SEED.map((l, i) => ({
+  ...l,
+  dealer: DEALER_NAMES[i % DEALER_NAMES.length]!,
+}));
+
+const POPULAR_MODELS: PopularModel[] = [
+  { make: 'Toyota', model: 'Camry',   body: 'Sedan', years: '2018–2024', from: 17900, variant: 'sedan', tone: 'pearl' },
+  { make: 'Honda',  model: 'Civic',   body: 'Sedan', years: '2017–2024', from: 14400, variant: 'sedan', tone: 'silver' },
+  { make: 'Toyota', model: 'RAV4',    body: 'SUV',   years: '2018–2024', from: 21900, variant: 'suv',   tone: 'graphite' },
+  { make: 'Honda',  model: 'CR-V',    body: 'SUV',   years: '2018–2024', from: 19800, variant: 'suv',   tone: 'midnight' },
+  { make: 'Mazda',  model: 'Mazda3',  body: 'Hatch', years: '2017–2024', from: 13900, variant: 'hatch', tone: 'crimson' },
+  { make: 'Subaru', model: 'Outback', body: 'Wagon', years: '2017–2024', from: 16400, variant: 'wagon', tone: 'forest' },
+];
+
+const OTHER_CITIES = [
+  { slug: 'toronto',   name: 'Toronto',   province: 'ON', count: 1284 },
+  { slug: 'montreal',  name: 'Montreal',  province: 'QC', count: 938 },
+  { slug: 'vancouver', name: 'Vancouver', province: 'BC', count: 871 },
+  { slug: 'calgary',   name: 'Calgary',   province: 'AB', count: 612 },
+  { slug: 'edmonton',  name: 'Edmonton',  province: 'AB', count: 487 },
+  { slug: 'ottawa',    name: 'Ottawa',    province: 'ON', count: 412 },
+];
+
+const FAQ_ITEMS: FaqItem[] = [
+  {
+    q: 'Why are Japanese cars popular in Canada?',
+    a: 'Japanese-built cars consistently rank among the top for long-term reliability and resale value in Canadian conditions. Brands like Toyota, Honda and Subaru are over-represented in vehicles that pass 250,000 km without major repairs, which matters in a country where winter driving and long highway commutes are common.',
+  },
+  {
+    q: 'Do I need an AMVIC-registered dealer in Alberta?',
+    a: "Yes. In Alberta, anyone who sells more than four vehicles a year must be licensed by AMVIC (Alberta Motor Vehicle Industry Council). Buying from a licensed dealer means access to the consumer compensation fund and recourse if something goes wrong. Every Alberta listing on japanauto.ca shows the dealer's AMVIC number.",
+  },
+  {
+    q: "What's the difference between OEM and aftermarket parts?",
+    a: "OEM (Original Equipment Manufacturer) parts are made by or for the original carmaker and match factory spec exactly. Aftermarket parts are made by third parties — they're usually cheaper and sometimes better, but quality varies. For safety-critical components like brakes and airbags, most owners stay with OEM.",
+  },
+  {
+    q: 'How do I check a VIN before buying?',
+    a: 'Run the 17-digit VIN through CarFax Canada or a similar history service. Check that the VIN on the windshield, doorjamb and registration all match. A VIN history can reveal accident reports, previous registrations across provinces, and any salvage or rebuilt title brands.',
+  },
+  {
+    q: 'What taxes apply when buying a used car in Canada?',
+    a: 'Tax depends on the province where you register the vehicle. Most provinces apply GST/HST or PST on top of the purchase price; Alberta has no provincial sales tax on private sales but charges 5% GST through dealers. Always confirm the total before you sign the bill of sale.',
+  },
+  {
+    q: 'Are salvage-title Japanese cars worth it?',
+    a: 'Sometimes — but go in with eyes open. A salvage or rebuilt title means the vehicle was once a total loss. Even after repair, resale value and insurability are lower. They can be reasonable for daily drivers if a qualified mechanic inspects the structural repairs first.',
+  },
+];
+
+const BLOG_ARTICLES: BlogArticle[] = [
+  {
+    cat: 'Buying guide',
+    title: 'How to verify an AMVIC dealer in Alberta',
+    excerpt: "A 3-minute walkthrough of the public registry — what the licence number tells you and what it doesn't.",
+    read: '5 min read',
+    date: '2026-04-22',
+    tone: '#1F2530',
+    slug: 'how-to-verify-amvic-dealer-alberta',
+  },
+  {
+    cat: 'Maintenance',
+    title: 'CVT vs. conventional automatic on a used Camry',
+    excerpt: 'Long-term reliability, what to listen for on a test drive, and when to walk away.',
+    read: '7 min read',
+    date: '2026-04-15',
+    tone: '#3A3A3D',
+    slug: 'cvt-vs-automatic-used-camry',
+  },
+  {
+    cat: 'Market',
+    title: 'JDM imports in Canada: the 15-year rule, explained',
+    excerpt: 'A plain-English summary of what you can legally import and what to budget for compliance.',
+    read: '6 min read',
+    date: '2026-04-08',
+    tone: '#2F3D2F',
+    slug: 'jdm-imports-canada-15-year-rule',
+  },
+];
+
+const GLOSSARY_TERMS: GlossaryTerm[] = [
+  { term: 'AMVIC', def: "Alberta's dealer licensing body." },
+  { term: 'AWD',   def: 'All-wheel drive — power to all four wheels.' },
+  { term: 'CVT',   def: 'Continuously variable transmission.' },
+  { term: 'OEM',   def: 'Original Equipment Manufacturer parts.' },
+  { term: 'JDM',   def: 'Japanese Domestic Market vehicles.' },
+  { term: 'VIN',   def: '17-digit vehicle identification number.' },
+];
+
+const title = 'Used Japanese cars and parts in Canada — japanauto.ca';
+const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi cars from local Canadian dealers. AMVIC-verified, VIN-checked listings.';
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>japanauto.ca — Phase 0 placeholder</title>
-  </head>
-  <body class="font-sans text-ink-strong">
-    <main class="max-w-screen-sm mx-auto p-6">
-      <h1 class="text-3xl font-semibold">japanauto.ca</h1>
-      <p class="mt-4 text-ink-muted">Phase 0 bootstrap successful. Phase 1 готовится.</p>
-    </main>
-  </body>
-</html>
+<BaseLayout {title} {description} canonical="https://japanauto.ca/">
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">
+    Used Japanese cars and parts in <span data-geo="city.short">Canada</span> — japanauto.ca
+  </h1>
+
+  {/* STATE A — resolved Tier-1 CMA. Middleware drops this if !resolved. */}
+  <div data-state="resolved">
+    <ContextLine />
+
+    <section class="section" style="padding-top:8px">
+      <BrandGrid brands={BRANDS} />
+      <div style="display:flex;justify-content:flex-end;margin-top:16px">
+        <a
+          class="t-body-s"
+          href="/brands/"
+          style="display:inline-flex;align-items:center;gap:6px;color:var(--color-ink-default);font-size:14px"
+        >
+          View all brand pages
+          <Icon name="arrowRight" size={14} />
+        </a>
+      </div>
+    </section>
+
+    <ListingFeed
+      heading="Latest Japanese cars in"
+      headingCity={true}
+      listings={LISTINGS}
+      ctaText="View all listings"
+      ctaHref="/used-cars/"
+      totalCount={1284}
+    />
+
+    <PopularModels models={POPULAR_MODELS} />
+
+    <TrustStrip />
+
+    <section class="section">
+      <OtherCitiesCollapse cities={OTHER_CITIES} />
+    </section>
+
+    <PartsEntryPoint />
+
+    <BlogExcerpt articles={BLOG_ARTICLES} />
+
+    <GlossaryHighlights terms={GLOSSARY_TERMS} />
+
+    <FaqSection items={FAQ_ITEMS} />
+
+    <SellCta />
+  </div>
+
+  {/* STATE B — unresolved or small city. Middleware drops if resolved. */}
+  <div data-state="unresolved">
+    <ChooseCityHero />
+    <SellCta variant="abbreviated" />
+  </div>
+</BaseLayout>

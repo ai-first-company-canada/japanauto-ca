@@ -1,0 +1,51 @@
+---
+import Icon from './Icon.astro';
+import CarSilhouetteFeatured from './CarSilhouetteFeatured.astro';
+
+type FeaturedVariant = 'sedan' | 'suv';
+type FeaturedTone = 'pearl' | 'midnight' | 'crimson' | 'silver' | 'graphite';
+
+interface Props {
+  make: string;
+  model: string;
+  year: number;
+  msrp: number;
+  dealer: { name: string; href: string };
+  variant?: FeaturedVariant;
+  tone?: FeaturedTone;
+}
+const {
+  make, model, year, msrp,
+  dealer,
+  variant = 'sedan',
+  tone = 'pearl',
+} = Astro.props;
+const msrpStr = msrp.toLocaleString('en-US');
+---
+<article class="featured">
+  <span class="eyebrow">New vehicle · Sponsored</span>
+  <div class="featured-photo" style="aspect-ratio:1 / 1">
+    <CarSilhouetteFeatured variant={variant} tone={tone} />
+  </div>
+  <div>
+    <h3 class="t-h-m" style="font-size:18px;line-height:24px">
+      New {year} {make} {model}
+    </h3>
+    <p class="t-body-s ink-muted" style="margin-top:4px;font-size:13px;line-height:18px">
+      Starting MSRP from {dealer.name}
+    </p>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:8px">
+    <span class="t-body-s ink-muted" style="font-size:13px">from</span>
+    <span class="num" style="font-size:26px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.015em">
+      CA${msrpStr}
+    </span>
+  </div>
+  <a class="btn btn-primary btn-block" href={dealer.href} style="margin-top:4px">
+    Visit dealer website
+    <Icon name="arrowRight" size={16} />
+  </a>
+  <p style="font-size:11px;line-height:16px;color:var(--color-ink-subtle);margin-top:4px">
+    Sponsored by {dealer.name} — official {make} dealer.
+  </p>
+</article>

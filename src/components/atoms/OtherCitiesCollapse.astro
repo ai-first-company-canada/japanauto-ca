@@ -1,0 +1,38 @@
+---
+import Icon from './Icon.astro';
+
+interface CityRow {
+  slug: string;
+  name: string;
+  province: string;
+  count: number;
+}
+interface Props {
+  cities: CityRow[];
+  label?: string;
+}
+const { cities, label = 'Japanese cars in other Canadian cities' } = Astro.props;
+---
+<details>
+  <summary style="display:flex;justify-content:space-between;align-items:center;list-style:none;cursor:pointer;padding:8px 0">
+    <h2 class="t-h-l" style="font-size:20px">{label}</h2>
+    <Icon name="chevronDown" size={20} />
+  </summary>
+  <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px">
+    {cities.map((c) => (
+      <a
+        href={`/used-cars/${c.slug}/`}
+        class="card"
+        style="display:flex;align-items:center;justify-content:space-between;padding:20px;min-height:72px"
+      >
+        <div>
+          <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
+          <span class="t-caption" style="font-size:10px;margin-top:4px;display:block">
+            {c.count.toLocaleString('en-US')} cars
+          </span>
+        </div>
+        <span class="t-caption t-mono" style="font-size:11px">{c.province}</span>
+      </a>
+    ))}
+  </div>
+</details>

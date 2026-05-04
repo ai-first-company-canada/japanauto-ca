@@ -1,0 +1,96 @@
+---
+import Wordmark from '../atoms/Wordmark.astro';
+import Icon, { type IconName } from '../atoms/Icon.astro';
+
+interface FooterCol {
+  title: string;
+  items: Array<{ label: string; href: string }>;
+}
+
+const socialIcons: IconName[] = ['x', 'instagram', 'facebook', 'youtube'];
+
+const cols: FooterCol[] = [
+  {
+    title: 'Browse',
+    items: [
+      { label: 'Used cars', href: '/used-cars/' },
+      { label: 'Parts', href: '/parts/' },
+      { label: 'Dealers', href: '/dealers/' },
+      { label: 'Salvage yards', href: '/salvage-yards/' },
+      { label: 'Brands', href: '/brands/' },
+      { label: 'Cities', href: '/cities/' },
+    ],
+  },
+  {
+    title: 'Sell',
+    items: [
+      { label: 'List your inventory', href: '/dealers/list/' },
+      { label: 'How it works', href: '/dealers/how-it-works/' },
+      { label: 'Pricing', href: '/dealers/pricing/' },
+      { label: 'AMVIC verified', href: '/about/amvic/' },
+    ],
+  },
+  {
+    title: 'Company',
+    items: [
+      { label: 'About', href: '/about/' },
+      { label: 'Blog', href: '/blog/' },
+      { label: 'Glossary', href: '/glossary/' },
+      { label: 'Contact', href: '/contact/' },
+      { label: 'Terms', href: '/terms/' },
+      { label: 'Privacy', href: '/privacy/' },
+    ],
+  },
+  {
+    title: 'Contact',
+    items: [
+      { label: 'support@japanauto.ca', href: 'mailto:support@japanauto.ca' },
+      { label: '1-833-JAPAN-CA', href: 'tel:+18335272622' },
+      { label: 'Calgary, AB', href: '/contact/' },
+    ],
+  },
+];
+---
+<footer style="border-top:1px solid var(--color-divider);padding:64px 16px 32px;background:#fff">
+  <Wordmark size={22} />
+  <p class="t-body-s ink-muted" style="margin-top:12px;font-size:13px;max-width:280px;line-height:19px">
+    Canada's marketplace for used Japanese cars and parts.
+  </p>
+  <div style="margin-top:20px;display:flex;gap:8px">
+    {socialIcons.map((s) => (
+      <a
+        href={`/social/${s}/`}
+        class="icon-btn"
+        style="width:40px;height:40px;border:1px solid var(--color-divider)"
+        aria-label={s}
+      >
+        <Icon name={s} size={20} />
+      </a>
+    ))}
+  </div>
+
+  <div style="margin-top:28px;display:grid;grid-template-columns:1fr;gap:0">
+    {cols.map((col) => (
+      <details style="border-top:1px solid var(--color-divider)">
+        <summary style="display:flex;justify-content:space-between;align-items:center;list-style:none;padding:16px 0;cursor:pointer">
+          <span class="t-caption" style="font-size:11px">{col.title}</span>
+          <Icon name="chevronDown" size={16} />
+        </summary>
+        <ul style="padding-bottom:16px;display:flex;flex-direction:column;gap:12px">
+          {col.items.map((it) => (
+            <li>
+              <a class="t-body-m" href={it.href} style="font-size:14px">{it.label}</a>
+            </li>
+          ))}
+        </ul>
+      </details>
+    ))}
+  </div>
+
+  <p
+    class="t-caption ink-muted"
+    style="margin-top:32px;font-size:10px;line-height:16px;text-transform:none;letter-spacing:0"
+  >
+    © 2026 japanauto.ca · Made in Canada · We are not affiliated with any vehicle manufacturer.
+  </p>
+</footer>

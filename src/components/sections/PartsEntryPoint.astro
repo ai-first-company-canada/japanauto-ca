@@ -1,0 +1,50 @@
+---
+import Icon, { type IconName } from '../atoms/Icon.astro';
+
+interface Props {
+  citySlug?: string;
+}
+const { citySlug = '' } = Astro.props;
+const partsHref = citySlug ? `/parts/${citySlug}/` : '/parts/';
+const salvageHref = citySlug ? `/salvage-yards/${citySlug}/` : '/salvage-yards/';
+
+const tiles: Array<{ ic: IconName; label: string }> = [
+  { ic: 'engine', label: 'Engine' },
+  { ic: 'cog',    label: 'Transmission' },
+  { ic: 'body',   label: 'Body' },
+  { ic: 'bolt',   label: 'Electrical' },
+  { ic: 'spring', label: 'Suspension' },
+  { ic: 'wheel',  label: 'Wheels' },
+];
+---
+<section class="band-subtle" style="padding:48px 16px">
+  <h2 class="t-h-l">Need parts instead?</h2>
+  <p class="t-body-m ink-muted" style="margin-top:8px;font-size:14px;line-height:21px">
+    Search OEM and aftermarket parts from verified Canadian salvage yards.
+  </p>
+  <div style="display:flex;gap:8px;margin-top:20px">
+    <a class="btn btn-primary" href={partsHref} style="flex:1">
+      Browse parts
+      <Icon name="arrowRight" size={16} />
+    </a>
+  </div>
+  <a
+    href={salvageHref}
+    style="display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-weight:600;font-size:14px;color:var(--color-ink-strong)"
+  >
+    View salvage yards
+    <Icon name="chevronRight" size={16} />
+  </a>
+  <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;margin-top:28px">
+    {tiles.map((t) => (
+      <a
+        href={partsHref}
+        class="card"
+        style="height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px"
+      >
+        <Icon name={t.ic} size={22} />
+        <span class="t-body-s" style="font-size:12px">{t.label}</span>
+      </a>
+    ))}
+  </div>
+</section>

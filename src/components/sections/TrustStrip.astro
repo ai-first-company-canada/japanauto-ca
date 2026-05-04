@@ -1,0 +1,34 @@
+---
+import Icon, { type IconName } from '../atoms/Icon.astro';
+
+interface Props {
+  amvic?: boolean;
+}
+const { amvic = false } = Astro.props;
+
+const amvicCopy = amvic
+  ? 'Alberta sellers checked against the public registry.'
+  : 'Alberta dealers AMVIC-verified. Other provinces vary by jurisdiction.';
+
+const plates: Array<{ ic: IconName; t: string; s: string }> = [
+  {
+    ic: 'layers',
+    t: '9 Japanese brands only',
+    s: 'Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi. No clutter from non-Japanese listings.',
+  },
+  { ic: 'shield', t: 'AMVIC-verified dealers', s: amvicCopy },
+  { ic: 'qr',     t: 'VIN-checked listings',  s: 'Every car has a verified 17-digit VIN.' },
+  { ic: 'car',    t: 'From 150+ dealers per city', s: 'Multi-brand independent lots, all in one place.' },
+];
+---
+<section class="band-subtle" style="padding:48px 16px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px">
+    {plates.map((p) => (
+      <div>
+        <Icon name={p.ic} size={24} />
+        <h3 class="t-h-s" style="font-size:15px;margin-top:12px;line-height:21px">{p.t}</h3>
+        <p class="t-body-s ink-muted" style="font-size:12px;line-height:18px;margin-top:4px">{p.s}</p>
+      </div>
+    ))}
+  </div>
+</section>

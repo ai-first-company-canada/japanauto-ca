@@ -1,0 +1,28 @@
+---
+import FaqAccordion from '../atoms/FaqAccordion.astro';
+
+export interface FaqItem {
+  q: string;
+  a: string;
+  open?: boolean;
+}
+
+interface Props {
+  heading?: string;
+  items: FaqItem[];
+}
+const {
+  heading = 'Common questions about buying used Japanese cars in Canada',
+  items,
+} = Astro.props;
+---
+<section class="section">
+  <header style="margin-bottom:16px">
+    <h2 class="t-h-l">{heading}</h2>
+  </header>
+  <div style="display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--color-divider)">
+    {items.map((f, i) => (
+      <FaqAccordion q={f.q} a={f.a} open={f.open ?? i < 2} />
+    ))}
+  </div>
+</section>

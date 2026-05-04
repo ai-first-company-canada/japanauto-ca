@@ -1,0 +1,24 @@
+---
+interface Props {
+  size?: number;
+  inverse?: boolean;
+  mono?: boolean;
+}
+const { size = 20, inverse = false, mono = false } = Astro.props;
+const wordColor = inverse ? '#FFFFFF' : '#0A0A0A';
+const dotColor = mono ? wordColor : '#BC002D';
+---
+<span class="wordmark" style={`height:${size}px;line-height:1;color:${wordColor}`} aria-label="japanauto">
+  <svg viewBox="0 0 220 40" height={size} role="img" aria-hidden="true" style="overflow:visible">
+    <text
+      x="0"
+      y="32"
+      font-family="'IBM Plex Sans', -apple-system, system-ui, sans-serif"
+      font-weight="700"
+      font-size="36"
+      letter-spacing="-0.02em"
+      fill={wordColor}
+    >&#x0237;apanauto</text>
+    <circle cx="5.0" cy="6" r="3.8" fill={dotColor} />
+  </svg>
+</span>

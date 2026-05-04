@@ -1,0 +1,21 @@
+---
+interface Props {
+  cityName?: string;
+  count?: number;
+  dealers?: number;
+}
+const {
+  cityName = 'Canada',
+  count = 0,
+  dealers = 0,
+} = Astro.props;
+const countStr = count.toLocaleString('en-US');
+---
+<div style="padding:12px 16px 8px">
+  <p class="t-body-s ink-muted">
+    <span data-geo="city.count" class="num">{countStr}</span>
+    Japanese cars from
+    <span data-geo="city.dealers" class="num">{dealers}</span>
+    dealers in <span data-geo="city.name">{cityName}</span> · Updated today
+  </p>
+</div>

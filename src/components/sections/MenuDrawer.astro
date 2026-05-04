@@ -1,0 +1,112 @@
+---
+import Wordmark from '../atoms/Wordmark.astro';
+import Icon from '../atoms/Icon.astro';
+
+interface Props {
+  cityShort?: string;
+  cityName?: string;
+}
+const {
+  cityShort = 'Choose your city',
+  cityName = '',
+} = Astro.props;
+
+const browseDealers = cityName ? `Dealers in ${cityName}` : 'Dealers';
+const browseSalvage = cityName ? `Salvage yards in ${cityName}` : 'Salvage yards';
+
+const groups: Array<{ title: string; items: Array<{ label: string; href: string }> }> = [
+  {
+    title: 'Browse',
+    items: [
+      { label: 'Used cars', href: '/used-cars/' },
+      { label: 'New cars', href: '/new-cars/' },
+      { label: 'Parts', href: '/parts/' },
+      { label: 'Brands', href: '/brands/' },
+      { label: browseDealers, href: '/dealers/' },
+      { label: browseSalvage, href: '/salvage-yards/' },
+    ],
+  },
+  {
+    title: 'Learn',
+    items: [
+      { label: 'Blog', href: '/blog/' },
+      { label: 'Glossary', href: '/glossary/' },
+      { label: 'Buying guides', href: '/blog/buying-guides/' },
+      { label: 'About AMVIC', href: '/about/amvic/' },
+    ],
+  },
+  {
+    title: 'For dealers',
+    items: [
+      { label: 'List your inventory', href: '/dealers/list/' },
+      { label: 'How it works', href: '/dealers/how-it-works/' },
+      { label: 'Pricing', href: '/dealers/pricing/' },
+      { label: 'Sign in', href: '/sign-in/' },
+    ],
+  },
+  {
+    title: 'About',
+    items: [
+      { label: 'About us', href: '/about/' },
+      { label: 'Contact', href: '/contact/' },
+      { label: 'Terms', href: '/terms/' },
+      { label: 'Privacy', href: '/privacy/' },
+    ],
+  },
+];
+---
+<dialog id="menu-drawer" class="dialog-fullscreen" aria-label="Site menu">
+  <form method="dialog" style="margin:0">
+    <header class="navbar" style="border-bottom:1px solid var(--color-divider)">
+      <Wordmark size={20} />
+      <button class="icon-btn" type="submit" aria-label="Close menu">
+        <Icon name="close" size={22} />
+      </button>
+    </header>
+  </form>
+
+  <div style="padding:16px">
+    <label style="position:relative;display:block">
+      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--color-ink-subtle)">
+        <Icon name="search" size={18} />
+      </span>
+      <input class="input" style="padding-left:42px" placeholder="Search by VIN, model, or dealer" />
+    </label>
+  </div>
+
+  <a
+    href="/cities/"
+    style="display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);gap:12px"
+  >
+    <span style="display:inline-flex;align-items:center;gap:12px">
+      <Icon name="pin" size={18} />
+      <span style="font-size:16px;font-weight:500" data-geo="city.short">{cityShort}</span>
+    </span>
+    <Icon name="chevronDown" size={18} />
+  </a>
+
+  {groups.map((g) => (
+    <section style="border-top:1px solid var(--color-divider)">
+      <h3 class="t-caption" style="padding:20px 16px 8px;font-size:11px">{g.title}</h3>
+      <ul>
+        {g.items.map((it) => (
+          <li>
+            <a
+              href={it.href}
+              style="display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px;font-size:16px;font-weight:500;color:var(--color-ink-strong)"
+            >
+              <span>{it.label}</span>
+              <Icon name="chevronRight" size={18} />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+
+  <div style="padding:32px 16px 24px;border-top:1px solid var(--color-divider)">
+    <p class="t-caption ink-muted" style="font-size:10px;line-height:16px;text-transform:none;letter-spacing:0">
+      © 2026 japanauto.ca · Made in Canada
+    </p>
+  </div>
+</dialog>

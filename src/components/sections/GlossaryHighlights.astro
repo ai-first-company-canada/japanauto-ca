@@ -1,0 +1,35 @@
+---
+import Icon from '../atoms/Icon.astro';
+
+export interface GlossaryTerm {
+  term: string;
+  def: string;
+  slug?: string;
+}
+
+interface Props {
+  heading?: string;
+  terms: GlossaryTerm[];
+}
+const { heading = 'Japanese auto glossary', terms } = Astro.props;
+---
+<section class="section band-subtle" style="padding:48px 16px">
+  <header style="margin-bottom:16px">
+    <h2 class="t-h-l">{heading}</h2>
+  </header>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    {terms.map((g) => (
+      <a
+        href={`/glossary/${g.slug ?? g.term.toLowerCase()}/`}
+        class="card"
+        style="display:flex;flex-direction:column;gap:4px;padding:14px;position:relative"
+      >
+        <h3 class="t-h-s" style="font-size:14px">{g.term}</h3>
+        <p class="t-body-s ink-muted" style="font-size:11px;line-height:15px">{g.def}</p>
+        <span style="position:absolute;right:12px;top:14px;color:var(--color-ink-muted)">
+          <Icon name="chevronRight" size={14} />
+        </span>
+      </a>
+    ))}
+  </div>
+</section>

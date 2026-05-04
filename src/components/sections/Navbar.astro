@@ -1,0 +1,32 @@
+---
+import Wordmark from '../atoms/Wordmark.astro';
+import Icon from '../atoms/Icon.astro';
+
+interface Props {
+  cityShort?: string;
+}
+const { cityShort = 'Canada' } = Astro.props;
+---
+<header class="navbar">
+  <a href="/" aria-label="japanauto, home" style="display:inline-flex;align-items:center">
+    <Wordmark size={20} />
+  </a>
+  <button
+    class="city-pill"
+    type="button"
+    onclick="document.getElementById('menu-drawer').showModal()"
+    aria-label="Change city"
+  >
+    <Icon name="pin" size={14} />
+    <span data-geo="city.short">{cityShort}</span>
+    <Icon name="chevronDown" size={14} />
+  </button>
+  <button
+    class="icon-btn"
+    type="button"
+    onclick="document.getElementById('menu-drawer').showModal()"
+    aria-label="Open menu"
+  >
+    <Icon name="menu" size={22} />
+  </button>
+</header>

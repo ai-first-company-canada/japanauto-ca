@@ -1,0 +1,52 @@
+---
+import CarSilhouette, { type SilhouetteVariant, type SilhouetteTone } from './CarSilhouette.astro';
+
+interface Props {
+  year: number;
+  make: string;
+  model: string;
+  trim?: string;
+  km: number;
+  drive: string;
+  transmission: string;
+  price: number;
+  listed: string;
+  dealer: string;
+  variant: SilhouetteVariant;
+  tone: SilhouetteTone;
+  href?: string;
+}
+
+const {
+  year, make, model, trim,
+  km, drive, transmission,
+  price, listed, dealer,
+  variant, tone,
+  href = '#',
+} = Astro.props;
+
+const kmStr = km.toLocaleString('en-US');
+const priceStr = price.toLocaleString('en-US');
+---
+<a href={href} class="card boosted" style="overflow:hidden;display:flex;flex-direction:column">
+  <div class="thumb">
+    <CarSilhouette variant={variant} tone={tone} />
+  </div>
+  <div style="padding:14px;display:flex;flex-direction:column;gap:6px">
+    <span class="boosted-eyebrow">Boosted</span>
+    <h3 class="t-h-s" style="font-size:14px;line-height:20px;font-weight:600">
+      {year} {make} {model}{trim ? ` ${trim}` : ''}
+    </h3>
+    <p class="t-body-s ink-muted" style="font-size:12px;line-height:16px">
+      {kmStr} km · {transmission} · {drive}
+    </p>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">
+      <span class="num" style="font-size:18px;font-weight:600;color:#0A0A0A;letter-spacing:-0.01em">
+        CA${priceStr}
+      </span>
+    </div>
+    <p class="t-body-s ink-muted" style="font-size:11px;line-height:14px;margin-top:4px;color:var(--color-ink-subtle)">
+      {listed} · {dealer} · Promoted
+    </p>
+  </div>
+</a>

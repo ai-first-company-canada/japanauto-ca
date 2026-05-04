@@ -28,3 +28,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# obsidian source-of-truth symlink (cloud-design mockups, ADRs, etc.)
+_archives

@@ -1,0 +1,31 @@
+---
+import Icon from './Icon.astro';
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+interface Props {
+  items: Crumb[];
+}
+const { items } = Astro.props;
+---
+<nav
+  aria-label="Breadcrumb"
+  style="display:flex;align-items:center;gap:8px;padding:12px 16px;overflow-x:auto;white-space:nowrap"
+>
+  {items.map((it, i) => (
+    <>
+      {it.href && i < items.length - 1 ? (
+        <a href={it.href} class="t-body-s ink-muted" style="font-size:13px">{it.label}</a>
+      ) : (
+        <span class="t-body-s" style="font-size:13px;color:var(--color-ink-strong);font-weight:500">{it.label}</span>
+      )}
+      {i < items.length - 1 && (
+        <span style="color:var(--color-ink-subtle);display:inline-flex;align-items:center">
+          <Icon name="chevronRight" size={14} />
+        </span>
+      )}
+    </>
+  ))}
+</nav>

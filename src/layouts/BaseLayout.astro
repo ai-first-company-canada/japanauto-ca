@@ -1,0 +1,104 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical: string;
+  ogImage?: string;
+  schemaLD?: object | object[];
+  geoFallbackCity?: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage,
+  schemaLD,
+  geoFallbackCity = 'toronto',
+} = Astro.props;
+
+const ogImageUrl = ogImage ?? '/og-default.png';
+
+const extraGraph = schemaLD ? (Array.isArray(schemaLD) ? schemaLD : [schemaLD]) : [];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://japanauto.ca/#organization',
+      name: 'japanauto.ca',
+      url: 'https://japanauto.ca',
+      logo: 'https://japanauto.ca/logo.png',
+      description: 'Canadian marketplace for used Japanese cars and parts donor cars',
+      areaServed: { '@type': 'Country', name: 'Canada' },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://japanauto.ca/#website',
+      url: 'https://japanauto.ca',
+      name: 'japanauto.ca',
+      publisher: { '@id': 'https://japanauto.ca/#organization' },
+      inLanguage: 'en-CA',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: 'https://japanauto.ca/search?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    ...extraGraph,
+  ],
+};
+---
+<!DOCTYPE html>
+<html lang="en" data-geo-resolved="false" data-geo-city={geoFallbackCity}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_CA" />
+    <meta property="og:site_name" content="japanauto.ca" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
+    </noscript>
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <slot name="navbar" />
+    <main>
+      <slot />
+    </main>
+    <slot name="footer" />
+    <slot name="sticky-bar" />
+    <slot name="menu-drawer" />
+  </body>
+</html>

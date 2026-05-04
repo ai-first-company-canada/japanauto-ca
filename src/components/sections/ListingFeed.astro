@@ -1,0 +1,65 @@
+---
+import ListingCard from '../atoms/ListingCard.astro';
+import Icon from '../atoms/Icon.astro';
+import type { SilhouetteVariant, SilhouetteTone } from '../atoms/CarSilhouette.astro';
+
+export interface FeedListing {
+  year: number;
+  make: string;
+  model: string;
+  trim?: string;
+  km: number;
+  drive: string;
+  transmission: string;
+  price: number;
+  listed: string;
+  dealer: string;
+  badge?: string;
+  reduced?: number;
+  variant: SilhouetteVariant;
+  tone: SilhouetteTone;
+  href?: string;
+}
+
+interface Props {
+  heading: string;
+  headingCity?: boolean;
+  cityShort?: string;
+  cityName?: string;
+  listings: FeedListing[];
+  ctaText?: string;
+  ctaHref?: string;
+  totalCount?: number;
+}
+const {
+  heading,
+  headingCity = false,
+  cityShort = 'Canada',
+  cityName = 'Canada',
+  listings,
+  ctaText,
+  ctaHref,
+  totalCount,
+} = Astro.props;
+const totalStr = totalCount != null ? totalCount.toLocaleString('en-US') : null;
+---
+<section class="section">
+  <header style="margin-bottom:16px">
+    <h2 class="t-h-l">
+      {heading}{headingCity ? ' ' : ''}
+      {headingCity && <span data-geo="city.short">{cityShort}</span>}
+    </h2>
+  </header>
+  <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+    {listings.map((l) => <ListingCard {...l} />)}
+  </div>
+  {ctaText && ctaHref && (
+    <a
+      href={ctaHref}
+      style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;color:var(--color-ink-strong);font-weight:600;font-size:14px"
+    >
+      {totalStr ? <>View all <span data-geo="city.count" class="num">{totalStr}</span> listings in <span data-geo="city.name">{cityName}</span></> : ctaText}
+      <Icon name="arrowRight" size={16} />
+    </a>
+  )}
+</section>

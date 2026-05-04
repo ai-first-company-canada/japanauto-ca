@@ -1,0 +1,49 @@
+---
+import Icon from '../atoms/Icon.astro';
+
+export interface BlogArticle {
+  cat: string;
+  title: string;
+  excerpt: string;
+  read: string;
+  date: string;
+  tone: string;
+  href?: string;
+  slug?: string;
+}
+
+interface Props {
+  heading?: string;
+  articles: BlogArticle[];
+}
+const { heading = 'Read before you buy', articles } = Astro.props;
+---
+<section class="section">
+  <header style="margin-bottom:16px">
+    <h2 class="t-h-l">{heading}</h2>
+  </header>
+  <div style="display:grid;grid-template-columns:1fr;gap:16px">
+    {articles.map((a) => (
+      <a href={a.href ?? `/blog/${a.slug ?? ''}/`} class="card" style="overflow:hidden;display:flex;flex-direction:column">
+        <div class="thumb thumb-16x9" style={`background:${a.tone};position:relative`}>
+          <span class="t-caption" style="position:absolute;left:12px;bottom:12px;color:#fff;font-size:10px">[draft photo]</span>
+        </div>
+        <div style="padding:16px">
+          <span class="t-caption" style="color:var(--color-accent);font-size:10px">{a.cat}</span>
+          <h3 class="t-h-m" style="font-size:16px;margin-top:8px;line-height:22px">{a.title}</h3>
+          <p class="t-body-s ink-muted" style="margin-top:8px;font-size:13px;line-height:19px">{a.excerpt}</p>
+          <p class="t-caption" style="margin-top:12px;font-size:10px">
+            {a.read} · <span class="t-mono">{a.date}</span>
+          </p>
+        </div>
+      </a>
+    ))}
+  </div>
+  <a
+    href="/blog/"
+    style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;color:var(--color-ink-strong);font-weight:600;font-size:14px"
+  >
+    All articles
+    <Icon name="arrowRight" size={16} />
+  </a>
+</section>

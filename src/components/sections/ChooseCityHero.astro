@@ -1,0 +1,37 @@
+---
+const TIER1: Array<{ name: string; province: string; slug: string }> = [
+  { name: 'Toronto',   province: 'ON', slug: 'toronto' },
+  { name: 'Montreal',  province: 'QC', slug: 'montreal' },
+  { name: 'Vancouver', province: 'BC', slug: 'vancouver' },
+  { name: 'Calgary',   province: 'AB', slug: 'calgary' },
+  { name: 'Edmonton',  province: 'AB', slug: 'edmonton' },
+  { name: 'Ottawa',    province: 'ON', slug: 'ottawa' },
+];
+---
+<section style="padding:64px 16px 48px">
+  <h2 class="t-display-l" style="font-size:32px;line-height:40px;text-wrap:pretty">
+    Choose your city to see Japanese cars from local dealers.
+  </h2>
+  <p class="t-body-m ink-muted" style="margin-top:16px;font-size:15px;line-height:23px;max-width:60ch">
+    japanauto.ca aggregates listings from independent dealerships in 6 major Canadian metros. Pick the one nearest you.
+  </p>
+
+  <div style="margin-top:32px;display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+    {TIER1.map((c) => (
+      <a
+        href={`/used-cars/${c.slug}/`}
+        class="card"
+        style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left"
+      >
+        <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
+        <span class="t-caption t-mono" style="font-size:10px;margin-top:auto">{c.province}</span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<section class="band-subtle" style="padding:32px 16px;text-align:center">
+  <p class="t-body-s ink-muted" style="max-width:60ch;margin:0 auto;font-size:13px;line-height:20px">
+    Smaller towns rarely have enough Japanese-car dealers to need an aggregator. If you're close to one of the cities above, you'll find what we have. Otherwise — drive to the nearest, or check us again later as we expand.
+  </p>
+</section>
