@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Tailwind v4 CSS-first theme (mirrors what was in tailwind.config.mjs). */
+@theme {
+  --color-accent:        #BC002D;
+  --color-accent-hover:  #A0001F;
+  --color-accent-soft:   #FCE9EC;
+
+  --color-ink-strong:    #0A0A0A;
+  --color-ink:           #262626;
+  --color-ink-muted:     #595959;
+  --color-ink-subtle:    #8C8C8C;
+
+  --color-paper:         #FFFFFF;
+  --color-paper-warm:    #FAFAF7;
+  --color-paper-two:     #F5F5F0;
+
+  --color-border:        #EAEAEA;
+  --color-border-strong: #D0D0D0;
+
+  --color-success:       #1F7A3A;
+  --color-amvic:         #0F4C8A;
+
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+}
+
+:root {
+  --color-bg: #FFFFFF;
+  --color-bg-subtle: #FAFAFA;
+  --color-divider: #EAEAEA;
+}
+
+html { -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-sans); color: var(--color-ink-strong); }

@@ -1,0 +1,86 @@
+# wrangler.toml — Cloudflare Pages Functions config for japanauto.ca
+#
+# This is the TEMPLATE that will be copied into the real repo at init time.
+# Fill in `database_id`, `id` for KV/R2 from Cloudflare dashboard before first deploy.
+#
+# Reference: https://developers.cloudflare.com/pages/functions/wrangler-configuration/
+
+name = "japanauto"
+# account_id removed — Pages CLI (wrangler 4.87+) doesn't accept it in config;
+# auth comes from `wrangler login` / CLOUDFLARE_ACCOUNT_ID env var instead.
+compatibility_date = "2026-04-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+# Static asset routing — all unmatched paths go to Astro's dist/.
+# Functions are auto-discovered under ./functions/.
+
+# ============================================================================
+# D1 (SQLite) — primary database
+# ============================================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "japanauto-prod"
+database_id = "b0d65b95-2f43-403d-9237-0d4cac6e186a"
+migrations_dir = "./migrations"
+
+# ============================================================================
+# KV — sessions, rate-limit, cache
+# ============================================================================
+[[kv_namespaces]]
+binding = "CACHE"
+id = "e9ea74ebb0c145c79c02d45837d70d95"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "a86ac2df901841a8843e1241c319ea1a"
+
+# ============================================================================
+# R2 — media storage (originals before Cloudflare Images variants)
+# ============================================================================
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "japanauto-media"
+
+# ============================================================================
+# Cloudflare Images (binding for variant transformations)
+# ============================================================================
+# IMAGES binding must be set via Cloudflare Pages dashboard for Pages projects
+# (wrangler.toml [images] block is not supported by Pages CLI as of wrangler 4.87).
+# [images]
+# binding = "IMAGES"
+
+# ============================================================================
+# Environment variables (non-secret — public)
+# ============================================================================
+[vars]
+ENV = "production"
+PUBLIC_SITE_URL = "https://japanauto.ca"
+JWT_ISSUER = "japanauto.ca"
+JWT_ACCESS_TTL_SECONDS = "900"          # 15 min
+JWT_REFRESH_TTL_SECONDS = "2592000"     # 30 days
+LISTING_DEFAULT_TTL_DAYS = "90"
+USED_CAR_AGE_CAP_YEARS = "10"
+
+# ============================================================================
+# SECRETS (set via `wrangler secret put NAME`)
+# ============================================================================
+# JWT_SECRET           — HMAC-SHA256 key (256+ bits)
+# STRIPE_SECRET_KEY    — sk_live_... or sk_test_...
+# STRIPE_WEBHOOK_SECRET — whsec_...
+# RESEND_API_KEY       — re_... for transactional emails
+# DAILY_IP_HASH_SALT   — rotates daily, used for contact_reveals.ip_hash
+#
+# All accessed via env.<NAME> in functions; never commit.
+
+# ============================================================================
+# Preview / dev environment overrides
+# ============================================================================
+[env.preview]
+[env.preview.vars]
+ENV = "preview"
+PUBLIC_SITE_URL = "https://preview.japanauto.ca"
+
+# [env.dev] removed — Cloudflare Pages only supports "preview" and "production"
+# named environments. For local dev, use `wrangler pages dev` which auto-injects
+# bindings from this file's top-level config.
