@@ -1,0 +1,52 @@
+---
+import Icon from '../atoms/Icon.astro';
+
+const options: Array<{ k: string; label: string; sub: string }> = [
+  { k: 'newest',     label: 'Newest first',           sub: 'Recently listed at the top' },
+  { k: 'price-asc',  label: 'Price: low to high',     sub: 'Cheapest first' },
+  { k: 'price-desc', label: 'Price: high to low',     sub: 'Most expensive first' },
+  { k: 'km-asc',     label: 'Mileage: low to high',   sub: 'Lowest km first' },
+  { k: 'year-desc',  label: 'Year: newest to oldest', sub: 'Most recent model years first' },
+  { k: 'distance',   label: 'Distance from me',       sub: 'Closest dealers first' },
+];
+---
+<dialog id="sort-filter" class="dialog-fullscreen" aria-label="Sort listings">
+  <form method="dialog" style="margin:0;display:flex;flex-direction:column;height:100%">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 16px 12px">
+      <h3 class="t-h-m" style="font-size:17px">Sort by</h3>
+      <button class="icon-btn" type="submit" aria-label="Close sort options">
+        <Icon name="close" size={20} />
+      </button>
+    </div>
+    <div class="sheet-scroll" style="border-top:1px solid var(--color-divider);margin:0 16px">
+      {options.map((o, i) => (
+        <label
+          style="display:flex;align-items:flex-start;gap:12px;padding:16px 0;border-bottom:1px solid var(--color-divider);cursor:pointer"
+        >
+          <input
+            type="radio"
+            name="sort"
+            value={o.k}
+            checked={i === 0}
+            style="position:absolute;opacity:0;pointer-events:none"
+          />
+          <span class="radio" aria-hidden="true" style="margin-top:2px"></span>
+          <span style="flex:1">
+            <span class="t-h-s" style="font-size:16px;font-weight:600;display:block">{o.label}</span>
+            <span class="t-body-s ink-muted" style="font-size:12px;margin-top:2px;display:block">{o.sub}</span>
+          </span>
+        </label>
+      ))}
+    </div>
+    <div class="sheet-action">
+      <button
+        class="btn btn-primary btn-block"
+        type="submit"
+        style="height:48px"
+      >
+        Apply sort
+      </button>
+    </div>
+  </form>
+</dialog>

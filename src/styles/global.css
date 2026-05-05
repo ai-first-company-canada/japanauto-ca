@@ -345,17 +345,31 @@ img, svg { display: block; max-width: 100%; }
 }
 .checkbox { border-radius: 4px; }
 .radio { border-radius: 50%; }
-.checkbox.checked, .radio.checked {
+.checkbox.checked, .radio.checked,
+input[type="checkbox"]:checked + .checkbox,
+input[type="radio"]:checked + .radio {
   border-color: var(--color-accent);
   background: var(--color-accent);
 }
-.checkbox.checked::after {
+.checkbox.checked::after,
+input[type="checkbox"]:checked + .checkbox::after {
   content: ""; width: 12px; height: 6px;
   border-left: 2px solid #fff; border-bottom: 2px solid #fff;
   transform: rotate(-45deg) translateY(-2px);
 }
-.radio.checked::after {
+.radio.checked::after,
+input[type="radio"]:checked + .radio::after {
   content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff;
+}
+
+/* ----------------------------------------------------------------------------
+ * Sheet handle (filter bottom-sheet visual cue)
+ * -------------------------------------------------------------------------- */
+.sheet-handle {
+  width: 40px; height: 4px;
+  background: var(--color-divider-strong);
+  border-radius: 2px;
+  margin: 12px auto 8px;
 }
 
 /* ----------------------------------------------------------------------------

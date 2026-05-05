@@ -1,0 +1,189 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Navbar from '../../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../../../components/sections/PageHeading.astro';
+import FilterPillBar from '../../../../components/sections/FilterPillBar.astro';
+import CatalogList from '../../../../components/sections/CatalogList.astro';
+import CatalogPagination from '../../../../components/sections/CatalogPagination.astro';
+import ModelCrossLinks from '../../../../components/sections/ModelCrossLinks.astro';
+import FaqSection from '../../../../components/sections/FaqSection.astro';
+import YearFilterDialog from '../../../../components/sections/YearFilterDialog.astro';
+import MileageFilterDialog from '../../../../components/sections/MileageFilterDialog.astro';
+import SortFilterDialog from '../../../../components/sections/SortFilterDialog.astro';
+import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
+import { MODELS_BY_BRAND, getModelsForCity } from '../../../../data/models-stubs';
+import { getCatalogForModelCity } from '../../../../data/catalog-stubs';
+
+export function getStaticPaths() {
+  const paths: Array<{ params: { make: string; model: string; city: string } }> = [];
+  for (const make of Object.keys(MODELS_BY_BRAND)) {
+    for (const model of MODELS_BY_BRAND[make]!) {
+      for (const city of TIER_1_CITIES) {
+        paths.push({ params: { make, model: model.slug, city: city.slug } });
+      }
+    }
+  }
+  return paths;
+}
+
+const { make, model, city } = Astro.params;
+const brand = BRAND_CONTENT[make!]!;
+const cityInfo = TIER_1_CITIES.find((c) => c.slug === city)!;
+const modelInfo = MODELS_BY_BRAND[make!]!.find((m) => m.slug === model)!;
+const catalog = getCatalogForModelCity(make!, model!, modelInfo.name, city!);
+const cityShort = `${cityInfo.name}, ${cityInfo.province}`;
+
+const otherModels = getModelsForCity(make!, city!);
+
+const modelFaqs = [
+  {
+    q: `Is the ${brand.name} ${modelInfo.name} reliable?`,
+    a: `${brand.name} models including the ${modelInfo.name} consistently rank in the top tier for long-term reliability across Canadian conditions.`,
+  },
+  {
+    q: `What years of ${brand.name} ${modelInfo.name} are available?`,
+    a: `Used ${brand.name} ${modelInfo.name} listings on japanauto.ca cover model years from 2016 to current — the rolling 10-year window for used inventory.`,
+  },
+  {
+    q: `Does the ${brand.name} ${modelInfo.name} have AWD?`,
+    a: `AWD availability depends on year and trim. Most ${brand.name} ${modelInfo.name} listings show drivetrain in the spec line. Filter by drive on the listing detail page.`,
+  },
+  {
+    q: `What's the typical price range for a used ${brand.name} ${modelInfo.name}?`,
+    a: `Pricing depends on year, mileage, and trim. As a rule, expect roughly 10-15% depreciation per year on top trims, more on base trims.`,
+  },
+];
+
+const title = `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
+const description = `${catalog.totalCount} used ${brand.name} ${modelInfo.name} listings in ${cityInfo.name}. AMVIC-verified dealers, VIN-checked vehicles, prices in CA$.`;
+const canonical = `https://japanauto.ca/used-cars/${make}/${model}/${city}/`;
+
+const allListings = [...catalog.boosted, ...catalog.organic];
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: brand.name, item: `https://japanauto.ca/used-cars/${make}/` },
+      { '@type': 'ListItem', position: 3, name: modelInfo.name, item: `https://japanauto.ca/used-cars/${make}/${model}/` },
+      { '@type': 'ListItem', position: 4, name: cityInfo.name, item: canonical },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    name: `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}`,
+    numberOfItems: catalog.totalCount,
+    itemListElement: allListings.map((l, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Vehicle',
+        name: `${l.year} ${l.make} ${l.model} ${l.trim}`,
+        vehicleModelDate: String(l.year),
+        mileageFromOdometer: { '@type': 'QuantitativeValue', value: l.km, unitCode: 'KMT' },
+        vehicleTransmission: l.transmission,
+        driveWheelConfiguration: l.drive,
+        url: `https://japanauto.ca/used-cars/listing/${l.slug}/`,
+        offers: {
+          '@type': 'Offer',
+          price: l.price,
+          priceCurrency: 'CAD',
+          availability: 'https://schema.org/InStock',
+          seller: { '@type': 'AutoDealer', name: l.dealer },
+        },
+      },
+    })),
+  },
+  {
+    '@type': 'Place',
+    name: cityInfo.name,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: cityInfo.name,
+      addressRegion: cityInfo.province,
+      addressCountry: 'CA',
+    },
+  },
+  ...(catalog.featured ? [{
+    '@type': 'Offer',
+    category: 'NewVehicle',
+    name: `New ${catalog.featured.year} ${catalog.featured.make} ${catalog.featured.model}`,
+    price: catalog.featured.msrp,
+    priceCurrency: 'CAD',
+    seller: { '@type': 'AutoDealer', name: catalog.featured.dealer },
+  }] : []),
+  {
+    '@type': 'FAQPage',
+    mainEntity: modelFaqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+
+const subtitleHtml = `<span class="num">${catalog.totalCount}</span> listings from <span class="num">${catalog.dealerCount}</span> dealers · Updated today`;
+const visibleCount = catalog.boosted.length + catalog.organic.length;
+---
+<BaseLayout
+  {title}
+  {description}
+  {canonical}
+  {schemaLD}
+  geoFallbackCity={city!}
+>
+  <Navbar slot="navbar" cityShort={cityShort} />
+  <MenuDrawer slot="menu-drawer" cityShort={cityShort} cityName={cityInfo.name} />
+  <CityPickerDialog slot="city-picker" />
+  <YearFilterDialog slot="filter-dialogs" />
+  <MileageFilterDialog slot="filter-dialogs" />
+  <SortFilterDialog slot="filter-dialogs" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">{`Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}, ${cityInfo.province}`}</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: brand.name, href: `/used-cars/${make}/` },
+    { label: modelInfo.name, href: `/used-cars/${make}/${model}/` },
+    { label: cityInfo.name },
+  ]} />
+
+  <PageHeading
+    title={`Used ${brand.name} ${modelInfo.name} in ${cityShort}`}
+    subtitle={subtitleHtml}
+  />
+
+  <FilterPillBar />
+
+  <p class="t-body-s ink-muted" style="padding:12px 16px 0;font-size:12px">
+    Showing <span class="num">{visibleCount}</span> of <span class="num">{catalog.totalCount}</span> listings
+  </p>
+
+  <CatalogList
+    featured={catalog.featured}
+    boosted={catalog.boosted}
+    organic={catalog.organic}
+    citySlug={city!}
+  />
+
+  <CatalogPagination remaining={catalog.remaining} />
+
+  <ModelCrossLinks
+    brandSlug={make!}
+    brandName={brand.name}
+    citySlug={city!}
+    cityName={cityInfo.name}
+    currentModelSlug={model!}
+    crossLinks={otherModels}
+  />
+
+  <FaqSection
+    items={modelFaqs}
+    heading={`Common questions about ${brand.name} ${modelInfo.name}`}
+  />
+</BaseLayout>

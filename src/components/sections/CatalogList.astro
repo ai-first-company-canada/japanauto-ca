@@ -1,0 +1,65 @@
+---
+import FeaturedSlot from '../atoms/FeaturedSlot.astro';
+import BoostedListingCard from '../atoms/BoostedListingCard.astro';
+import ListingCard from '../atoms/ListingCard.astro';
+import type { CatalogListing, FeaturedData } from '../../data/catalog-stubs';
+
+interface Props {
+  featured: FeaturedData | null;
+  boosted: CatalogListing[];
+  organic: CatalogListing[];
+  citySlug: string;
+}
+const { featured, boosted, organic } = Astro.props;
+---
+<section style="padding:16px 16px 32px">
+  {featured && (
+    <FeaturedSlot
+      make={featured.make}
+      model={featured.model}
+      year={featured.year}
+      msrp={featured.msrp}
+      dealer={{ name: featured.dealer, href: '#' }}
+      variant={featured.variant}
+      tone={featured.tone}
+    />
+  )}
+  <div style={`display:grid;grid-template-columns:1fr 1fr;gap:16px;${featured ? 'margin-top:16px' : ''}`}>
+    {boosted.map((l) => (
+      <BoostedListingCard
+        year={l.year}
+        make={l.make}
+        model={l.model}
+        trim={l.trim}
+        km={l.km}
+        drive={l.drive}
+        transmission={l.transmission}
+        price={l.price}
+        listed={l.listed}
+        dealer={l.dealer}
+        variant={l.variant}
+        tone={l.tone}
+        href={`/used-cars/listing/${l.slug}/`}
+      />
+    ))}
+    {organic.map((l) => (
+      <ListingCard
+        year={l.year}
+        make={l.make}
+        model={l.model}
+        trim={l.trim}
+        km={l.km}
+        drive={l.drive}
+        transmission={l.transmission}
+        price={l.price}
+        listed={l.listed}
+        dealer={l.dealer}
+        badge={l.badge}
+        reduced={l.reduced}
+        variant={l.variant}
+        tone={l.tone}
+        slug={l.slug}
+      />
+    ))}
+  </div>
+</section>

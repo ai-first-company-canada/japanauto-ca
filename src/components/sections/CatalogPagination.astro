@@ -1,0 +1,25 @@
+---
+import Icon from '../atoms/Icon.astro';
+
+interface Props {
+  remaining: number;
+}
+const { remaining } = Astro.props;
+---
+{remaining > 0 && (
+  <section style="padding:0 16px 32px">
+    <button
+      type="button"
+      class="btn btn-secondary btn-lg btn-block"
+      disabled
+      aria-disabled="true"
+      style="opacity:0.7;cursor:not-allowed"
+    >
+      Load more (<span class="num">{remaining}</span> remaining)
+      <Icon name="arrowRight" size={16} />
+    </button>
+    <p class="t-body-s ink-muted" style="text-align:center;margin-top:8px;font-size:12px">
+      Pagination wires up in Phase 2.
+    </p>
+  </section>
+)}

@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Navbar from '../../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../../../components/sections/PageHeading.astro';
+import CityDirectoryGrid from '../../../../components/sections/CityDirectoryGrid.astro';
+import AboutBrandSection from '../../../../components/sections/AboutBrandSection.astro';
+import FaqSection from '../../../../components/sections/FaqSection.astro';
+import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
+import { MODELS_BY_BRAND, CITY_FACTORS } from '../../../../data/models-stubs';
+
+export function getStaticPaths() {
+  const paths: Array<{ params: { make: string; model: string } }> = [];
+  for (const make of Object.keys(MODELS_BY_BRAND)) {
+    for (const model of MODELS_BY_BRAND[make]!) {
+      paths.push({ params: { make, model: model.slug } });
+    }
+  }
+  return paths;
+}
+
+const { make, model } = Astro.params;
+const brand = BRAND_CONTENT[make!]!;
+const modelInfo = MODELS_BY_BRAND[make!]!.find((m) => m.slug === model)!;
+
+const cityCards = TIER_1_CITIES.map((c) => {
+  const factor = CITY_FACTORS[c.slug] ?? 0.5;
+  return {
+    slug: c.slug,
+    name: c.name,
+    province: c.province,
+    count: Math.max(2, Math.round(modelInfo.baseCount * factor)),
+  };
+});
+
+const totalListings = cityCards.reduce((s, c) => s + c.count, 0);
+
+const title = `Used ${brand.name} ${modelInfo.name} across Canada — japanauto.ca`;
+const description = `Used ${brand.name} ${modelInfo.name} listings in ${TIER_1_CITIES.length} major Canadian cities. ${totalListings} total listings. AMVIC-verified, VIN-checked.`;
+const canonical = `https://japanauto.ca/used-cars/${make}/${model}/`;
+
+const aboutTitle = `About the ${brand.name} ${modelInfo.name}`;
+const aboutParagraphs = [
+  `The ${brand.name} ${modelInfo.name} is one of ${brand.name}'s most-listed models on japanauto.ca. Buyers across Canada filter by year, mileage, and trim to compare listings against city-local pricing.`,
+  `Used ${modelInfo.name} listings cover the rolling 10-year window. Pricing varies by city — Toronto and Vancouver markets typically run ~5-10% above smaller-CMA averages due to demand and AMVIC dealer density.`,
+];
+
+const modelFaqs = [
+  {
+    q: `Is the ${brand.name} ${modelInfo.name} a good used buy?`,
+    a: `${brand.name} consistently leads its segment for resale value and long-term reliability. The ${modelInfo.name} is one of the more popular trims among Canadian used buyers — supply tends to be solid in larger CMAs.`,
+  },
+  {
+    q: `Which Canadian city has the most used ${brand.name} ${modelInfo.name}?`,
+    a: `Toronto leads volume followed by Montreal and Vancouver. Smaller CMAs (Edmonton, Ottawa) have lower volume but often more competitive pricing per km.`,
+  },
+  {
+    q: `What's the average price for a used ${brand.name} ${modelInfo.name}?`,
+    a: `Pricing depends on year, mileage, trim, and city. Pick a city below to see live listing ranges. Phase 2 will surface median price per generation.`,
+  },
+];
+
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: brand.name, item: `https://japanauto.ca/used-cars/${make}/` },
+      { '@type': 'ListItem', position: 3, name: modelInfo.name, item: canonical },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    name: `${brand.name} ${modelInfo.name} availability across Canada`,
+    itemListElement: cityCards.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: `${brand.name} ${modelInfo.name} in ${c.name}`,
+      url: `https://japanauto.ca/used-cars/${make}/${model}/${c.slug}/`,
+    })),
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: modelFaqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+
+const subtitleHtml = `<span class="num">${totalListings}</span> ${modelInfo.name} listings across <span class="num">${TIER_1_CITIES.length}</span> Canadian cities · Updated today`;
+---
+<BaseLayout {title} {description} {canonical} {schemaLD}>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">{`Used ${brand.name} ${modelInfo.name} across Canada`}</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: brand.name, href: `/used-cars/${make}/` },
+    { label: modelInfo.name },
+  ]} />
+
+  <PageHeading
+    title={`${brand.name} ${modelInfo.name} across Canada`}
+    subtitle={subtitleHtml}
+  />
+
+  <CityDirectoryGrid
+    brandSlug={`${make}/${model}`}
+    brandName={`${brand.name} ${modelInfo.name}`}
+    cities={cityCards}
+  />
+
+  <AboutBrandSection title={aboutTitle} paragraphs={aboutParagraphs} />
+
+  <FaqSection
+    items={modelFaqs}
+    heading={`Common questions about the ${brand.name} ${modelInfo.name}`}
+  />
+</BaseLayout>
