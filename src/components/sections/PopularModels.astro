@@ -33,9 +33,15 @@ const {
     </h2>
   </header>
   <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
-    {models.map((m) => (
+    {models.map((m) => {
+      const makeSlug = m.make.toLowerCase();
+      const modelSlug = m.model.toLowerCase().replace(/\s+/g, '-');
+      const fallback = `/used-cars/${makeSlug}/${modelSlug}/${citySlug}/`;
+      const geoTemplate = m.href ? undefined : `/used-cars/${makeSlug}/${modelSlug}/{city}/`;
+      return (
       <a
-        href={m.href ?? `/used-cars/${m.make.toLowerCase()}/${m.model.toLowerCase().replace(/\s+/g, '-')}/${citySlug}/`}
+        href={m.href ?? fallback}
+        data-geo-href={geoTemplate}
         class="card"
         style="overflow:hidden;display:flex;flex-direction:column;padding:14px;gap:8px;position:relative"
       >
@@ -57,6 +63,7 @@ const {
           </div>
         </div>
       </a>
-    ))}
+      );
+    })}
   </div>
 </section>

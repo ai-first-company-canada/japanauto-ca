@@ -23,7 +23,7 @@ interface ContactRow {
 const contactRows: ContactRow[] = [
   { label: 'Phone', value: dealer.phone, href: `tel:${dealer.phoneTel}` },
   { label: 'Email', value: dealer.email, href: `mailto:${dealer.email}` },
-  { label: 'Web',   value: `${dealer.web} →`, href: dealer.webHref, ext: true },
+  { label: 'Web',   value: `${dealer.web} →`, href: `/dealers/${dealer.slug}/`, ext: false },
 ];
 ---
 <section style="padding:32px 16px 0">

@@ -276,36 +276,43 @@ img, svg { display: block; max-width: 100%; }
 .pill-bar.sticky { position: sticky; top: 56px; z-index: 4; }
 
 /* ----------------------------------------------------------------------------
- * Featured slot (sponsored / new vehicle)
+ * Featured slot (sponsored / new vehicle) — edge-to-edge photo + eyebrow overlay
  * -------------------------------------------------------------------------- */
-.featured {
+.featured-edge {
   background: var(--color-bg-subtle);
   border: 1.5px solid var(--color-accent);
   border-radius: 12px;
-  padding: 20px;
-  display: flex; flex-direction: column; gap: 12px;
-}
-.featured .featured-photo {
-  aspect-ratio: 4 / 3; width: 100%;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #F2F2F2 100%);
-  position: relative;
   overflow: hidden;
 }
-.featured .featured-photo::after {
+.featured-photo-overlay {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F2F2F2 100%);
+  overflow: hidden;
+}
+.featured-photo-overlay::after {
   content: ""; position: absolute; left: 12%; right: 12%; bottom: 8px;
   height: 8px; border-radius: 50%;
   background: radial-gradient(ellipse at center, rgba(10,10,10,0.18), transparent 70%);
   pointer-events: none;
 }
-.featured .eyebrow {
+.eyebrow-overlay {
+  position: absolute; top: 12px; left: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  padding: 6px 10px; border-radius: 6px;
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--color-accent);
+  z-index: 1;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.featured .eyebrow::before {
+.eyebrow-overlay::before {
   content: ""; width: 6px; height: 6px; border-radius: 50%;
   background: var(--color-accent);
+}
+.featured-content {
+  padding: 16px 20px 20px;
+  display: flex; flex-direction: column; gap: 12px;
 }
 
 /* ----------------------------------------------------------------------------
@@ -396,3 +403,80 @@ input[type="radio"]:checked + .radio::after {
   color: var(--color-ink-default);
 }
 .dialog-fullscreen::backdrop { background: rgba(0,0,0,0.4); }
+
+/* ----------------------------------------------------------------------------
+ * Sticky contact bar (listing detail) — appears when Key Specs scrolls into view
+ * -------------------------------------------------------------------------- */
+.sticky-contact-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-divider);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 3;
+  transition: transform 200ms ease-out, opacity 200ms ease-out;
+}
+.sticky-contact-bar.sticky-bar-hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+.sticky-contact-bar__inner {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+.sticky-contact-bar__photo {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-bg-muted);
+  flex-shrink: 0;
+}
+.sticky-contact-bar__text {
+  flex: 1;
+  min-width: 0;
+}
+.sticky-contact-bar__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  line-height: 17px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sticky-contact-bar__price {
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  line-height: 16px;
+}
+.sticky-contact-bar__call {
+  height: 44px;
+  min-width: 88px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: var(--color-accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.sticky-contact-bar__call:active {
+  background: var(--color-accent-hover);
+}

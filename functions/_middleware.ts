@@ -144,9 +144,29 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       element(el: Element): void { el.setInnerContent(this.value); }
     }
 
+    class GeoHrefHandler {
+      private readonly slug: string;
+      private readonly province: string;
+      constructor(slug: string, province: string) {
+        this.slug = slug;
+        this.province = province;
+      }
+      element(el: Element): void {
+        const template = el.getAttribute("data-geo-href") ?? "";
+        if (!template) return;
+        el.setAttribute(
+          "href",
+          template.replace("{city}", this.slug).replace("{province}", this.province),
+        );
+      }
+    }
+
     const dropSelector = geo.resolved
       ? '[data-state="unresolved"]'
       : '[data-state="resolved"]';
+
+    const geoSlug = geo.slug ?? "toronto";
+    const geoProvince = geo.province ?? "ON";
 
     const rewriter = new HTMLRewriter()
       .on("html", {
@@ -161,7 +181,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .on('[data-geo="city.province"]', new SetTextHandler(geo.province ?? ""))
       .on('[data-geo="city.count"]',    new SetTextHandler(geo.count.toLocaleString("en-US")))
       .on('[data-geo="city.dealers"]',  new SetTextHandler(String(geo.dealers)))
-      .on('[data-geo="city.slug"]',     new SetTextHandler(geo.slug ?? ""));
+      .on('[data-geo="city.slug"]',     new SetTextHandler(geo.slug ?? ""))
+      .on('a[data-geo-href]',           new GeoHrefHandler(geoSlug, geoProvince))
+      .on('button[data-geo-href]',      new GeoHrefHandler(geoSlug, geoProvince));
 
     return rewriter.transform(new Response(response.body, {
       status: response.status,

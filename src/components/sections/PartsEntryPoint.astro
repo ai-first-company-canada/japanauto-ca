@@ -5,8 +5,10 @@ interface Props {
   citySlug?: string;
 }
 const { citySlug = '' } = Astro.props;
-const partsHref = citySlug ? `/parts/${citySlug}/` : '/parts/';
-const salvageHref = citySlug ? `/salvage-yards/${citySlug}/` : '/salvage-yards/';
+const partsHref = citySlug ? `/parts/${citySlug}/` : '/parts/toronto/';
+const salvageHref = citySlug ? `/salvage-yards/${citySlug}/` : '/salvage-yards/toronto/';
+const partsGeoHref = '/parts/{city}/';
+const salvageGeoHref = '/salvage-yards/{city}/';
 
 const tiles: Array<{ ic: IconName; label: string }> = [
   { ic: 'engine', label: 'Engine' },
@@ -23,13 +25,14 @@ const tiles: Array<{ ic: IconName; label: string }> = [
     Search OEM and aftermarket parts from verified Canadian salvage yards.
   </p>
   <div style="display:flex;gap:8px;margin-top:20px">
-    <a class="btn btn-primary" href={partsHref} style="flex:1">
+    <a class="btn btn-primary" href={partsHref} data-geo-href={partsGeoHref} style="flex:1">
       Browse parts
       <Icon name="arrowRight" size={16} />
     </a>
   </div>
   <a
     href={salvageHref}
+    data-geo-href={salvageGeoHref}
     style="display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-weight:600;font-size:14px;color:var(--color-ink-strong)"
   >
     View salvage yards
@@ -39,6 +42,7 @@ const tiles: Array<{ ic: IconName; label: string }> = [
     {tiles.map((t) => (
       <a
         href={partsHref}
+        data-geo-href={partsGeoHref}
         class="card"
         style="height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px"
       >

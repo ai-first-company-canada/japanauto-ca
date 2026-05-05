@@ -18,14 +18,15 @@ const TIER1: Array<{ name: string; province: string; slug: string }> = [
 
   <div style="margin-top:32px;display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
     {TIER1.map((c) => (
-      <a
-        href={`/used-cars/${c.slug}/`}
+      <button
+        type="button"
+        onclick={`window.setCityCookie('${c.slug}','${c.province}')`}
         class="card"
-        style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left"
+        style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left;background:var(--color-bg);border:1px solid var(--color-divider);font-family:inherit;cursor:pointer;width:100%"
       >
         <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
         <span class="t-caption t-mono" style="font-size:10px;margin-top:auto">{c.province}</span>
-      </a>
+      </button>
     ))}
   </div>
 </section>

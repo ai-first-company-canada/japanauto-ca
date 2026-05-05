@@ -8,7 +8,6 @@ import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
 import ListingPhotoGallery from '../../../components/sections/ListingPhotoGallery.astro';
 import ListingTitleBlock from '../../../components/sections/ListingTitleBlock.astro';
 import PriceBlock from '../../../components/sections/PriceBlock.astro';
-import ContactQuickActions from '../../../components/sections/ContactQuickActions.astro';
 import KeySpecsGrid from '../../../components/sections/KeySpecsGrid.astro';
 import DescriptionSection from '../../../components/sections/DescriptionSection.astro';
 import DealerCard from '../../../components/sections/DealerCard.astro';
@@ -258,7 +257,6 @@ const stickyPhoto = photos[0]!;
     reduced={listing.reduced}
     sold={sold}
   />
-  <ContactQuickActions dealer={dealer} sold={sold} />
 
   <KeySpecsGrid listing={extendedListing} />
   <DescriptionSection paragraphs={extendedListing.description} />
