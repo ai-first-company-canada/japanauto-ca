@@ -12,7 +12,6 @@ import CatalogPagination from '../../../../components/sections/CatalogPagination
 import ModelCrossLinks from '../../../../components/sections/ModelCrossLinks.astro';
 import FaqSection from '../../../../components/sections/FaqSection.astro';
 import YearFilterDialog from '../../../../components/sections/YearFilterDialog.astro';
-import MileageFilterDialog from '../../../../components/sections/MileageFilterDialog.astro';
 import SortFilterDialog from '../../../../components/sections/SortFilterDialog.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
 import { MODELS_BY_BRAND, getModelsForCity } from '../../../../data/models-stubs';
@@ -140,7 +139,6 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
   <MenuDrawer slot="menu-drawer" cityShort={cityShort} cityName={cityInfo.name} />
   <CityPickerDialog slot="city-picker" />
   <YearFilterDialog slot="filter-dialogs" />
-  <MileageFilterDialog slot="filter-dialogs" />
   <SortFilterDialog slot="filter-dialogs" />
   <Footer slot="footer" />
 

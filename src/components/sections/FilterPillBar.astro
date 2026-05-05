@@ -3,17 +3,13 @@ import Icon from '../atoms/Icon.astro';
 
 interface Props {
   yearLabel?: string;
-  mileageLabel?: string;
   sortLabel?: string;
   yearActive?: boolean;
-  mileageActive?: boolean;
 }
 const {
   yearLabel = 'All years',
-  mileageLabel = 'All mileage',
   sortLabel = 'Newest first',
   yearActive = false,
-  mileageActive = false,
 } = Astro.props;
 ---
 <div class="pill-bar sticky" style="top:56px">
@@ -26,17 +22,6 @@ const {
   >
     <span style="color:var(--color-ink-muted)">Year:</span>
     <span style="font-weight:600">{yearLabel}</span>
-    <Icon name="chevronDown" size={12} />
-  </button>
-  <button
-    type="button"
-    class="pill"
-    data-state={mileageActive ? 'selected' : 'default'}
-    onclick="document.getElementById('mileage-filter').showModal()"
-    aria-label={`Filter by mileage — currently ${mileageLabel}`}
-  >
-    <span style="color:var(--color-ink-muted)">Mileage:</span>
-    <span style="font-weight:600">{mileageLabel}</span>
     <Icon name="chevronDown" size={12} />
   </button>
   <button
