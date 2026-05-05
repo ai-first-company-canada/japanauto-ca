@@ -1,0 +1,35 @@
+---
+interface CityTile {
+  slug: string;
+  name: string;
+  count: number;
+}
+
+interface Props {
+  make: string;
+  model: string;
+  currentCitySlug: string;
+  cities: CityTile[];
+  makeName: string;
+  modelName: string;
+}
+
+const { make, model, cities, makeName, modelName } = Astro.props;
+---
+<section style="padding:40px 16px 0">
+  <h2 class="t-h-s" style="font-size:18px;font-weight:600;margin:0;color:var(--color-ink-strong)">
+    {makeName} {modelName} in other Canadian cities
+  </h2>
+  <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    {cities.map((c) => (
+      <a
+        href={`/used-cars/${make}/${model}/${c.slug}/`}
+        class="card"
+        style="padding:14px 16px;text-align:left;display:flex;flex-direction:column;gap:2px;text-decoration:none"
+      >
+        <span style="font-size:14px;font-weight:600;color:var(--color-ink-strong)">{c.name}</span>
+        <span style="font-size:12px;color:var(--color-ink-muted)">{c.count} listed</span>
+      </a>
+    ))}
+  </div>
+</section>

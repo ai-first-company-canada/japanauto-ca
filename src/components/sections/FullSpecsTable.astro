@@ -1,0 +1,84 @@
+---
+import VinVerifiedPill from '../atoms/VinVerifiedPill.astro';
+import type { ExtendedListing } from '../../data/dealer-stubs';
+
+interface Props {
+  listing: ExtendedListing;
+}
+
+const { listing } = Astro.props;
+const kmStr = listing.km.toLocaleString('en-US');
+
+interface Row {
+  label: string;
+  value: string | number;
+  vinPill?: boolean;
+  mono?: boolean;
+}
+
+interface Group {
+  title: string;
+  rows: Row[];
+}
+
+const groups: Group[] = [
+  {
+    title: 'Identification',
+    rows: [
+      { label: 'Year',  value: listing.year },
+      { label: 'Make',  value: listing.make },
+      { label: 'Model', value: listing.model },
+      { label: 'Trim',  value: listing.trim },
+      { label: 'VIN',   value: listing.vin, vinPill: listing.vinVerified, mono: true },
+    ],
+  },
+  {
+    title: 'Engine & drivetrain',
+    rows: [
+      { label: 'Engine displacement', value: listing.engine },
+      { label: 'Fuel type',           value: listing.fuel },
+      { label: 'Transmission',        value: listing.transmission },
+      { label: 'Drivetrain',          value: listing.drivetrain },
+    ],
+  },
+  {
+    title: 'Body',
+    rows: [
+      { label: 'Body type',      value: listing.bodyType },
+      { label: 'Doors',          value: listing.doors },
+      { label: 'Seats',          value: listing.seats },
+      { label: 'Exterior color', value: listing.exteriorColor },
+      { label: 'Interior color', value: listing.interiorColor },
+    ],
+  },
+  {
+    title: 'Condition',
+    rows: [
+      { label: 'Mileage',   value: `${kmStr} km` },
+      { label: 'Condition', value: listing.condition },
+    ],
+  },
+];
+---
+<div>
+  {groups.map((g, gi) => (
+    <div style={`margin-top:${gi === 0 ? 0 : 24}px`}>
+      <h3 style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-strong);margin:0 0 4px">
+        {g.title}
+      </h3>
+      {g.rows.map((r) => (
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--color-divider)">
+          <span style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:500;flex-shrink:0;color:var(--color-ink-muted)">
+            {r.label}
+          </span>
+          <span
+            style={`font-size:14px;font-weight:500;color:var(--color-ink-strong);font-family:${r.mono ? "'IBM Plex Mono', monospace" : 'inherit'};display:inline-flex;align-items:center;gap:8px;text-align:right`}
+          >
+            {r.value}
+            {r.vinPill && <VinVerifiedPill />}
+          </span>
+        </div>
+      ))}
+    </div>
+  ))}
+</div>

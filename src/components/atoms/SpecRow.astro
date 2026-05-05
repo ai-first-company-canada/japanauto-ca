@@ -1,0 +1,20 @@
+---
+interface Props {
+  label: string;
+  value: string | number;
+  dense?: boolean;
+}
+const { label, value, dense = false } = Astro.props;
+const padding = dense ? '12px 0' : '0';
+---
+<div style={`display:flex;flex-direction:column;gap:2px;padding:${padding}`}>
+  <span style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:500;color:var(--color-ink-muted)">
+    {label}
+  </span>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:15px;font-weight:500;color:var(--color-ink-default)">
+      {value}
+    </span>
+    <slot />
+  </div>
+</div>

@@ -1,0 +1,98 @@
+---
+import type { DealerProfile } from '../../data/dealer-stubs';
+
+interface Props {
+  dealer: DealerProfile;
+  sold: boolean;
+}
+
+const { dealer, sold } = Astro.props;
+
+// Phase 1.4: static day-of-week (Tuesday). Phase 2 client-side script
+// reads new Date().getDay() and toggles `today` highlight.
+const TODAY_DOW = 2;
+const initial = dealer.name.charAt(0);
+
+interface ContactRow {
+  label: string;
+  value: string;
+  href: string;
+  ext?: boolean;
+}
+
+const contactRows: ContactRow[] = [
+  { label: 'Phone', value: dealer.phone, href: `tel:${dealer.phoneTel}` },
+  { label: 'Email', value: dealer.email, href: `mailto:${dealer.email}` },
+  { label: 'Web',   value: `${dealer.web} →`, href: dealer.webHref, ext: true },
+];
+---
+<section style="padding:32px 16px 0">
+  <h2 class="t-h-s" style="font-size:18px;font-weight:600;margin:0 0 16px;color:var(--color-ink-strong)">
+    About this dealer
+  </h2>
+
+  <div style="background:var(--color-bg-subtle);border-radius:12px;padding:20px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--color-ink-strong);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0">
+        {initial}
+      </div>
+      <div style="min-width:0">
+        <span style="font-size:17px;font-weight:600;color:var(--color-ink-strong);display:block;line-height:22px">
+          {dealer.name}
+        </span>
+        <span style="font-size:11px;color:var(--color-ink-muted)">
+          {dealer.badge} · {dealer.city}, {dealer.province}
+        </span>
+      </div>
+    </div>
+
+    <p style="margin-top:16px;font-size:14px;color:var(--color-ink-default)">
+      {dealer.address}
+    </p>
+
+    <div style="margin-top:16px">
+      <h4 style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted);margin:0 0 6px">
+        Open hours
+      </h4>
+      {dealer.hours.map((h) => {
+        const isToday = h.dow.includes(TODAY_DOW);
+        const rowStyle = isToday
+          ? 'display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--color-ink-strong);font-weight:600'
+          : 'display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--color-ink-default);font-weight:400';
+        return (
+          <div style={rowStyle}>
+            <span>{h.d}{isToday ? ' · today' : ''}</span>
+            <span>{h.h}</span>
+          </div>
+        );
+      })}
+    </div>
+
+    <div style="margin-top:16px;border-top:1px solid var(--color-divider);padding-top:12px">
+      {contactRows.map((c) => (
+        <div style="display:flex;align-items:baseline;gap:12px;padding:8px 0">
+          <span style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted);width:56px;flex-shrink:0">
+            {c.label}
+          </span>
+          <a
+            href={c.href}
+            target={c.ext ? '_blank' : undefined}
+            rel={c.ext ? 'noopener' : undefined}
+            style="font-size:14px;color:var(--color-ink-strong);text-decoration:none;font-weight:500"
+          >
+            {c.value}
+          </a>
+        </div>
+      ))}
+    </div>
+
+    <a
+      href={`/dealers/${dealer.slug}/`}
+      style="display:inline-block;margin-top:16px;font-size:13px;font-weight:500;color:var(--color-accent);text-decoration:none"
+    >
+      {sold
+        ? 'View other listings from this dealer →'
+        : `View dealer profile and all ${dealer.listingsCount} listings →`}
+    </a>
+  </div>
+</section>

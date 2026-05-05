@@ -1,0 +1,36 @@
+---
+interface Props {
+  price: number;
+  negotiable: boolean;
+  reduced?: number;
+  priceWas?: number;
+  sold: boolean;
+}
+
+const { price, negotiable, reduced, priceWas, sold } = Astro.props;
+const priceStr = price.toLocaleString('en-US');
+const reducedStr = reduced != null ? reduced.toLocaleString('en-US') : null;
+const wasStr = priceWas != null ? priceWas.toLocaleString('en-US') : null;
+
+const priceStyle = sold
+  ? 'font-family:\'IBM Plex Mono\',monospace;font-size:36px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.02em;line-height:40px;text-decoration:line-through;opacity:0.6'
+  : 'font-family:\'IBM Plex Mono\',monospace;font-size:36px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.02em;line-height:40px';
+---
+<section style="padding:16px 16px 0">
+  <span style={priceStyle}>CA${priceStr}</span>
+  {!sold && (
+    <p style="margin-top:4px;font-size:13px;color:var(--color-ink-muted)">
+      {negotiable ? 'Negotiable' : 'Firm price'}
+    </p>
+  )}
+  {!sold && reducedStr && (
+    <p style="margin-top:6px;font-size:12px;font-weight:500;color:var(--color-accent)">
+      ↓ CA${reducedStr}{wasStr ? ` from CA$${wasStr}` : ''}
+    </p>
+  )}
+  {sold && (
+    <p style="margin-top:4px;font-size:12px;font-weight:500;color:var(--color-ink-muted)">
+      Sold for CA${priceStr}
+    </p>
+  )}
+</section>

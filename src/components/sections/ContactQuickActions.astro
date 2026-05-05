@@ -1,0 +1,31 @@
+---
+import ContactButton from '../atoms/ContactButton.astro';
+import type { DealerProfile } from '../../data/dealer-stubs';
+
+interface Props {
+  dealer: DealerProfile;
+  sold: boolean;
+}
+
+const { dealer, sold } = Astro.props;
+---
+<section style="padding:16px 16px 0">
+  {sold ? (
+    <button
+      disabled
+      style="width:100%;height:56px;border-radius:10px;background:var(--color-bg-muted);color:var(--color-ink-muted);border:none;font-size:15px;font-weight:600;cursor:not-allowed"
+    >
+      This vehicle has been sold
+    </button>
+  ) : (
+    <>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <ContactButton variant="primary" icon="phone" href={`tel:${dealer.phoneTel}`} label="Call dealer" size="lg" />
+        <ContactButton variant="secondary" icon="mail" href={`mailto:${dealer.email}`} label="Email dealer" size="lg" />
+      </div>
+      <p style="margin-top:12px;font-size:11px;text-align:center;color:var(--color-ink-subtle)">
+        or scroll for full dealer details ↓
+      </p>
+    </>
+  )}
+</section>

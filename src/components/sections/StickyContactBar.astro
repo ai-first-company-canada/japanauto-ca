@@ -1,0 +1,98 @@
+---
+import ListingPhoto, { type ListingPhotoTone, type ListingPhotoFraming } from '../atoms/ListingPhoto.astro';
+import ContactButton from '../atoms/ContactButton.astro';
+import type { CatalogListing } from '../../data/catalog-stubs';
+import type { DealerProfile } from '../../data/dealer-stubs';
+
+interface Photo {
+  tone: ListingPhotoTone;
+  framing: ListingPhotoFraming;
+}
+
+interface Props {
+  listing: CatalogListing;
+  dealer: DealerProfile;
+  photo: Photo;
+}
+
+const { listing, dealer, photo } = Astro.props;
+const priceStr = listing.price.toLocaleString('en-US');
+---
+<div class="sticky-contact-bar" role="region" aria-label="Contact dealer">
+  <div class="sticky-contact-bar__inner">
+    <div class="sticky-contact-bar__photo">
+      <ListingPhoto tone={photo.tone} framing={photo.framing} />
+    </div>
+    <div class="sticky-contact-bar__text">
+      <p class="sticky-contact-bar__title">
+        {listing.year} {listing.model} {listing.trim}
+      </p>
+      <p class="sticky-contact-bar__price">CA${priceStr}</p>
+    </div>
+    <ContactButton
+      variant="primary"
+      icon="phone"
+      href={`tel:${dealer.phoneTel}`}
+      size="sm"
+      ariaLabel="Call dealer"
+    />
+    <ContactButton
+      variant="secondary"
+      icon="mail"
+      href={`mailto:${dealer.email}`}
+      size="sm"
+      ariaLabel="Email dealer"
+    />
+  </div>
+</div>
+
+<style>
+  .sticky-contact-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-divider);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 3;
+  }
+  .sticky-contact-bar__inner {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+  }
+  .sticky-contact-bar__photo {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--color-bg-muted);
+    flex-shrink: 0;
+  }
+  .sticky-contact-bar__text {
+    flex: 1;
+    min-width: 0;
+  }
+  .sticky-contact-bar__title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink-strong);
+    line-height: 17px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sticky-contact-bar__price {
+    margin: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-ink-muted);
+    line-height: 16px;
+  }
+</style>

@@ -1,0 +1,49 @@
+---
+import SpecRow from '../atoms/SpecRow.astro';
+import Icon from '../atoms/Icon.astro';
+import FullSpecsTable from './FullSpecsTable.astro';
+import type { ExtendedListing } from '../../data/dealer-stubs';
+
+interface Props {
+  listing: ExtendedListing;
+}
+
+const { listing } = Astro.props;
+const kmStr = listing.km.toLocaleString('en-US');
+---
+<section style="padding:32px 16px 0">
+  <h2 class="t-h-s" style="font-size:18px;font-weight:600;margin:0;color:var(--color-ink-strong)">
+    Key specs
+  </h2>
+  <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;row-gap:20px;column-gap:16px">
+    <SpecRow label="Mileage"      value={`${kmStr} km`} />
+    <SpecRow label="Transmission" value={listing.transmission} />
+    <SpecRow label="Drivetrain"   value={listing.drivetrain} />
+    <SpecRow label="Fuel type"    value={listing.fuel} />
+    <SpecRow label="Body type"    value={listing.bodyType} />
+    <SpecRow label="Doors"        value={listing.doors} />
+    <SpecRow label="Engine"       value={listing.engine} />
+    <SpecRow label="Seats"        value={listing.seats} />
+  </div>
+
+  <details class="full-specs-toggle" style="margin-top:16px">
+    <summary style="list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;color:var(--color-ink-default);font-size:14px;font-weight:500">
+      <span class="full-specs-toggle__open">View full specs</span>
+      <span class="full-specs-toggle__close">Hide full specs</span>
+      <span class="full-specs-toggle__chev-down" style="display:inline-flex"><Icon name="chevronDown" size={14} /></span>
+      <span class="full-specs-toggle__chev-up" style="display:none"><Icon name="chevronUp" size={14} /></span>
+    </summary>
+    <div style="padding-top:24px">
+      <FullSpecsTable listing={listing} />
+    </div>
+  </details>
+</section>
+
+<style>
+  .full-specs-toggle summary::-webkit-details-marker { display: none; }
+  .full-specs-toggle .full-specs-toggle__close { display: none; }
+  .full-specs-toggle[open] .full-specs-toggle__open { display: none; }
+  .full-specs-toggle[open] .full-specs-toggle__close { display: inline; }
+  .full-specs-toggle[open] .full-specs-toggle__chev-down { display: none !important; }
+  .full-specs-toggle[open] .full-specs-toggle__chev-up { display: inline-flex !important; }
+</style>

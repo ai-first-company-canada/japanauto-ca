@@ -1,0 +1,30 @@
+---
+import type { DealerProfile } from '../../data/dealer-stubs';
+
+interface Props {
+  dealer: DealerProfile;
+}
+
+const { dealer } = Astro.props;
+---
+<section style="padding:16px 16px 0">
+  <div style="background:var(--color-bg-subtle);border-radius:12px;padding:16px">
+    <span style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted)">
+      Alberta regulation
+    </span>
+    <p style="margin:4px 0 0;font-size:15px;font-weight:600;color:var(--color-ink-strong)">
+      AMVIC #{dealer.amvic}
+    </p>
+    <p style="margin:8px 0 0;font-size:13px;line-height:19px;color:var(--color-ink-muted)">
+      This dealer is registered with the Alberta Motor Vehicle Industry Council.
+    </p>
+    <a
+      href="https://amvic.org"
+      target="_blank"
+      rel="noopener"
+      style="display:inline-block;margin-top:12px;font-size:13px;font-weight:500;color:var(--color-accent);text-decoration:none"
+    >
+      Verify on amvic.org →
+    </a>
+  </div>
+</section>

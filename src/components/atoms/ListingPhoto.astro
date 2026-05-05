@@ -1,0 +1,163 @@
+---
+export type ListingPhotoTone = 'silver' | 'midnight' | 'white' | 'pearl' | 'black' | 'red' | 'blue' | 'grey' | 'crimson' | 'graphite' | 'sand' | 'forest' | 'bronze';
+
+export type ListingPhotoFraming = 'three-quarter' | 'side' | 'rear-three-quarter' | 'front-low' | 'interior' | 'dash' | 'wheel-detail' | 'engine-bay';
+
+interface Props {
+  tone?: ListingPhotoTone;
+  framing?: ListingPhotoFraming;
+}
+
+const { tone = 'silver', framing = 'three-quarter' } = Astro.props;
+
+interface Palette {
+  top: string; bot: string; glass: string; wheel: string; stroke: string;
+}
+
+const palettes: Record<string, Palette> = {
+  silver:   { top: '#E0E0E2', bot: '#9A9A9C', glass: '#2A2A2D', wheel: '#0A0A0A', stroke: '#7A7A7C' },
+  midnight: { top: '#3A4250', bot: '#1A1F2A', glass: '#0A0A0A', wheel: '#0A0A0A', stroke: '#0A0A0A' },
+  white:    { top: '#FAFAF9', bot: '#D8D6CF', glass: '#1F1F22', wheel: '#0A0A0A', stroke: '#9A9890' },
+  pearl:    { top: '#F4F1EA', bot: '#C9C2B0', glass: '#1F1F22', wheel: '#0A0A0A', stroke: '#9A9486' },
+  black:    { top: '#3A3A3D', bot: '#0E0E10', glass: '#000000', wheel: '#0A0A0A', stroke: '#000000' },
+  red:      { top: '#9E1F2E', bot: '#5E0E1A', glass: '#1A0A0E', wheel: '#0A0A0A', stroke: '#3E0610' },
+  crimson:  { top: '#9E1F2E', bot: '#5E0E1A', glass: '#1A0A0E', wheel: '#0A0A0A', stroke: '#3E0610' },
+  blue:     { top: '#3D5878', bot: '#1B2C44', glass: '#0A0F1A', wheel: '#0A0A0A', stroke: '#0F1830' },
+  grey:     { top: '#9C9A95', bot: '#5C5A55', glass: '#1F1F22', wheel: '#0A0A0A', stroke: '#3F3D38' },
+  graphite: { top: '#5A5A5E', bot: '#1F1F22', glass: '#0A0A0A', wheel: '#0A0A0A', stroke: '#1A1A1C' },
+  sand:     { top: '#E0D8C5', bot: '#A8997B', glass: '#3A3528', wheel: '#0A0A0A', stroke: '#7A6F58' },
+  forest:   { top: '#4A5A4A', bot: '#1F2A1F', glass: '#0A150A', wheel: '#0A0A0A', stroke: '#0F1A0F' },
+  bronze:   { top: '#9A8A75', bot: '#5C4A35', glass: '#2A2520', wheel: '#0A0A0A', stroke: '#3A2E1F' },
+};
+
+const c = palettes[tone] ?? palettes.silver!;
+const gid = `lp-${framing}-${tone}`;
+
+const frames: Record<string, string> = {
+  'three-quarter': `
+    <g transform="translate(60 130)">
+      <path d="M10 70 Q14 50 32 46 L70 38 Q82 18 116 14 L184 14 Q224 18 244 38 L274 46 Q288 52 286 72 L286 96 L10 96 Z" fill="url(#${gid})" stroke="${c.stroke}" stroke-width="1.2"/>
+      <path d="M76 36 Q86 22 116 18 L184 18 Q214 20 240 38 L240 50 L80 50 Z" fill="${c.glass}"/>
+      <path d="M150 19 L150 50" stroke="${c.stroke}" stroke-width="1.5"/>
+      <path d="M196 19 L196 50" stroke="${c.stroke}" stroke-width="1.5"/>
+      <path d="M14 52 L284 52 L282 58 L18 58 Z" fill="#FFFFFF" opacity="0.5"/>
+      <circle cx="64" cy="96" r="20" fill="${c.wheel}"/>
+      <circle cx="64" cy="96" r="9" fill="#3A3A3D"/>
+      <circle cx="232" cy="96" r="20" fill="${c.wheel}"/>
+      <circle cx="232" cy="96" r="9" fill="#3A3A3D"/>
+    </g>`,
+  'side': `
+    <g transform="translate(40 140)">
+      <path d="M0 70 Q4 48 26 44 L60 36 Q72 18 110 14 L210 14 Q252 18 268 38 L308 46 Q320 52 318 70 L318 96 L0 96 Z" fill="url(#${gid})" stroke="${c.stroke}" stroke-width="1.2"/>
+      <path d="M68 38 Q80 20 110 18 L210 18 Q244 22 264 40 L264 50 L72 50 Z" fill="${c.glass}"/>
+      <path d="M120 19 L120 50" stroke="${c.stroke}" stroke-width="1.4"/>
+      <path d="M170 19 L170 50" stroke="${c.stroke}" stroke-width="1.4"/>
+      <path d="M218 19 L218 50" stroke="${c.stroke}" stroke-width="1.4"/>
+      <path d="M4 52 L316 52 L314 58 L8 58 Z" fill="#FFFFFF" opacity="0.5"/>
+      <circle cx="62" cy="96" r="22" fill="${c.wheel}"/>
+      <circle cx="62" cy="96" r="10" fill="#3A3A3D"/>
+      <circle cx="262" cy="96" r="22" fill="${c.wheel}"/>
+      <circle cx="262" cy="96" r="10" fill="#3A3A3D"/>
+    </g>`,
+  'rear-three-quarter': `
+    <g transform="translate(60 130)">
+      <path d="M10 70 Q14 52 32 46 L60 38 Q72 18 116 14 L184 14 Q220 18 240 38 L274 46 Q288 50 286 72 L286 96 L10 96 Z" fill="url(#${gid})" stroke="${c.stroke}" stroke-width="1.2"/>
+      <path d="M64 38 Q72 22 110 18 L186 18 Q210 20 232 38 L232 50 L70 50 Z" fill="${c.glass}"/>
+      <rect x="240" y="60" width="46" height="12" rx="2" fill="#A03020"/>
+      <path d="M14 52 L284 52 L282 58 L18 58 Z" fill="#FFFFFF" opacity="0.5"/>
+      <circle cx="64" cy="96" r="20" fill="${c.wheel}"/>
+      <circle cx="64" cy="96" r="9" fill="#3A3A3D"/>
+      <circle cx="232" cy="96" r="20" fill="${c.wheel}"/>
+      <circle cx="232" cy="96" r="9" fill="#3A3A3D"/>
+    </g>`,
+  'front-low': `
+    <g transform="translate(80 130)">
+      <path d="M0 70 Q10 46 40 40 L40 100 Q40 110 50 110 L190 110 Q200 110 200 100 L200 40 Q230 46 240 70 L240 110 L0 110 Z" fill="url(#${gid})" stroke="${c.stroke}" stroke-width="1.2"/>
+      <path d="M48 38 L192 38 L184 12 L56 12 Z" fill="${c.glass}"/>
+      <rect x="60" y="76" width="120" height="22" rx="3" fill="#0A0A0A"/>
+      <path d="M72 84 L168 84" stroke="#3A3A3D" stroke-width="1"/>
+      <path d="M72 90 L168 90" stroke="#3A3A3D" stroke-width="1"/>
+      <ellipse cx="36" cy="60" rx="22" ry="8" fill="#FFFFFF" opacity="0.85"/>
+      <ellipse cx="204" cy="60" rx="22" ry="8" fill="#FFFFFF" opacity="0.85"/>
+      <circle cx="120" cy="60" r="6" fill="${c.stroke}"/>
+    </g>`,
+  'interior': `
+    <rect width="400" height="300" fill="#1A1A1C"/>
+    <path d="M0 200 Q200 130 400 200 L400 300 L0 300 Z" fill="#0A0A0A"/>
+    <circle cx="120" cy="195" r="42" fill="none" stroke="#5A5A5E" stroke-width="3"/>
+    <circle cx="120" cy="195" r="14" fill="#3A3A3D"/>
+    <path d="M120 153 L120 237" stroke="#5A5A5E" stroke-width="2"/>
+    <path d="M78 195 L162 195" stroke="#5A5A5E" stroke-width="2"/>
+    <rect x="200" y="170" width="120" height="70" rx="6" fill="#262626" stroke="#3A3A3D" stroke-width="1"/>
+    <rect x="208" y="178" width="60" height="6" rx="1" fill="#5A5A5E"/>
+    <rect x="208" y="190" width="80" height="4" rx="1" fill="#3A3A3D"/>
+    <rect x="208" y="200" width="44" height="4" rx="1" fill="#3A3A3D"/>
+    <path d="M30 250 Q60 230 90 250 L90 300 L30 300 Z" fill="#262626"/>
+    <path d="M310 250 Q340 230 370 250 L370 300 L310 300 Z" fill="#262626"/>`,
+  'dash': `
+    <rect width="400" height="300" fill="#0A0A0A"/>
+    <circle cx="140" cy="150" r="70" fill="#1A1A1C" stroke="#3A3A3D" stroke-width="2"/>
+    <circle cx="260" cy="150" r="70" fill="#1A1A1C" stroke="#3A3A3D" stroke-width="2"/>
+    <line x1="140" y1="150" x2="180" y2="115" stroke="#BC002D" stroke-width="3" stroke-linecap="round"/>
+    <line x1="260" y1="150" x2="226" y2="120" stroke="#BC002D" stroke-width="3" stroke-linecap="round"/>
+    <rect x="170" y="220" width="60" height="40" rx="4" fill="#1A1A1C" stroke="#3A3A3D"/>
+    <text x="200" y="245" font-family="monospace" font-size="12" fill="#E8E6DF" text-anchor="middle">58,400</text>`,
+  'wheel-detail': `
+    <circle cx="200" cy="160" r="110" fill="#1A1A1C"/>
+    <circle cx="200" cy="160" r="100" fill="#0A0A0A" stroke="#3A3A3D" stroke-width="2"/>
+    <path d="M200 160 L292 160" stroke="#9A9A9C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M200 160 L228.4 247.5" stroke="#9A9A9C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M200 160 L125.4 213.7" stroke="#9A9A9C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M200 160 L125.4 106.3" stroke="#9A9A9C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M200 160 L228.4 72.5" stroke="#9A9A9C" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="200" cy="160" r="22" fill="#3A3A3D"/>
+    <circle cx="200" cy="160" r="6" fill="#0A0A0A"/>
+    <circle cx="200" cy="160" r="118" fill="none" stroke="#1A1A1C" stroke-width="14"/>`,
+  'engine-bay': `
+    <rect width="400" height="300" fill="#262626"/>
+    <rect x="80" y="100" width="240" height="120" rx="4" fill="#3A3A3D" stroke="#5A5A5E" stroke-width="1.5"/>
+    <rect x="130" y="130" width="140" height="60" rx="3" fill="#5A5A5E"/>
+    <text x="200" y="166" font-family="sans-serif" font-size="14" fill="#E0E0E2" text-anchor="middle" font-weight="600">2.5L i-FORCE</text>
+    <path d="M40 80 Q80 90 100 110" stroke="#1A1A1C" stroke-width="6" fill="none"/>
+    <path d="M360 80 Q320 90 300 110" stroke="#1A1A1C" stroke-width="6" fill="none"/>
+    <path d="M60 230 L120 230" stroke="#9A9A9C" stroke-width="3" fill="none"/>
+    <rect x="40" y="120" width="40" height="48" rx="2" fill="#1A1A1C" stroke="#5A5A5E"/>
+    <rect x="48" y="116" width="6" height="6" fill="#9A9A9C"/>
+    <rect x="66" y="116" width="6" height="6" fill="#9A9A9C"/>
+    <rect x="320" y="120" width="40" height="48" rx="6" fill="#E0E0E2" opacity="0.3" stroke="#9A9A9C"/>`,
+};
+
+const inner = frames[framing] ?? frames['three-quarter']!;
+const usesBackdrop = framing !== 'interior' && framing !== 'dash' && framing !== 'engine-bay';
+
+const defs = `
+  <defs>
+    <linearGradient id="bg-${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F2F2F2"/>
+      <stop offset="55%" stop-color="#E8E6DF"/>
+      <stop offset="100%" stop-color="#C9C5BA"/>
+    </linearGradient>
+    <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${c.top}"/>
+      <stop offset="100%" stop-color="${c.bot}"/>
+    </linearGradient>
+    <radialGradient id="floor-${gid}" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.25)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+  </defs>`;
+
+const backdrop = usesBackdrop
+  ? `<rect width="400" height="300" fill="url(#bg-${gid})"/><ellipse cx="200" cy="245" rx="160" ry="14" fill="url(#floor-${gid})"/>`
+  : '';
+
+const svgInner = `${defs}${backdrop}${inner}`;
+---
+
+<svg
+  viewBox="0 0 400 300"
+  preserveAspectRatio="xMidYMid slice"
+  style="width:100%;height:100%;display:block"
+  aria-hidden="true"
+  set:html={svgInner}
+/>

@@ -1,0 +1,29 @@
+---
+import type { CatalogListing } from '../../data/catalog-stubs';
+
+interface Props {
+  listing: CatalogListing;
+  city: string;
+  province: string;
+  sold: boolean;
+}
+
+const { listing, city, province, sold } = Astro.props;
+const kmStr = listing.km.toLocaleString('en-US');
+---
+<section style="padding:16px 16px 0">
+  {sold && (
+    <span style="display:inline-block;font-size:11px;font-weight:600;color:var(--color-accent);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">
+      Sold
+    </span>
+  )}
+  <span style="display:block;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:500;color:var(--color-ink-muted)">
+    Used · {listing.year} · {listing.make}
+  </span>
+  <h1 style="margin:4px 0 0;font-size:26px;line-height:32px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.02em">
+    {listing.year} {listing.make} {listing.model} {listing.trim}
+  </h1>
+  <p style="margin-top:4px;font-size:14px;line-height:20px;color:var(--color-ink-default)">
+    {kmStr} km · {listing.transmission} · {listing.drive} · {city}, {province}
+  </p>
+</section>
