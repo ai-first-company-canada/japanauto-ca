@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/sections/Navbar.astro';
+import MenuDrawer from '../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../components/sections/CityPickerDialog.astro';
+import Footer from '../components/sections/Footer.astro';
+import Icon from '../components/atoms/Icon.astro';
+
+const title = 'Page not found — japanauto.ca';
+const description = "The page you're looking for doesn't exist. Browse used Japanese cars and parts from local Canadian dealers.";
+---
+<BaseLayout {title} {description} canonical="https://japanauto.ca/404">
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <section style="padding:96px 16px 64px;text-align:center;min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+    <p class="t-caption" style="font-size:11px;color:var(--color-ink-muted)">404</p>
+    <h1 class="t-display-l" style="font-size:32px;line-height:40px">Page not found</h1>
+    <p class="t-body-m ink-muted" style="font-size:15px;line-height:23px;max-width:50ch">
+      The page you're looking for doesn't exist or has moved. Try the homepage or browse the menu for used Japanese cars and parts in your city.
+    </p>
+    <div style="margin-top:16px">
+      <a class="btn btn-primary btn-lg" href="/">
+        Back to homepage
+        <Icon name="arrowRight" size={16} />
+      </a>
+    </div>
+  </section>
+</BaseLayout>

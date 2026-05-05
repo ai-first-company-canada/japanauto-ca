@@ -16,11 +16,13 @@ export interface PopularModel {
 interface Props {
   heading?: string;
   cityName?: string;
+  citySlug?: string;
   models: PopularModel[];
 }
 const {
   heading = 'Most-searched Japanese models near',
   cityName = 'Canada',
+  citySlug = 'toronto',
   models,
 } = Astro.props;
 ---
@@ -33,7 +35,7 @@ const {
   <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
     {models.map((m) => (
       <a
-        href={m.href ?? `/used-cars/${m.make.toLowerCase()}/${m.model.toLowerCase().replace(/\s+/g, '-')}/`}
+        href={m.href ?? `/used-cars/${m.make.toLowerCase()}/${m.model.toLowerCase().replace(/\s+/g, '-')}/${citySlug}/`}
         class="card"
         style="overflow:hidden;display:flex;flex-direction:column;padding:14px;gap:8px;position:relative"
       >

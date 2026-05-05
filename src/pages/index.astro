@@ -39,14 +39,14 @@ const DEALER_NAMES = [
 ];
 
 const LISTINGS_SEED: Array<Omit<FeedListing, 'dealer'>> = [
-  { year: 2021, make: 'Toyota', model: 'Camry',   trim: 'LE',       km: 58400,  drive: 'AWD', transmission: 'CVT',  price: 24900, listed: 'Listed today',       variant: 'sedan', tone: 'pearl',    badge: 'New today' },
-  { year: 2019, make: 'Honda',  model: 'CR-V',    trim: 'EX',       km: 71200,  drive: 'AWD', transmission: 'CVT',  price: 26450, listed: 'Listed 2 days ago',  variant: 'suv',   tone: 'midnight', badge: 'New today' },
-  { year: 2020, make: 'Mazda',  model: 'CX-5',    trim: 'GS',       km: 64800,  drive: 'AWD', transmission: 'Auto', price: 23900, listed: 'Listed 3 days ago',  variant: 'suv',   tone: 'crimson' },
-  { year: 2018, make: 'Subaru', model: 'Outback', trim: '2.5i',     km: 92500,  drive: 'AWD', transmission: 'CVT',  price: 19800, listed: 'Listed 4 days ago',  variant: 'wagon', tone: 'forest',   reduced: 1500 },
-  { year: 2022, make: 'Lexus',  model: 'NX 350',  trim: 'F-Sport',  km: 38900,  drive: 'AWD', transmission: 'Auto', price: 48900, listed: 'Listed 5 days ago',  variant: 'suv',   tone: 'graphite' },
-  { year: 2017, make: 'Honda',  model: 'Civic',   trim: 'LX',       km: 108200, drive: 'FWD', transmission: 'CVT',  price: 14900, listed: 'Listed 6 days ago',  variant: 'sedan', tone: 'silver' },
-  { year: 2020, make: 'Toyota', model: 'RAV4',    trim: 'XLE',      km: 67400,  drive: 'AWD', transmission: 'Auto', price: 32400, listed: 'Listed 1 week ago',  variant: 'suv',   tone: 'sand' },
-  { year: 2019, make: 'Nissan', model: 'Rogue',   trim: 'SV',       km: 81200,  drive: 'AWD', transmission: 'CVT',  price: 21300, listed: 'Listed 1 week ago',  variant: 'suv',   tone: 'pearl' },
+  { year: 2021, make: 'Toyota', model: 'Camry',   trim: 'LE',       km: 58400,  drive: 'AWD', transmission: 'CVT',  price: 24900, listed: 'Listed today',       variant: 'sedan', tone: 'pearl',    badge: 'New today', slug: '2021-toyota-camry-le-toronto-ab1234' },
+  { year: 2019, make: 'Honda',  model: 'CR-V',    trim: 'EX',       km: 71200,  drive: 'AWD', transmission: 'CVT',  price: 26450, listed: 'Listed 2 days ago',  variant: 'suv',   tone: 'midnight', badge: 'New today', slug: '2019-honda-crv-ex-toronto-cd5678' },
+  { year: 2020, make: 'Mazda',  model: 'CX-5',    trim: 'GS',       km: 64800,  drive: 'AWD', transmission: 'Auto', price: 23900, listed: 'Listed 3 days ago',  variant: 'suv',   tone: 'crimson',  slug: '2020-mazda-cx5-gs-toronto-ef9012' },
+  { year: 2018, make: 'Subaru', model: 'Outback', trim: '2.5i',     km: 92500,  drive: 'AWD', transmission: 'CVT',  price: 19800, listed: 'Listed 4 days ago',  variant: 'wagon', tone: 'forest',   reduced: 1500, slug: '2018-subaru-outback-25i-toronto-gh3456' },
+  { year: 2022, make: 'Lexus',  model: 'NX 350',  trim: 'F-Sport',  km: 38900,  drive: 'AWD', transmission: 'Auto', price: 48900, listed: 'Listed 5 days ago',  variant: 'suv',   tone: 'graphite', slug: '2022-lexus-nx350-fsport-toronto-ij7890' },
+  { year: 2017, make: 'Honda',  model: 'Civic',   trim: 'LX',       km: 108200, drive: 'FWD', transmission: 'CVT',  price: 14900, listed: 'Listed 6 days ago',  variant: 'sedan', tone: 'silver',   slug: '2017-honda-civic-lx-toronto-kl2345' },
+  { year: 2020, make: 'Toyota', model: 'RAV4',    trim: 'XLE',      km: 67400,  drive: 'AWD', transmission: 'Auto', price: 32400, listed: 'Listed 1 week ago',  variant: 'suv',   tone: 'sand',     slug: '2020-toyota-rav4-xle-toronto-mn6789' },
+  { year: 2019, make: 'Nissan', model: 'Rogue',   trim: 'SV',       km: 81200,  drive: 'AWD', transmission: 'CVT',  price: 21300, listed: 'Listed 1 week ago',  variant: 'suv',   tone: 'pearl',    slug: '2019-nissan-rogue-sv-toronto-op0123' },
 ];
 
 const LISTINGS: FeedListing[] = LISTINGS_SEED.map((l, i) => ({
@@ -156,7 +156,7 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
     <ContextLine />
 
     <section class="section" style="padding-top:8px">
-      <BrandGrid brands={BRANDS} />
+      <BrandGrid brands={BRANDS} citySlug="toronto" />
       <div style="display:flex;justify-content:flex-end;margin-top:16px">
         <a
           class="t-body-s"
@@ -178,7 +178,7 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
       totalCount={1284}
     />
 
-    <PopularModels models={POPULAR_MODELS} />
+    <PopularModels models={POPULAR_MODELS} citySlug="toronto" />
 
     <TrustStrip />
 

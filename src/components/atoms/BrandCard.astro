@@ -5,10 +5,8 @@ interface Props {
   slug: string;
   citySlug?: string;
 }
-const { name, count, slug, citySlug } = Astro.props;
-const href = citySlug
-  ? `/used-cars/${slug}/${citySlug}/`
-  : `/used-cars/${slug}/`;
+const { name, count, slug, citySlug = 'toronto' } = Astro.props;
+const href = `/used-cars/${slug}/${citySlug}/`;
 ---
 <a
   href={href}

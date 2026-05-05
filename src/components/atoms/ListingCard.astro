@@ -17,7 +17,7 @@ interface Props {
   sold?: boolean;
   variant: SilhouetteVariant;
   tone: SilhouetteTone;
-  href?: string;
+  slug?: string;
 }
 
 const {
@@ -26,9 +26,10 @@ const {
   price, listed, dealer,
   badge, reduced, sold,
   variant, tone,
-  href = '#',
+  slug,
 } = Astro.props;
 
+const href = slug ? `/used-cars/listing/${slug}/` : '#';
 const kmStr = km.toLocaleString('en-US');
 const priceStr = price.toLocaleString('en-US');
 const reducedStr = reduced != null ? reduced.toLocaleString('en-US') : null;
