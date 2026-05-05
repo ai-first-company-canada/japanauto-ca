@@ -100,5 +100,14 @@ const jsonLd = {
     <slot name="footer" />
     <slot name="sticky-bar" />
     <slot name="menu-drawer" />
+    <slot name="city-picker" />
+    <script is:inline>
+      window.setCityCookie = function (slug, province) {
+        var yr = 60 * 60 * 24 * 365;
+        document.cookie = "jc_city=" + slug + "; max-age=" + yr + "; path=/; samesite=lax";
+        document.cookie = "jc_province=" + province + "; max-age=" + yr + "; path=/; samesite=lax";
+        window.location.reload();
+      };
+    </script>
   </body>
 </html>

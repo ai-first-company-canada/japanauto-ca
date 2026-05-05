@@ -1,0 +1,44 @@
+---
+import Wordmark from '../atoms/Wordmark.astro';
+import Icon from '../atoms/Icon.astro';
+
+const TIER1: Array<{ name: string; province: string; slug: string }> = [
+  { name: 'Toronto',   province: 'ON', slug: 'toronto' },
+  { name: 'Montreal',  province: 'QC', slug: 'montreal' },
+  { name: 'Vancouver', province: 'BC', slug: 'vancouver' },
+  { name: 'Calgary',   province: 'AB', slug: 'calgary' },
+  { name: 'Edmonton',  province: 'AB', slug: 'edmonton' },
+  { name: 'Ottawa',    province: 'ON', slug: 'ottawa' },
+];
+---
+<dialog id="city-picker" class="dialog-fullscreen" aria-label="Choose your city">
+  <form method="dialog" style="margin:0">
+    <header class="navbar" style="border-bottom:1px solid var(--color-divider)">
+      <Wordmark size={20} />
+      <button class="icon-btn" type="submit" aria-label="Close city picker">
+        <Icon name="close" size={22} />
+      </button>
+    </header>
+  </form>
+
+  <section style="padding:32px 16px 16px">
+    <h2 class="t-display-m" style="font-size:24px;line-height:32px">Choose your city</h2>
+    <p class="t-body-s ink-muted" style="margin-top:8px;font-size:13px;line-height:19px;max-width:60ch">
+      Pick the Canadian metro nearest you to see local Japanese-car listings.
+    </p>
+  </section>
+
+  <div style="padding:0 16px 32px;display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+    {TIER1.map((c) => (
+      <button
+        type="button"
+        class="card"
+        onclick={`window.setCityCookie('${c.slug}','${c.province}')`}
+        style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left;cursor:pointer;background:#fff"
+      >
+        <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
+        <span class="t-caption t-mono" style="font-size:10px;margin-top:auto">{c.province}</span>
+      </button>
+    ))}
+  </div>
+</dialog>
