@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Navbar from '../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../../components/sections/PageHeading.astro';
+import CityDirectoryGrid from '../../../components/sections/CityDirectoryGrid.astro';
+import AboutBrandSection from '../../../components/sections/AboutBrandSection.astro';
+import FaqSection from '../../../components/sections/FaqSection.astro';
+import { BRAND_CONTENT, TIER_1_CITIES } from '../../../data/brand-content';
+
+export function getStaticPaths() {
+  return Object.keys(BRAND_CONTENT).map((make) => ({ params: { make } }));
+}
+
+const { make } = Astro.params;
+const brand = BRAND_CONTENT[make!]!;
+
+const cityCards = TIER_1_CITIES.map((c) => {
+  const factor = c.count / 1284;
+  return {
+    slug: c.slug,
+    name: c.name,
+    province: c.province,
+    count: Math.max(3, Math.round(brand.totalCount * factor)),
+  };
+});
+
+const totalDealers = cityCards.reduce((s, c) => {
+  const factor = c.count / 1284;
+  return s + Math.max(3, Math.round(brand.dealerCount * factor));
+}, 0);
+
+const title = `Used ${brand.name} cars across Canada — japanauto.ca`;
+const description = `Used ${brand.name} cars in ${TIER_1_CITIES.length} major Canadian cities. ${totalDealers} ${brand.name} dealers nationwide. AMVIC-verified, VIN-checked.`;
+const canonical = `https://japanauto.ca/used-cars/${make}/`;
+
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: brand.name, item: canonical },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    name: `${brand.name} availability across Canada`,
+    itemListElement: cityCards.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: `${brand.name} in ${c.name}`,
+      url: `https://japanauto.ca/used-cars/${make}/${c.slug}/`,
+    })),
+  },
+  {
+    '@type': 'Brand',
+    name: brand.name,
+    description: brand.aboutParagraphs[0] ?? `${brand.name} cars available across Canada.`,
+  },
+];
+
+const subtitleHtml = `<span class="num">${totalDealers}</span> ${brand.name} dealers across <span class="num">${TIER_1_CITIES.length}</span> Canadian cities · Updated today`;
+---
+<BaseLayout {title} {description} {canonical} {schemaLD}>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">{`Used ${brand.name} cars across Canada`}</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: brand.name },
+  ]} />
+
+  <PageHeading
+    title={`${brand.name} cars across Canada`}
+    subtitle={subtitleHtml}
+  />
+
+  <CityDirectoryGrid brandSlug={make!} brandName={brand.name} cities={cityCards} />
+
+  <AboutBrandSection title={brand.aboutTitle} paragraphs={brand.aboutParagraphs} />
+
+  <FaqSection items={brand.faqs} heading={`Common questions about ${brand.name}`} />
+</BaseLayout>

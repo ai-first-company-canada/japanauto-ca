@@ -1,0 +1,29 @@
+---
+interface Model {
+  slug: string;
+  name: string;
+  count: number;
+}
+interface Props {
+  models: Model[];
+  brandSlug: string;
+  citySlug: string;
+}
+const { models, brandSlug, citySlug } = Astro.props;
+---
+<section style="padding:0 16px 32px">
+  <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+    {models.map((m) => (
+      <a
+        href={`/used-cars/${brandSlug}/${m.slug}/${citySlug}/`}
+        class="card"
+        style="display:flex;flex-direction:column;justify-content:center;padding:14px;min-height:80px;gap:4px"
+      >
+        <div class="t-h-s" style="font-size:14px;line-height:20px;font-weight:600">{m.name}</div>
+        <div class="t-caption" style="font-size:9px;letter-spacing:0.06em">
+          <span class="num">{m.count}</span> LISTED
+        </div>
+      </a>
+    ))}
+  </div>
+</section>

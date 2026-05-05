@@ -1,0 +1,48 @@
+---
+import Icon from '../atoms/Icon.astro';
+
+interface CityRow {
+  slug: string;
+  name: string;
+  province: string;
+}
+interface Props {
+  brandSlug: string;
+  brandName: string;
+  currentCitySlug?: string;
+  citiesList: CityRow[];
+}
+const { brandSlug, brandName, currentCitySlug, citiesList } = Astro.props;
+const otherCities = citiesList.filter((c) => c.slug !== currentCitySlug);
+---
+<section class="band-subtle" style="padding:32px 16px">
+  <a
+    href={`/used-cars/${brandSlug}/`}
+    style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;color:var(--color-ink-strong);font-weight:600;font-size:14px"
+  >
+    Read more about {brandName}
+    <Icon name="arrowRight" size={16} />
+  </a>
+  <hr class="hr" />
+
+  <details>
+    <summary
+      style="display:flex;align-items:center;justify-content:space-between;list-style:none;padding:12px 0;color:var(--color-ink-strong);font-weight:600;font-size:14px;cursor:pointer"
+    >
+      {brandName} in other Canadian cities
+      <Icon name="chevronDown" size={16} />
+    </summary>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;margin-bottom:8px">
+      {otherCities.map((c) => (
+        <a
+          href={`/used-cars/${brandSlug}/${c.slug}/`}
+          class="card"
+          style="display:flex;flex-direction:column;justify-content:space-between;padding:14px;min-height:76px;cursor:pointer"
+        >
+          <h4 class="t-h-s" style="font-size:14px;font-weight:600">{c.name}</h4>
+          <span class="t-caption t-mono" style="font-size:10px;margin-top:auto">{c.province}</span>
+        </a>
+      ))}
+    </div>
+  </details>
+</section>

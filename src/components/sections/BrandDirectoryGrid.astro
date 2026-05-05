@@ -1,0 +1,27 @@
+---
+interface BrandRow {
+  slug: string;
+  name: string;
+  count: number;
+}
+interface Props {
+  brands: BrandRow[];
+}
+const { brands } = Astro.props;
+---
+<section style="padding:0 16px 32px">
+  <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+    {brands.map((b) => (
+      <a
+        href={`/used-cars/${b.slug}/`}
+        class="card"
+        style="display:flex;flex-direction:column;justify-content:center;padding:16px;min-height:80px;gap:4px"
+      >
+        <div class="t-h-s" style="font-size:14px;line-height:20px">{b.name}</div>
+        <div class="t-caption" style="font-size:9px;color:var(--color-ink-muted)">
+          <span class="num">{b.count}</span> listed
+        </div>
+      </a>
+    ))}
+  </div>
+</section>

@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../components/sections/PageHeading.astro';
+import BrandDirectoryGrid from '../../components/sections/BrandDirectoryGrid.astro';
+import AboutBrandSection from '../../components/sections/AboutBrandSection.astro';
+import FaqSection, { type FaqItem } from '../../components/sections/FaqSection.astro';
+import { BRAND_CONTENT, TIER_1_CITIES } from '../../data/brand-content';
+
+const brandRows = Object.entries(BRAND_CONTENT).map(([slug, b]) => ({
+  slug,
+  name: b.name,
+  count: b.totalCount,
+}));
+
+const totalListings = TIER_1_CITIES.reduce((s, c) => s + c.count, 0);
+const brandCount = brandRows.length;
+const cityCount = TIER_1_CITIES.length;
+
+const title = 'Used Japanese cars in Canada — japanauto.ca';
+const description = `Used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi cars from local Canadian dealers. ${totalListings.toLocaleString('en-US')} listings across ${cityCount} cities.`;
+const canonical = 'https://japanauto.ca/used-cars/';
+
+const aboutParagraphs = [
+  'japanauto.ca aggregates used Japanese-car listings from independent dealerships in 6 major Canadian metros. We focus on the 9 brands that have sold meaningfully in Canada — no clutter from non-Japanese makes.',
+  'Every Alberta listing shows the dealer\'s AMVIC number; every car has a verified 17-digit VIN. Browse by brand to see national availability, or pick your city for local listings.',
+];
+
+const faqs: FaqItem[] = [
+  {
+    q: 'Why japanauto.ca instead of a generic marketplace?',
+    a: 'We focus on Japanese makes only. Generic marketplaces show every car ever made; japanauto.ca lists only the 9 Japanese brands sold in Canada — Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi.',
+  },
+  {
+    q: 'Which brands does japanauto.ca cover?',
+    a: 'All 9 Japanese brands sold in the Canadian market: Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, and Mitsubishi. We do not list non-Japanese makes.',
+  },
+  {
+    q: 'Which cities does japanauto.ca cover?',
+    a: 'Toronto, Montreal, Vancouver, Calgary, Edmonton, and Ottawa. These are the 6 Canadian metros where independent Japanese-car dealers have enough volume to support an aggregator.',
+  },
+  {
+    q: 'Are listings verified?',
+    a: 'Every Alberta dealer is AMVIC-verified. Every car has a 17-digit VIN that matches the windshield, doorjamb, and registration. Dealers in other provinces are checked against their respective licensing bodies.',
+  },
+];
+
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Used cars', item: canonical },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    name: 'Japanese car brands available in Canada',
+    itemListElement: brandRows.map((b, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: b.name,
+      url: `https://japanauto.ca/used-cars/${b.slug}/`,
+    })),
+  },
+];
+
+const subtitleHtml = `<span class="num">${totalListings.toLocaleString('en-US')}</span> listings across <span class="num">${brandCount}</span> brands and <span class="num">${cityCount}</span> Canadian cities · Updated today`;
+---
+<BaseLayout {title} {description} {canonical} {schemaLD}>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">Used Japanese cars in Canada</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: 'Used cars' },
+  ]} />
+
+  <PageHeading
+    title="Used Japanese cars in Canada"
+    subtitle={subtitleHtml}
+  />
+
+  <BrandDirectoryGrid brands={brandRows} />
+
+  <AboutBrandSection title="Why a Japanese-only marketplace?" paragraphs={aboutParagraphs} />
+
+  <FaqSection items={faqs} heading="Common questions about japanauto.ca" />
+</BaseLayout>

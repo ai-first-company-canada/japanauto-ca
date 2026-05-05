@@ -1,0 +1,34 @@
+---
+interface CityRow {
+  slug: string;
+  name: string;
+  province: string;
+  count: number;
+}
+interface Props {
+  brandSlug: string;
+  brandName: string;
+  cities: CityRow[];
+}
+const { brandSlug, brandName, cities } = Astro.props;
+---
+<section style="padding:0 16px 32px">
+  <h2 class="sr-only">{`${brandName} availability across Canadian cities`}</h2>
+  <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+    {cities.map((c) => (
+      <a
+        href={`/used-cars/${brandSlug}/${c.slug}/`}
+        class="card"
+        style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left"
+      >
+        <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;gap:8px">
+          <span class="t-caption" style="font-size:10px">
+            <span class="num">{c.count.toLocaleString('en-US')}</span> cars
+          </span>
+          <span class="t-caption t-mono" style="font-size:10px">{c.province}</span>
+        </div>
+      </a>
+    ))}
+  </div>
+</section>
