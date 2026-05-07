@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+import Wordmark from '../components/atoms/Wordmark.astro';
+
+interface Props {
+  title: string;
+  canonical: string;
+  activeTab: 'dashboard' | 'listings' | 'profile';
+}
+const { title, canonical, activeTab } = Astro.props;
+const description = 'Dealer portal — japanauto.ca';
+---
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="canonical" href={canonical} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
+    </noscript>
+  </head>
+  <body class="dealer-body">
+    <header class="dealer-header">
+      <a href="/" aria-label="japanauto, home" style="display:inline-flex;align-items:center">
+        <Wordmark size={20} />
+      </a>
+      <a href="/dealer/logout/" class="dealer-logout-link">Sign out</a>
+    </header>
+    <nav class="dealer-tabs" aria-label="Dealer navigation">
+      <a
+        href="/dealer/dashboard/"
+        class:list={['dealer-tab', { active: activeTab === 'dashboard' }]}
+      >Dashboard</a>
+      <a
+        href="/dealer/listings/"
+        class:list={['dealer-tab', { active: activeTab === 'listings' }]}
+      >Listings</a>
+      <a
+        href="/dealer/profile/"
+        class:list={['dealer-tab', { active: activeTab === 'profile' }]}
+      >Profile</a>
+    </nav>
+    <main class="dealer-main">
+      <slot />
+    </main>
+  </body>
+</html>

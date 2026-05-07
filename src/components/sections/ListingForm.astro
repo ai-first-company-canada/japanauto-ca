@@ -1,0 +1,669 @@
+---
+interface Props {
+  mode: 'create' | 'edit';
+}
+const { mode } = Astro.props;
+
+const BRAND_OPTIONS: Array<[string, string]> = [
+  ['toyota', 'Toyota'],
+  ['honda', 'Honda'],
+  ['nissan', 'Nissan'],
+  ['mazda', 'Mazda'],
+  ['subaru', 'Subaru'],
+  ['lexus', 'Lexus'],
+  ['acura', 'Acura'],
+  ['infiniti', 'Infiniti'],
+  ['mitsubishi', 'Mitsubishi'],
+];
+
+const CITY_OPTIONS: Array<[string, string, string]> = [
+  ['toronto', 'Toronto', 'ON'],
+  ['montreal', 'Montreal', 'QC'],
+  ['vancouver', 'Vancouver', 'BC'],
+  ['calgary', 'Calgary', 'AB'],
+  ['edmonton', 'Edmonton', 'AB'],
+  ['ottawa', 'Ottawa', 'ON'],
+];
+
+const TRANSMISSIONS: Array<[string, string]> = [
+  ['automatic', 'Automatic'],
+  ['manual', 'Manual'],
+  ['cvt', 'CVT'],
+  ['dct', 'DCT'],
+];
+
+const DRIVETRAINS: Array<[string, string]> = [
+  ['fwd', 'FWD'],
+  ['rwd', 'RWD'],
+  ['awd', 'AWD'],
+  ['4wd', '4WD'],
+];
+
+const FUEL_TYPES: Array<[string, string]> = [
+  ['gasoline', 'Gasoline'],
+  ['hybrid', 'Hybrid'],
+  ['plugin_hybrid', 'Plug-in hybrid'],
+  ['electric', 'Electric'],
+  ['diesel', 'Diesel'],
+];
+
+const BODY_TYPES: Array<[string, string]> = [
+  ['sedan', 'Sedan'],
+  ['suv', 'SUV'],
+  ['coupe', 'Coupe'],
+  ['wagon', 'Wagon'],
+  ['hatchback', 'Hatchback'],
+  ['convertible', 'Convertible'],
+  ['minivan', 'Minivan'],
+  ['pickup', 'Pickup'],
+  ['crossover', 'Crossover'],
+];
+
+const CONDITIONS: Array<[string, string]> = [
+  ['used_excellent', 'Used — excellent'],
+  ['used_good', 'Used — good'],
+  ['used_fair', 'Used — fair'],
+];
+
+const currentYear = new Date().getUTCFullYear();
+const minYear = currentYear - 10;
+const maxYear = currentYear + 1;
+const yearOptions: number[] = [];
+for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
+---
+<form
+  id="listing-form"
+  data-listing-form
+  data-mode={mode}
+  novalidate
+>
+  <fieldset
+    class="auth-form-group"
+    style="border:0;padding:0;margin:0 0 24px"
+  >
+    <legend class="t-caption" style="margin-bottom:8px">VEHICLE</legend>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-year">Year</label>
+      <select class="auth-form-input" id="lf-year" name="year" required>
+        <option value="">Select year</option>
+        {yearOptions.map((y) => <option value={y}>{y}</option>)}
+      </select>
+      <div class="auth-form-error" data-field-error="year"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-make">Make</label>
+      <select class="auth-form-input" id="lf-make" name="make_slug" required>
+        <option value="">Select make</option>
+        {BRAND_OPTIONS.map(([slug, name]) => (
+          <option value={slug}>{name}</option>
+        ))}
+      </select>
+      <div class="auth-form-error" data-field-error="make_id"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-model">Model</label>
+      <select class="auth-form-input" id="lf-model" name="model_id" required>
+        <option value="">Select make first</option>
+      </select>
+      <div class="auth-form-error" data-field-error="model_id"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-trim">Trim (optional)</label>
+      <input
+        class="auth-form-input"
+        id="lf-trim"
+        name="trim"
+        type="text"
+        maxlength="60"
+        placeholder="e.g. LE, Sport, Limited"
+      />
+      <div class="auth-form-error" data-field-error="trim"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-vin">VIN</label>
+      <input
+        class="auth-form-input"
+        id="lf-vin"
+        name="vin"
+        type="text"
+        required
+        minlength="17"
+        maxlength="17"
+        autocapitalize="characters"
+        spellcheck="false"
+        placeholder="17 characters, no I/O/Q"
+        style="text-transform:uppercase"
+      />
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Must pass ISO 3779 checksum (real VINs only).
+      </p>
+      <div class="auth-form-error" data-field-error="vin"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">SPECS</legend>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-mileage">Mileage (km)</label>
+      <input
+        class="auth-form-input"
+        id="lf-mileage"
+        name="mileage"
+        type="number"
+        required
+        min="0"
+        max="1000000"
+        inputmode="numeric"
+      />
+      <div class="auth-form-error" data-field-error="mileage"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-condition">Condition</label>
+      <select class="auth-form-input" id="lf-condition" name="condition" required>
+        <option value="">Select condition</option>
+        {CONDITIONS.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <div class="auth-form-error" data-field-error="condition"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-transmission">Transmission</label>
+      <select class="auth-form-input" id="lf-transmission" name="transmission">
+        <option value="">— not specified —</option>
+        {TRANSMISSIONS.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <div class="auth-form-error" data-field-error="transmission"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-drivetrain">Drivetrain</label>
+      <select class="auth-form-input" id="lf-drivetrain" name="drivetrain">
+        <option value="">— not specified —</option>
+        {DRIVETRAINS.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <div class="auth-form-error" data-field-error="drivetrain"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-fuel">Fuel type</label>
+      <select class="auth-form-input" id="lf-fuel" name="fuel_type">
+        <option value="">— not specified —</option>
+        {FUEL_TYPES.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <div class="auth-form-error" data-field-error="fuel_type"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-body">Body type</label>
+      <select class="auth-form-input" id="lf-body" name="body_type">
+        <option value="">— not specified —</option>
+        {BODY_TYPES.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <div class="auth-form-error" data-field-error="body_type"></div>
+    </div>
+
+    <div
+      style="display:grid;grid-template-columns:1fr 1fr;gap:12px"
+    >
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="lf-doors">Doors</label>
+        <input
+          class="auth-form-input"
+          id="lf-doors"
+          name="doors"
+          type="number"
+          min="2"
+          max="5"
+          inputmode="numeric"
+        />
+        <div class="auth-form-error" data-field-error="doors"></div>
+      </div>
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="lf-seats">Seats</label>
+        <input
+          class="auth-form-input"
+          id="lf-seats"
+          name="seats"
+          type="number"
+          min="2"
+          max="9"
+          inputmode="numeric"
+        />
+        <div class="auth-form-error" data-field-error="seats"></div>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">COLOR</legend>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="lf-color-ext">Exterior</label>
+        <input
+          class="auth-form-input"
+          id="lf-color-ext"
+          name="color_exterior"
+          type="text"
+          maxlength="40"
+        />
+        <div class="auth-form-error" data-field-error="color_exterior"></div>
+      </div>
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="lf-color-int">Interior</label>
+        <input
+          class="auth-form-input"
+          id="lf-color-int"
+          name="color_interior"
+          type="text"
+          maxlength="40"
+        />
+        <div class="auth-form-error" data-field-error="color_interior"></div>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">LOCATION</legend>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-city">City</label>
+      <select class="auth-form-input" id="lf-city" name="city" required>
+        <option value="">Select city</option>
+        {CITY_OPTIONS.map(([slug, name, prov]) => (
+          <option value={slug} data-province={prov}>{name}, {prov}</option>
+        ))}
+      </select>
+      <div class="auth-form-error" data-field-error="city"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">PRICING</legend>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-price">Price (CAD)</label>
+      <input
+        class="auth-form-input"
+        id="lf-price"
+        name="price_dollars"
+        type="number"
+        required
+        min="0"
+        max="1000000"
+        step="1"
+        inputmode="numeric"
+        placeholder="e.g. 27900"
+      />
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Whole dollars. Stored as cents internally.
+      </p>
+      <div class="auth-form-error" data-field-error="price"></div>
+    </div>
+    <div class="auth-form-group">
+      <label
+        style="display:flex;gap:8px;align-items:center;font-size:14px"
+      >
+        <input id="lf-negotiable" name="negotiable" type="checkbox" />
+        <span>Negotiable</span>
+      </label>
+      <div class="auth-form-error" data-field-error="negotiable"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">DESCRIPTION</legend>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-title">Title</label>
+      <input
+        class="auth-form-input"
+        id="lf-title"
+        name="title"
+        type="text"
+        required
+        minlength="3"
+        maxlength="120"
+        placeholder="e.g. 2022 Toyota Camry LE — One Owner"
+      />
+      <div class="auth-form-error" data-field-error="title"></div>
+    </div>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="lf-description">Description (optional)</label>
+      <textarea
+        class="auth-form-input"
+        id="lf-description"
+        name="description"
+        rows="5"
+        maxlength="5000"
+        style="height:auto;padding:12px 14px;resize:vertical;min-height:120px"
+      ></textarea>
+      <div class="auth-form-error" data-field-error="description"></div>
+    </div>
+  </fieldset>
+
+  <div
+    style="background:var(--color-bg-subtle);padding:24px;border-radius:8px;text-align:center;margin-bottom:24px"
+  >
+    <p class="t-body-s ink-muted">
+      Photo upload — Phase 2b3 wires Cloudflare Images Direct Upload
+    </p>
+  </div>
+
+  <div
+    class="auth-form-error"
+    data-form-error
+    style="text-align:center;margin-bottom:16px"
+  ></div>
+
+  <button class="btn btn-primary auth-submit" type="submit" data-submit-btn>
+    {mode === 'edit' ? 'Save changes' : 'Create listing'}
+  </button>
+
+  {mode === 'edit' && (
+    <button
+      type="button"
+      class="btn btn-secondary"
+      data-mark-sold
+      style="width:100%;margin-top:12px"
+    >Mark as sold</button>
+  )}
+</form>
+
+<script is:inline>
+  (function () {
+    var form = document.getElementById('listing-form');
+    if (!form) return;
+
+    var mode = form.getAttribute('data-mode');
+    var submitBtn = form.querySelector('[data-submit-btn]');
+    var formErr = form.querySelector('[data-form-error]');
+    var makeSel = form.querySelector('[name="make_slug"]');
+    var modelSel = form.querySelector('[name="model_id"]');
+    var citySel = form.querySelector('[name="city"]');
+
+    var MAKES_BY_SLUG = {};   // slug → id
+    var MODELS_CACHE = {};    // make_id → [{id, slug, name}]
+    var initialModelId = null;
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function clearErrors() {
+      form.querySelectorAll('[data-field-error]').forEach(function (el) {
+        el.textContent = '';
+      });
+      if (formErr) formErr.innerHTML = '';
+    }
+
+    function setFormError(msg) {
+      if (formErr) formErr.textContent = msg;
+    }
+
+    function applyIssues(issues) {
+      var unmapped = [];
+      Object.keys(issues || {}).forEach(function (key) {
+        var msgs = issues[key];
+        if (!msgs || !msgs.length) return;
+        var fieldEl = form.querySelector('[data-field-error="' + key + '"]');
+        if (fieldEl) {
+          fieldEl.textContent = msgs[0];
+        } else {
+          unmapped.push(key + ': ' + msgs[0]);
+        }
+      });
+      if (unmapped.length && formErr) {
+        formErr.innerHTML = unmapped.map(function (m) {
+          return '<div>' + escapeHtml(m) + '</div>';
+        }).join('');
+      }
+    }
+
+    async function loadMakes() {
+      try {
+        var res = await fetch('/api/makes');
+        if (!res.ok) return;
+        var data = await res.json();
+        (data.makes || []).forEach(function (m) {
+          MAKES_BY_SLUG[m.slug] = m.id;
+        });
+      } catch (e) {
+        console.error('makes load failed', e);
+      }
+    }
+
+    async function loadModels(makeId) {
+      if (!makeId) return [];
+      if (MODELS_CACHE[makeId]) return MODELS_CACHE[makeId];
+      try {
+        var res = await fetch('/api/models?make_id=' + encodeURIComponent(makeId));
+        if (!res.ok) return [];
+        var data = await res.json();
+        var models = data.models || [];
+        MODELS_CACHE[makeId] = models;
+        return models;
+      } catch (e) {
+        console.error('models load failed', e);
+        return [];
+      }
+    }
+
+    async function syncModelOptions(preselectModelId) {
+      var slug = makeSel.value;
+      var makeId = MAKES_BY_SLUG[slug];
+      modelSel.innerHTML = '';
+      var first = document.createElement('option');
+      first.value = '';
+      first.textContent = makeId ? 'Select model' : 'Select make first';
+      modelSel.appendChild(first);
+      if (!makeId) return;
+
+      var models = await loadModels(makeId);
+      models.forEach(function (m) {
+        var opt = document.createElement('option');
+        opt.value = String(m.id);
+        opt.textContent = m.name;
+        modelSel.appendChild(opt);
+      });
+      if (preselectModelId) {
+        modelSel.value = String(preselectModelId);
+      }
+    }
+
+    function readPayload() {
+      var fd = new FormData(form);
+      var payload = {
+        year: parseInt(fd.get('year'), 10),
+        make_id: MAKES_BY_SLUG[fd.get('make_slug')] || 0,
+        model_id: parseInt(fd.get('model_id'), 10),
+        trim: (fd.get('trim') || '').trim() || null,
+        vin: (fd.get('vin') || '').trim().toUpperCase(),
+        mileage: parseInt(fd.get('mileage'), 10),
+        condition: fd.get('condition'),
+        transmission: fd.get('transmission') || null,
+        drivetrain: fd.get('drivetrain') || null,
+        fuel_type: fd.get('fuel_type') || null,
+        body_type: fd.get('body_type') || null,
+        doors: fd.get('doors') ? parseInt(fd.get('doors'), 10) : null,
+        seats: fd.get('seats') ? parseInt(fd.get('seats'), 10) : null,
+        color_exterior: (fd.get('color_exterior') || '').trim() || null,
+        color_interior: (fd.get('color_interior') || '').trim() || null,
+        city: fd.get('city'),
+        province: '',
+        price: Math.round(parseFloat(fd.get('price_dollars') || '0') * 100),
+        negotiable: fd.get('negotiable') ? 1 : 0,
+        title: (fd.get('title') || '').trim(),
+        description: (fd.get('description') || '').trim() || undefined,
+      };
+      // Derive province from city option's data-province attribute
+      var citySelEl = form.querySelector('[name="city"]');
+      var opt = citySelEl ? citySelEl.options[citySelEl.selectedIndex] : null;
+      payload.province = opt && opt.dataset.province ? opt.dataset.province : '';
+      // Strip nulls for optional enum fields so zod doesn't choke on null
+      ['transmission', 'drivetrain', 'fuel_type', 'body_type'].forEach(function (k) {
+        if (payload[k] === null) delete payload[k];
+      });
+      if (payload.description === undefined) delete payload.description;
+      return payload;
+    }
+
+    async function loadExisting(id) {
+      var res = await fetch('/api/listings/' + encodeURIComponent(id));
+      if (res.status === 401) {
+        window.location.href = '/dealer/login/?next=' +
+          encodeURIComponent(window.location.pathname + window.location.search);
+        return;
+      }
+      if (res.status === 404) {
+        setFormError('Listing not found.');
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+      }
+      if (!res.ok) {
+        setFormError('Failed to load listing (HTTP ' + res.status + ').');
+        return;
+      }
+      var data = await res.json();
+      var l = data.listing || data;
+      // Set fields
+      function setVal(name, val) {
+        var el = form.querySelector('[name="' + name + '"]');
+        if (el) el.value = val == null ? '' : String(val);
+      }
+      setVal('year', l.year);
+      setVal('trim', l.trim || '');
+      setVal('vin', l.vin || '');
+      setVal('mileage', l.mileage);
+      setVal('condition', l.condition);
+      setVal('transmission', l.transmission || '');
+      setVal('drivetrain', l.drivetrain || '');
+      setVal('fuel_type', l.fuel_type || '');
+      setVal('body_type', l.body_type || '');
+      setVal('doors', l.doors || '');
+      setVal('seats', l.seats || '');
+      setVal('color_exterior', l.color_exterior || '');
+      setVal('color_interior', l.color_interior || '');
+      setVal('city', l.city || '');
+      setVal('price_dollars', l.price ? Math.round(l.price / 100) : '');
+      setVal('title', l.title || '');
+      setVal('description', l.description || '');
+      var negEl = form.querySelector('[name="negotiable"]');
+      if (negEl) negEl.checked = l.negotiable === 1;
+
+      // Resolve make_slug from make_id (reverse lookup)
+      var makeSlug = '';
+      Object.keys(MAKES_BY_SLUG).forEach(function (slug) {
+        if (MAKES_BY_SLUG[slug] === l.make_id) makeSlug = slug;
+      });
+      if (makeSlug) makeSel.value = makeSlug;
+      initialModelId = l.model_id;
+      await syncModelOptions(initialModelId);
+    }
+
+    makeSel.addEventListener('change', function () {
+      syncModelOptions(null);
+    });
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      clearErrors();
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = mode === 'edit' ? 'Saving…' : 'Creating…';
+      }
+
+      var payload = readPayload();
+      var listingId = form.getAttribute('data-listing-id');
+      var url = mode === 'edit'
+        ? '/api/listings/' + encodeURIComponent(listingId || '')
+        : '/api/listings';
+      var method = mode === 'edit' ? 'PATCH' : 'POST';
+
+      try {
+        var res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.status === 200 || res.status === 201) {
+          window.location.href = '/dealer/listings/';
+          return;
+        }
+
+        if (res.status === 401) {
+          window.location.href = '/dealer/login/?next=' +
+            encodeURIComponent(window.location.pathname + window.location.search);
+          return;
+        }
+
+        var err = {};
+        try { err = await res.json(); } catch (_) {}
+        if (res.status === 422 && err.issues) {
+          applyIssues(err.issues);
+          if (Object.keys(err.issues).length === 0) {
+            setFormError(err.message || 'Validation failed');
+          }
+        } else if (res.status === 409) {
+          setFormError(err.message || 'Conflict (duplicate VIN or slug).');
+        } else if (res.status === 429) {
+          setFormError('Too many listings created recently. Try again later.');
+        } else if (res.status === 403) {
+          setFormError(err.message || 'Forbidden.');
+        } else if (res.status >= 500) {
+          setFormError('Server error (' + res.status + '). Try again in a moment.');
+        } else {
+          setFormError(err.message || 'Save failed (HTTP ' + res.status + ').');
+        }
+      } catch (_) {
+        setFormError('Network error. Check your connection.');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = mode === 'edit' ? 'Save changes' : 'Create listing';
+        }
+      }
+    });
+
+    var soldBtn = form.querySelector('[data-mark-sold]');
+    if (soldBtn) {
+      soldBtn.addEventListener('click', async function () {
+        if (!confirm('Mark this listing as sold? It will be removed from active catalog.')) return;
+        var listingId = form.getAttribute('data-listing-id');
+        if (!listingId) return;
+        soldBtn.disabled = true;
+        try {
+          var res = await fetch('/api/listings/' + encodeURIComponent(listingId), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'sold' }),
+          });
+          if (res.ok) {
+            window.location.href = '/dealer/listings/';
+          } else {
+            alert('Failed to mark as sold.');
+            soldBtn.disabled = false;
+          }
+        } catch (_) {
+          soldBtn.disabled = false;
+        }
+      });
+    }
+
+    // Init
+    (async function init() {
+      await loadMakes();
+      if (mode === 'edit') {
+        // Wait one tick so the parent edit page can set data-listing-id from ?id=
+        await new Promise(function (r) { setTimeout(r, 0); });
+        var id = form.getAttribute('data-listing-id');
+        if (id) await loadExisting(id);
+      }
+    })();
+  })();
+</script>

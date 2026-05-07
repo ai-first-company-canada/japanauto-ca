@@ -1,0 +1,165 @@
+---
+import DealerLayout from '../../../layouts/DealerLayout.astro';
+---
+<DealerLayout
+  title="My listings — japanauto.ca"
+  canonical="https://japanauto.ca/dealer/listings/"
+  activeTab="listings"
+>
+  <div
+    style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px"
+  >
+    <h1 class="t-display-m" style="font-size:26px;line-height:32px">My listings</h1>
+    <a href="/dealer/listings/new/" class="btn btn-primary btn-sm">+ New</a>
+  </div>
+
+  <div
+    data-status-tabs
+    style="display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--color-divider)"
+  >
+    <button class="status-tab active" type="button" data-status="active">
+      Active <span data-count-active class="num">—</span>
+    </button>
+    <button class="status-tab" type="button" data-status="sold">
+      Sold <span data-count-sold class="num">—</span>
+    </button>
+    <button class="status-tab" type="button" data-status="expired">
+      Expired <span data-count-expired class="num">—</span>
+    </button>
+    <button class="status-tab" type="button" data-status="draft">
+      Drafts <span data-count-draft class="num">—</span>
+    </button>
+  </div>
+
+  <div
+    data-listings-table
+    style="display:flex;flex-direction:column;gap:8px"
+  >
+    <p class="t-body-s ink-muted">Loading…</p>
+  </div>
+
+  <script is:inline>
+    (function () {
+      var allListings = [];
+      var activeStatus = 'active';
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function render() {
+        var filtered = allListings.filter(function (l) {
+          return (l.status || 'active') === activeStatus;
+        });
+        var container = document.querySelector('[data-listings-table]');
+        if (!container) return;
+        if (filtered.length === 0) {
+          container.innerHTML =
+            '<p class="t-body-s ink-muted" style="padding:32px 0;text-align:center">No ' +
+            escapeHtml(activeStatus) + ' listings.</p>';
+          return;
+        }
+        container.innerHTML = filtered.map(function (l) {
+          var make = l.make_name || l.make_slug || '';
+          var model = l.model_name || l.model_slug || '';
+          var trim = l.trim ? ' ' + l.trim : '';
+          var dollars = (Number(l.price || 0) / 100).toLocaleString('en-US');
+          var km = Number(l.mileage || 0).toLocaleString('en-US');
+          var id = encodeURIComponent(l.id);
+          return (
+            '<div class="card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px">' +
+            '<div style="flex:1;min-width:0">' +
+            '<div class="t-h-s" style="font-size:14px;line-height:20px">' +
+            escapeHtml(l.year + ' ' + make + ' ' + model + trim) + '</div>' +
+            '<div class="t-body-s ink-muted" style="font-size:12px;line-height:16px;margin-top:2px">' +
+            'CA$<span class="num">' + dollars + '</span> · ' +
+            '<span class="num">' + km + '</span> km' +
+            '</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:6px;flex-shrink:0">' +
+            '<a href="/dealer/listings/edit/?id=' + id +
+            '" class="btn btn-secondary btn-sm" style="padding:0 12px;height:36px;font-size:12px">Edit</a>' +
+            '<button type="button" class="btn btn-sm" data-delete-id="' + escapeHtml(l.id) +
+            '" style="padding:0 12px;height:36px;font-size:12px;background:#fff;color:var(--color-accent);border:1px solid var(--color-accent)">Delete</button>' +
+            '</div>' +
+            '</div>'
+          );
+        }).join('');
+
+        container.querySelectorAll('[data-delete-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var id = btn.getAttribute('data-delete-id');
+            if (!confirm('Delete this listing? It will be moved to Expired.')) return;
+            btn.disabled = true;
+            var res = await fetch('/api/listings/' + encodeURIComponent(id), {
+              method: 'DELETE',
+            });
+            if (res.ok) {
+              // Soft-delete: API sets status='expired'. Reflect locally.
+              allListings = allListings.map(function (l) {
+                return l.id === id ? Object.assign({}, l, { status: 'expired' }) : l;
+              });
+              updateCounts();
+              render();
+            } else {
+              alert('Failed to delete listing.');
+              btn.disabled = false;
+            }
+          });
+        });
+      }
+
+      function updateCounts() {
+        var counts = { active: 0, sold: 0, expired: 0, draft: 0, flagged: 0 };
+        allListings.forEach(function (l) {
+          var s = l.status || 'active';
+          if (counts[s] !== undefined) counts[s]++;
+        });
+        var setNum = function (sel, n) {
+          var el = document.querySelector(sel);
+          if (el) el.textContent = String(n);
+        };
+        setNum('[data-count-active]', counts.active);
+        setNum('[data-count-sold]', counts.sold);
+        setNum('[data-count-expired]', counts.expired);
+        setNum('[data-count-draft]', counts.draft);
+      }
+
+      document.querySelectorAll('.status-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.status-tab').forEach(function (t) {
+            t.classList.remove('active');
+          });
+          tab.classList.add('active');
+          activeStatus = tab.getAttribute('data-status');
+          render();
+        });
+      });
+
+      (async function load() {
+        try {
+          var res = await fetch('/api/listings?dealer_id=me&limit=200');
+          if (res.status === 401) {
+            window.location.href = '/dealer/login/?next=/dealer/listings/';
+            return;
+          }
+          if (!res.ok) throw new Error('listings fetch failed: ' + res.status);
+          var data = await res.json();
+          allListings = data.listings || data.items || [];
+          updateCounts();
+          render();
+        } catch (e) {
+          console.error(e);
+          var c = document.querySelector('[data-listings-table]');
+          if (c) {
+            c.innerHTML =
+              '<p class="t-body-s" style="color:var(--color-accent);padding:32px 0;text-align:center">Failed to load listings.</p>';
+          }
+        }
+      })();
+    })();
+  </script>
+</DealerLayout>

@@ -1,0 +1,16 @@
+---
+import DealerLayout from '../../../layouts/DealerLayout.astro';
+import ListingForm from '../../../components/sections/ListingForm.astro';
+---
+<DealerLayout
+  title="New listing — japanauto.ca"
+  canonical="https://japanauto.ca/dealer/listings/new/"
+  activeTab="listings"
+>
+  <a
+    href="/dealer/listings/"
+    style="font-size:13px;color:var(--color-ink-muted);margin-bottom:8px;display:inline-block"
+  >← Back to listings</a>
+  <h1 class="t-display-m" style="font-size:26px;margin-bottom:24px">New listing</h1>
+  <ListingForm mode="create" />
+</DealerLayout>

@@ -42,11 +42,43 @@ import {
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
 
 // ============================================================================
-// GET — catalog query
+// GET — dealer's own listings (?dealer_id=me) OR catalog query
 // ============================================================================
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const url = new URL(request.url);
   const params = url.searchParams;
+
+  // Dealer-scoped query (used by /dealer/dashboard + /dealer/listings).
+  // Returns the dealer's own listings regardless of status.
+  if (params.get("dealer_id") === "me") {
+    const auth = await requireDealer(request, env);
+    if (auth instanceof Response) return auth;
+
+    const limitRaw = parseInt(params.get("limit") ?? "100", 10);
+    const limit = Number.isInteger(limitRaw) && limitRaw > 0 && limitRaw <= 200
+      ? limitRaw : 100;
+
+    const result = await env.DB.prepare(`
+      SELECT
+        l.id, l.slug, l.dealer_id, l.year, l.trim, l.vin,
+        l.body_type, l.fuel_type, l.transmission, l.drivetrain,
+        l.mileage, l.price, l.price_currency, l.condition, l.negotiable,
+        l.city, l.province, l.title, l.description, l.status,
+        l.expires_at, l.sold_at, l.view_count, l.contact_count,
+        l.created_at, l.updated_at,
+        l.make_id, l.model_id,
+        mk.slug AS make_slug, mk.name AS make_name,
+        md.slug AS model_slug, md.name AS model_name
+      FROM listings l
+      LEFT JOIN makes mk ON mk.id = l.make_id
+      LEFT JOIN models md ON md.id = l.model_id
+      WHERE l.dealer_id = ?
+      ORDER BY l.created_at DESC
+      LIMIT ?
+    `).bind(auth.dealerId, limit).all();
+
+    return json({ listings: result.results ?? [] });
+  }
 
   // Coerce & validate query params
   const yearsParam = params.get("years");

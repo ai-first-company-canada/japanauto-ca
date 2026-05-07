@@ -1,0 +1,150 @@
+---
+import DealerLayout from '../../layouts/DealerLayout.astro';
+import Icon from '../../components/atoms/Icon.astro';
+---
+<DealerLayout
+  title="Dashboard — japanauto.ca"
+  canonical="https://japanauto.ca/dealer/dashboard/"
+  activeTab="dashboard"
+>
+  <h1
+    class="t-display-m"
+    style="font-size:26px;line-height:32px;margin-bottom:8px"
+  >
+    Welcome back, <span data-dealer-name>…</span>
+  </h1>
+  <p class="t-body-m ink-muted" style="margin-bottom:24px">
+    <span data-dealer-meta>—</span>
+  </p>
+
+  <section
+    class="dashboard-stats"
+    style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:32px"
+  >
+    <div class="card" style="padding:16px">
+      <div class="t-caption ink-muted">ACTIVE LISTINGS</div>
+      <div
+        class="num"
+        style="font-size:32px;font-weight:600;margin-top:4px"
+        data-stat-active
+      >—</div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div class="t-caption ink-muted">CONTACTS THIS MONTH</div>
+      <div
+        class="num"
+        style="font-size:32px;font-weight:600;margin-top:4px"
+        data-stat-contacts
+      >—</div>
+    </div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div
+      style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"
+    >
+      <h2 class="t-h-l" style="font-size:20px">Recent listings</h2>
+      <a
+        href="/dealer/listings/"
+        style="font-size:14px;font-weight:500;color:var(--color-accent)"
+      >View all →</a>
+    </div>
+    <div
+      data-recent-listings
+      style="display:flex;flex-direction:column;gap:12px"
+    >
+      <p class="t-body-s ink-muted">Loading…</p>
+    </div>
+  </section>
+
+  <section>
+    <a
+      href="/dealer/listings/new/"
+      class="btn btn-primary btn-block btn-lg"
+    >
+      <Icon name="arrowRight" size={16} />
+      Add new listing
+    </a>
+  </section>
+
+  <script is:inline>
+    (async function () {
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function setText(sel, txt) {
+        var el = document.querySelector(sel);
+        if (el) el.textContent = txt;
+      }
+
+      try {
+        var dealerRes = await fetch('/api/dealers/me');
+        if (dealerRes.status === 401) {
+          window.location.href = '/dealer/login/?next=/dealer/dashboard/';
+          return;
+        }
+        if (!dealerRes.ok) throw new Error('dealer fetch failed: ' + dealerRes.status);
+        var dealerJson = await dealerRes.json();
+        var dealer = dealerJson.dealer || dealerJson;
+
+        setText('[data-dealer-name]', dealer.name || 'Dealer');
+        var meta =
+          (dealer.type === 'salvage_yard' ? 'Salvage yard' : 'Verified seller') +
+          ' · ' + (dealer.city || '') + ', ' + (dealer.province || '');
+        setText('[data-dealer-meta]', meta);
+
+        var listingsRes = await fetch('/api/listings?dealer_id=me&limit=10');
+        if (listingsRes.ok) {
+          var data = await listingsRes.json();
+          var all = data.listings || data.items || [];
+          var active = all.filter(function (l) { return l.status === 'active'; }).length;
+          setText('[data-stat-active]', String(active));
+
+          var recent = document.querySelector('[data-recent-listings]');
+          if (all.length === 0) {
+            recent.innerHTML =
+              '<p class="t-body-s ink-muted">No listings yet. Add your first listing to get started.</p>';
+          } else {
+            recent.innerHTML = all.slice(0, 5).map(function (l) {
+              var make = l.make_name || l.make_slug || '';
+              var model = l.model_name || l.model_slug || '';
+              var trim = l.trim ? ' ' + l.trim : '';
+              var dollars = (Number(l.price || 0) / 100).toLocaleString('en-US');
+              var km = Number(l.mileage || 0).toLocaleString('en-US');
+              var id = encodeURIComponent(l.id);
+              return (
+                '<a href="/dealer/listings/edit/?id=' + id +
+                '" class="card" style="padding:12px;display:flex;justify-content:space-between;align-items:center">' +
+                '<div>' +
+                '<div class="t-h-s" style="font-size:14px">' +
+                escapeHtml(l.year + ' ' + make + ' ' + model + trim) +
+                '</div>' +
+                '<div class="t-body-s ink-muted" style="font-size:12px">CA$' +
+                dollars + ' · ' + km + ' km</div>' +
+                '</div>' +
+                '<span style="font-size:18px;color:var(--color-ink-muted)">›</span>' +
+                '</a>'
+              );
+            }).join('');
+          }
+        } else {
+          setText('[data-stat-active]', '0');
+        }
+
+        // Contacts placeholder — Phase 2c will wire real D1 query
+        setText('[data-stat-contacts]', '0');
+      } catch (e) {
+        console.error('Dashboard load failed', e);
+        var recent = document.querySelector('[data-recent-listings]');
+        if (recent) {
+          recent.innerHTML =
+            '<p class="t-body-s" style="color:var(--color-accent)">Failed to load. Refresh the page or try again later.</p>';
+        }
+      }
+    })();
+  </script>
+</DealerLayout>

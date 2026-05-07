@@ -1,0 +1,444 @@
+---
+import DealerLayout from '../../layouts/DealerLayout.astro';
+
+const PROVINCES: Array<[string, string]> = [
+  ['AB', 'Alberta'],
+  ['BC', 'British Columbia'],
+  ['ON', 'Ontario'],
+  ['QC', 'Québec'],
+  ['MB', 'Manitoba'],
+  ['SK', 'Saskatchewan'],
+  ['NS', 'Nova Scotia'],
+  ['NB', 'New Brunswick'],
+  ['NL', 'Newfoundland and Labrador'],
+  ['PE', 'Prince Edward Island'],
+  ['YT', 'Yukon'],
+  ['NT', 'Northwest Territories'],
+  ['NU', 'Nunavut'],
+];
+
+const CITIES: Array<[string, string, string]> = [
+  ['toronto', 'Toronto', 'ON'],
+  ['montreal', 'Montreal', 'QC'],
+  ['vancouver', 'Vancouver', 'BC'],
+  ['calgary', 'Calgary', 'AB'],
+  ['edmonton', 'Edmonton', 'AB'],
+  ['ottawa', 'Ottawa', 'ON'],
+];
+---
+<DealerLayout
+  title="Profile — japanauto.ca"
+  canonical="https://japanauto.ca/dealer/profile/"
+  activeTab="profile"
+>
+  <h1 class="t-display-m" style="font-size:26px;line-height:32px;margin-bottom:8px">Profile</h1>
+  <p class="t-body-m ink-muted" style="margin-bottom:24px">
+    Public dealer info shown on your listings.
+  </p>
+
+  <form id="profile-form" novalidate>
+    <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+      <legend class="t-caption" style="margin-bottom:8px">ACCOUNT</legend>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-name">Dealership name</label>
+        <input
+          class="auth-form-input"
+          id="pf-name"
+          name="name"
+          type="text"
+          required
+          minlength="2"
+          maxlength="120"
+        />
+        <div class="auth-form-error" data-field-error="name"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label">Account type</label>
+        <div class="auth-radio-group">
+          <label class="auth-radio-option">
+            <input type="radio" name="type" value="dealer" checked />
+            <span>Dealer</span>
+          </label>
+          <label class="auth-radio-option">
+            <input type="radio" name="type" value="salvage_yard" />
+            <span>Salvage yard</span>
+          </label>
+        </div>
+        <div class="auth-form-error" data-field-error="type"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-email">Email</label>
+        <input
+          class="auth-form-input"
+          id="pf-email"
+          name="email"
+          type="email"
+          readonly
+          style="background:var(--color-bg-subtle);color:var(--color-ink-muted)"
+        />
+        <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+          Email change requires re-verification (coming in Phase 6).
+        </p>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-phone">Phone</label>
+        <input
+          class="auth-form-input"
+          id="pf-phone"
+          name="phone"
+          type="tel"
+          autocomplete="tel"
+          placeholder="+1 (403) 555-1234"
+        />
+        <div class="auth-form-error" data-field-error="phone"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-website">Website (optional)</label>
+        <input
+          class="auth-form-input"
+          id="pf-website"
+          name="website"
+          type="url"
+          maxlength="2048"
+          placeholder="https://"
+        />
+        <div class="auth-form-error" data-field-error="website"></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+      <legend class="t-caption" style="margin-bottom:8px">LOCATION</legend>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-address1">Address line 1</label>
+        <input
+          class="auth-form-input"
+          id="pf-address1"
+          name="address_line1"
+          type="text"
+          maxlength="200"
+        />
+        <div class="auth-form-error" data-field-error="address_line1"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-address2">Address line 2 (optional)</label>
+        <input
+          class="auth-form-input"
+          id="pf-address2"
+          name="address_line2"
+          type="text"
+          maxlength="200"
+        />
+        <div class="auth-form-error" data-field-error="address_line2"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-postal">Postal code</label>
+        <input
+          class="auth-form-input"
+          id="pf-postal"
+          name="postal_code"
+          type="text"
+          maxlength="7"
+          placeholder="A1A 1A1"
+          autocapitalize="characters"
+        />
+        <div class="auth-form-error" data-field-error="postal_code"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-city">City</label>
+        <select class="auth-form-input" id="pf-city" name="city_select">
+          <option value="">Select city</option>
+          {CITIES.map(([slug, name, prov]) => (
+            <option value={slug} data-province={prov}>{name}, {prov}</option>
+          ))}
+        </select>
+        <div class="auth-form-error" data-field-error="city"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-province">Province</label>
+        <select class="auth-form-input" id="pf-province" name="province" required>
+          <option value="">Select province</option>
+          {PROVINCES.map(([code, name]) => (
+            <option value={code}>{name}</option>
+          ))}
+        </select>
+        <div class="auth-form-error" data-field-error="province"></div>
+      </div>
+
+      <div class="auth-form-group" id="pf-amvic-group" style="display:none">
+        <label class="auth-form-label" for="pf-amvic">AMVIC number</label>
+        <input
+          class="auth-form-input"
+          id="pf-amvic"
+          name="amvic_number"
+          type="text"
+          maxlength="40"
+        />
+        <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+          AMVIC number is mandatory for dealers in Alberta.
+        </p>
+        <div class="auth-form-error" data-field-error="amvic_number"></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+      <legend class="t-caption" style="margin-bottom:8px">ABOUT</legend>
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-description">Short bio (optional)</label>
+        <textarea
+          class="auth-form-input"
+          id="pf-description"
+          name="description"
+          rows="4"
+          maxlength="5000"
+          placeholder="Shown on your public dealer page"
+          style="height:auto;padding:12px 14px;resize:vertical;min-height:96px"
+        ></textarea>
+        <div class="auth-form-error" data-field-error="description"></div>
+      </div>
+    </fieldset>
+
+    <div
+      style="background:var(--color-bg-subtle);padding:16px;border-radius:8px;margin-bottom:24px"
+    >
+      <p class="t-body-s ink-muted" style="font-size:12px">
+        Business hours editor — Phase 2c.
+      </p>
+    </div>
+
+    <div
+      class="auth-form-error"
+      data-form-error
+      style="text-align:center;margin-bottom:16px"
+    ></div>
+
+    <button class="btn btn-primary auth-submit" type="submit" data-submit-btn>Save changes</button>
+  </form>
+
+  <div class="dealer-toast" data-toast role="status" aria-live="polite">Profile updated</div>
+
+  <script is:inline>
+    (function () {
+      var form = document.getElementById('profile-form');
+      if (!form) return;
+
+      var submitBtn = form.querySelector('[data-submit-btn]');
+      var formErr = form.querySelector('[data-form-error]');
+      var toast = document.querySelector('[data-toast]');
+      var amvicGroup = document.getElementById('pf-amvic-group');
+      var amvicInput = document.getElementById('pf-amvic');
+      var citySelect = document.getElementById('pf-city');
+      var provinceSelect = document.getElementById('pf-province');
+      var typeRadios = form.querySelectorAll('[name="type"]');
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      function selectedType() {
+        var checked = form.querySelector('[name="type"]:checked');
+        return checked ? checked.value : 'dealer';
+      }
+
+      function toggleAmvic() {
+        var show = provinceSelect.value === 'AB' && selectedType() === 'dealer';
+        if (!amvicGroup) return;
+        amvicGroup.style.display = show ? '' : 'none';
+        if (amvicInput) amvicInput.required = show;
+      }
+
+      function setFormError(msg) {
+        if (formErr) formErr.textContent = msg;
+      }
+
+      function clearErrors() {
+        form.querySelectorAll('[data-field-error]').forEach(function (el) {
+          el.textContent = '';
+        });
+        if (formErr) formErr.innerHTML = '';
+      }
+
+      function applyIssues(issues) {
+        var unmapped = [];
+        Object.keys(issues || {}).forEach(function (key) {
+          var msgs = issues[key];
+          if (!msgs || !msgs.length) return;
+          var fieldEl = form.querySelector('[data-field-error="' + key + '"]');
+          if (fieldEl) {
+            fieldEl.textContent = msgs[0];
+          } else {
+            unmapped.push(key + ': ' + msgs[0]);
+          }
+        });
+        if (unmapped.length && formErr) {
+          formErr.innerHTML = unmapped.map(function (m) {
+            return '<div>' + escapeHtml(m) + '</div>';
+          }).join('');
+        }
+      }
+
+      function showToast(text) {
+        if (!toast) return;
+        toast.textContent = text;
+        toast.classList.add('is-visible');
+        setTimeout(function () { toast.classList.remove('is-visible'); }, 2400);
+      }
+
+      function normalizePhone(raw) {
+        var trimmed = (raw || '').trim();
+        if (!trimmed) return '';
+        var digits = trimmed.replace(/\D/g, '');
+        if (digits.length === 10) return '+1' + digits;
+        if (digits.length === 11 && digits.charAt(0) === '1') return '+' + digits;
+        return trimmed;
+      }
+
+      function setVal(name, val) {
+        var el = form.querySelector('[name="' + name + '"]');
+        if (el) el.value = val == null ? '' : String(val);
+      }
+
+      function setRadio(value) {
+        typeRadios.forEach(function (r) {
+          r.checked = r.value === value;
+        });
+      }
+
+      provinceSelect.addEventListener('change', toggleAmvic);
+      typeRadios.forEach(function (r) { r.addEventListener('change', toggleAmvic); });
+
+      // City select → mirror province
+      citySelect.addEventListener('change', function () {
+        var opt = citySelect.options[citySelect.selectedIndex];
+        var prov = opt && opt.dataset.province;
+        if (prov) {
+          provinceSelect.value = prov;
+          toggleAmvic();
+        }
+      });
+
+      async function load() {
+        try {
+          var res = await fetch('/api/dealers/me');
+          if (res.status === 401) {
+            window.location.href = '/dealer/login/?next=/dealer/profile/';
+            return;
+          }
+          if (!res.ok) {
+            setFormError('Failed to load profile (HTTP ' + res.status + ').');
+            return;
+          }
+          var data = await res.json();
+          var d = data.dealer || data;
+
+          setVal('name', d.name);
+          setVal('email', d.email);
+          setVal('phone', d.phone || '');
+          setVal('website', d.website || '');
+          setVal('address_line1', d.address_line1 || '');
+          setVal('address_line2', d.address_line2 || '');
+          setVal('postal_code', d.postal_code || '');
+          setVal('province', d.province || '');
+          setVal('amvic_number', d.amvic_number || '');
+          setVal('description', d.description || '');
+          setRadio(d.type || 'dealer');
+
+          // Best-effort city mapping: match by display name.
+          var cityName = (d.city || '').toLowerCase();
+          var matched = false;
+          Array.prototype.forEach.call(citySelect.options, function (opt) {
+            if (!matched && opt.value && opt.textContent.toLowerCase().indexOf(cityName) === 0) {
+              opt.selected = true;
+              matched = true;
+            }
+          });
+          toggleAmvic();
+        } catch (e) {
+          console.error(e);
+          setFormError('Network error loading profile.');
+        }
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        clearErrors();
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Saving…';
+        }
+
+        var fd = new FormData(form);
+        var cityOpt = citySelect.options[citySelect.selectedIndex];
+        var cityName = cityOpt && cityOpt.value
+          ? cityOpt.textContent.split(',')[0].trim()
+          : '';
+
+        var payload = {
+          type: selectedType(),
+          name: (fd.get('name') || '').toString().trim(),
+          phone: normalizePhone(fd.get('phone') || ''),
+          website: (fd.get('website') || '').toString().trim() || null,
+          description: (fd.get('description') || '').toString().trim() || null,
+          address_line1: (fd.get('address_line1') || '').toString().trim() || null,
+          address_line2: (fd.get('address_line2') || '').toString().trim() || null,
+          postal_code: (fd.get('postal_code') || '').toString().trim() || null,
+          province: fd.get('province') || '',
+          amvic_number: (fd.get('amvic_number') || '').toString().trim() || null,
+        };
+        if (cityName) payload.city = cityName;
+        if (!payload.phone) delete payload.phone;
+        if (!payload.amvic_number) delete payload.amvic_number;
+
+        try {
+          var res = await fetch('/api/dealers/me', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            showToast('Profile updated');
+            return;
+          }
+          if (res.status === 401) {
+            window.location.href = '/dealer/login/?next=/dealer/profile/';
+            return;
+          }
+          var err = {};
+          try { err = await res.json(); } catch (_) {}
+          if (res.status === 422 && err.issues) {
+            applyIssues(err.issues);
+            if (Object.keys(err.issues).length === 0) {
+              setFormError(err.message || 'Validation failed');
+            }
+          } else if (res.status === 409) {
+            setFormError(err.message || 'Slug or email already in use.');
+          } else if (res.status >= 500) {
+            setFormError('Server error (' + res.status + ').');
+          } else {
+            setFormError(err.message || 'Save failed (HTTP ' + res.status + ').');
+          }
+        } catch (_) {
+          setFormError('Network error.');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save changes';
+          }
+        }
+      });
+
+      load();
+    })();
+  </script>
+</DealerLayout>

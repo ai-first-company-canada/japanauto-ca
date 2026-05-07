@@ -1,0 +1,33 @@
+---
+import DealerLayout from '../../../layouts/DealerLayout.astro';
+import ListingForm from '../../../components/sections/ListingForm.astro';
+---
+<DealerLayout
+  title="Edit listing — japanauto.ca"
+  canonical="https://japanauto.ca/dealer/listings/edit/"
+  activeTab="listings"
+>
+  <a
+    href="/dealer/listings/"
+    style="font-size:13px;color:var(--color-ink-muted);margin-bottom:8px;display:inline-block"
+  >← Back to listings</a>
+  <h1 class="t-display-m" style="font-size:26px;margin-bottom:24px">Edit listing</h1>
+  <ListingForm mode="edit" />
+
+  <script is:inline>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get('id');
+      var form = document.querySelector('form[data-listing-form]');
+      if (!id) {
+        var main = document.querySelector('main');
+        if (main) {
+          main.innerHTML =
+            '<p class="t-body-m" style="text-align:center;padding:48px 0">No listing ID provided.</p>';
+        }
+        return;
+      }
+      if (form) form.setAttribute('data-listing-id', id);
+    })();
+  </script>
+</DealerLayout>

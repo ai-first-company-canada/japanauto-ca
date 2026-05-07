@@ -482,7 +482,10 @@ const listingBaseFields = {
 export const listingCreateInputSchema = z.object(listingBaseFields);
 export type ListingCreateInput = z.infer<typeof listingCreateInputSchema>;
 
-export const listingUpdateInputSchema = z.object(listingBaseFields).partial();
+export const listingUpdateInputSchema = z.object(listingBaseFields).partial().extend({
+  /** Owner-initiated status transitions (Phase 2b2 mark-as-sold). */
+  status: z.enum(["active", "sold", "expired"]).optional(),
+});
 export type ListingUpdateInput = z.infer<typeof listingUpdateInputSchema>;
 
 /** Full D1 row. */
