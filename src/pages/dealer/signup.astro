@@ -100,7 +100,7 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         placeholder="+1 (403) 555-1234"
       />
       <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
-        Canadian phone in any format. Example: (403) 555-1234
+        Canadian phone in any format. Example: (403) 234-5678
       </p>
       <div class="auth-form-error" data-field-error="phone"></div>
     </div>
@@ -356,12 +356,15 @@ const PROVINCES: Array<{ code: string; name: string }> = [
               formErr.textContent = err.message || 'Validation failed';
             }
           } else if (res.status === 409) {
-            setFormError(err.message || 'Email already registered');
+            setFormError(err.message || 'Email already registered. Try signing in instead.');
           } else if (res.status === 429) {
-            setFormError('Too many signups from this network. Try again later.');
+            setFormError('Too many attempts. Wait a few minutes and try again.');
+          } else if (res.status >= 500) {
+            setFormError('Server error (' + res.status + '). Try again in a moment.');
           } else {
-            setFormError(err.message || 'Sign up failed. Try again.');
+            setFormError(err.message || 'Sign up failed (HTTP ' + res.status + ').');
           }
+          console.error('Auth error:', res.status, err);
         } catch (_) {
           setFormError('Network error. Check your connection.');
         } finally {
