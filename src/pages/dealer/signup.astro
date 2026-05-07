@@ -293,13 +293,12 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         btn.textContent = 'Creating account…';
 
         var name = form.name.value.trim();
-        var cityName = '';
+        // City stored as slug (kebab-case) — matches listings.city storage.
+        var citySlug = '';
         if (citySelect.value === 'other') {
-          cityName = cityOther.value.trim();
+          citySlug = slugify(cityOther.value.trim());
         } else if (citySelect.value) {
-          var picked = (PROVINCE_CITIES[provinceSel.value] || [])
-            .find(function (p) { return p[0] === citySelect.value; });
-          cityName = picked ? picked[1] : citySelect.value;
+          citySlug = citySelect.value;
         }
 
         var payload = {
@@ -309,7 +308,7 @@ const PROVINCES: Array<{ code: string; name: string }> = [
           email: form.email.value.trim(),
           password: form.password.value,
           phone: normalizePhone(form.phone.value),
-          city: cityName,
+          city: citySlug,
           province: provinceSel.value,
         };
         if (amvicInput && amvicInput.value.trim()) {

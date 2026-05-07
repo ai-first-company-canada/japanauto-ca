@@ -22,28 +22,44 @@ import {
 // DEALERS
 // ============================================================================
 
+/**
+ * Convert a raw D1 row (hours stored as JSON TEXT) to a typed Dealer.
+ * Mutates a copy of the row — leaves the original untouched.
+ */
+function parseDealerRow(row: Record<string, unknown>): Dealer {
+  const r: Record<string, unknown> = { ...row };
+  const raw = r.hours;
+  if (typeof raw === "string" && raw.length > 0) {
+    try { r.hours = JSON.parse(raw); }
+    catch { r.hours = null; }
+  } else if (raw === undefined) {
+    r.hours = null;
+  }
+  return dealerSchema.parse(r);
+}
+
 export async function getDealerById(env: Env, id: string): Promise<Dealer | null> {
   const row = await env.DB.prepare(
     `SELECT * FROM dealers WHERE id = ? LIMIT 1`
-  ).bind(id).first();
+  ).bind(id).first<Record<string, unknown>>();
   if (!row) return null;
-  return dealerSchema.parse(row);
+  return parseDealerRow(row);
 }
 
 export async function getDealerByEmail(env: Env, email: string): Promise<Dealer | null> {
   const row = await env.DB.prepare(
     `SELECT * FROM dealers WHERE email = ? LIMIT 1`
-  ).bind(email.toLowerCase()).first();
+  ).bind(email.toLowerCase()).first<Record<string, unknown>>();
   if (!row) return null;
-  return dealerSchema.parse(row);
+  return parseDealerRow(row);
 }
 
 export async function getDealerBySlug(env: Env, slug: string): Promise<Dealer | null> {
   const row = await env.DB.prepare(
     `SELECT * FROM dealers WHERE slug = ? LIMIT 1`
-  ).bind(slug).first();
+  ).bind(slug).first<Record<string, unknown>>();
   if (!row) return null;
-  return dealerSchema.parse(row);
+  return parseDealerRow(row);
 }
 
 // ============================================================================
@@ -62,6 +78,22 @@ export async function getListingById(env: Env, id: string): Promise<Listing | nu
   const row = await env.DB.prepare(
     `SELECT * FROM listings WHERE id = ? LIMIT 1`
   ).bind(id).first();
+  if (!row) return null;
+  return listingSchema.parse(row);
+}
+
+/**
+ * Atomically set status='sold' + sold_at=now WHERE status != 'sold'.
+ * Returns the updated row, or null if not found / already sold.
+ */
+export async function markListingSold(env: Env, id: string): Promise<Listing | null> {
+  const now = Math.floor(Date.now() / 1000);
+  const row = await env.DB.prepare(
+    `UPDATE listings
+     SET status = 'sold', sold_at = ?, updated_at = ?
+     WHERE id = ? AND status != 'sold'
+     RETURNING *`
+  ).bind(now, now, id).first();
   if (!row) return null;
   return listingSchema.parse(row);
 }

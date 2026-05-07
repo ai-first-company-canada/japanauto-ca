@@ -207,13 +207,50 @@ const CITIES: Array<[string, string, string]> = [
       </div>
     </fieldset>
 
-    <div
-      style="background:var(--color-bg-subtle);padding:16px;border-radius:8px;margin-bottom:24px"
+    <fieldset
+      class="auth-form-group"
+      style="border:1px solid var(--color-divider);border-radius:8px;padding:16px;margin:0 0 24px"
     >
-      <p class="t-body-s ink-muted" style="font-size:12px">
-        Business hours editor — Phase 2c.
+      <legend
+        class="t-caption"
+        style="padding:0 8px;font-size:12px;color:var(--color-ink-muted)"
+      >OPEN HOURS</legend>
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-bottom:12px">
+        Shown on your public dealer page. Uncheck Open to mark a day Closed.
       </p>
-    </div>
+      <div data-hours-editor>
+        {[0, 1, 2, 3, 4, 5, 6].map((dow) => (
+          <div
+            class="hours-row"
+            data-dow={dow}
+            style="display:grid;grid-template-columns:54px 76px 1fr 18px 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--color-divider)"
+          >
+            <span class="t-body-s" style="font-size:13px;font-weight:500">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow]}
+            </span>
+            <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+              <input type="checkbox" data-hours-open />
+              <span>Open</span>
+            </label>
+            <input
+              type="time"
+              class="auth-form-input"
+              data-hours-from
+              style="height:36px;padding:0 8px;font-size:13px"
+              disabled
+            />
+            <span class="t-body-s ink-muted" style="font-size:12px;text-align:center">to</span>
+            <input
+              type="time"
+              class="auth-form-input"
+              data-hours-to
+              style="height:36px;padding:0 8px;font-size:13px"
+              disabled
+            />
+          </div>
+        ))}
+      </div>
+    </fieldset>
 
     <div
       class="auth-form-error"
@@ -327,6 +364,60 @@ const CITIES: Array<[string, string, string]> = [
         }
       });
 
+      // ----- Hours editor -----
+      var hoursRows = form.querySelectorAll('.hours-row');
+      function applyHoursToEditor(hours) {
+        hoursRows.forEach(function (row) {
+          var cb = row.querySelector('[data-hours-open]');
+          var from = row.querySelector('[data-hours-from]');
+          var to = row.querySelector('[data-hours-to]');
+          cb.checked = false;
+          from.value = ''; from.disabled = true;
+          to.value = ''; to.disabled = true;
+        });
+        if (!Array.isArray(hours)) return;
+        hours.forEach(function (entry) {
+          var days = (entry && entry.dow) || [];
+          days.forEach(function (dow) {
+            var row = form.querySelector('.hours-row[data-dow="' + dow + '"]');
+            if (!row) return;
+            var cb = row.querySelector('[data-hours-open]');
+            var from = row.querySelector('[data-hours-from]');
+            var to = row.querySelector('[data-hours-to]');
+            if (entry.open && entry.close) {
+              cb.checked = true;
+              from.value = entry.open; from.disabled = false;
+              to.value = entry.close; to.disabled = false;
+            }
+          });
+        });
+      }
+
+      function collectHoursFromEditor() {
+        var out = [];
+        hoursRows.forEach(function (row) {
+          var dow = parseInt(row.getAttribute('data-dow'), 10);
+          var cb = row.querySelector('[data-hours-open]');
+          var from = row.querySelector('[data-hours-from]');
+          var to = row.querySelector('[data-hours-to]');
+          if (cb.checked && from.value && to.value) {
+            out.push({ dow: [dow], open: from.value, close: to.value });
+          }
+        });
+        return out;
+      }
+
+      hoursRows.forEach(function (row) {
+        var cb = row.querySelector('[data-hours-open]');
+        var from = row.querySelector('[data-hours-from]');
+        var to = row.querySelector('[data-hours-to]');
+        cb.addEventListener('change', function () {
+          from.disabled = !cb.checked;
+          to.disabled = !cb.checked;
+          if (!cb.checked) { from.value = ''; to.value = ''; }
+        });
+      });
+
       async function load() {
         try {
           var res = await fetch('/api/dealers/me');
@@ -353,15 +444,12 @@ const CITIES: Array<[string, string, string]> = [
           setVal('description', d.description || '');
           setRadio(d.type || 'dealer');
 
-          // Best-effort city mapping: match by display name.
-          var cityName = (d.city || '').toLowerCase();
-          var matched = false;
+          // City stored as slug — match option.value directly.
+          var citySlug = (d.city || '').toLowerCase();
           Array.prototype.forEach.call(citySelect.options, function (opt) {
-            if (!matched && opt.value && opt.textContent.toLowerCase().indexOf(cityName) === 0) {
-              opt.selected = true;
-              matched = true;
-            }
+            opt.selected = opt.value === citySlug;
           });
+          applyHoursToEditor(d.hours);
           toggleAmvic();
         } catch (e) {
           console.error(e);
@@ -378,10 +466,8 @@ const CITIES: Array<[string, string, string]> = [
         }
 
         var fd = new FormData(form);
-        var cityOpt = citySelect.options[citySelect.selectedIndex];
-        var cityName = cityOpt && cityOpt.value
-          ? cityOpt.textContent.split(',')[0].trim()
-          : '';
+        // Send city slug (option.value), not display name — matches listings.city storage.
+        var citySlug = citySelect.value || '';
 
         var payload = {
           type: selectedType(),
@@ -394,8 +480,9 @@ const CITIES: Array<[string, string, string]> = [
           postal_code: (fd.get('postal_code') || '').toString().trim() || null,
           province: fd.get('province') || '',
           amvic_number: (fd.get('amvic_number') || '').toString().trim() || null,
+          hours: collectHoursFromEditor(),
         };
-        if (cityName) payload.city = cityName;
+        if (citySlug) payload.city = citySlug;
         if (!payload.phone) delete payload.phone;
         if (!payload.amvic_number) delete payload.amvic_number;
 

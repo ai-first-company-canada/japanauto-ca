@@ -317,6 +317,28 @@ export const verificationPurposeSchema = z.enum(VERIFICATION_PURPOSES);
 export const brandSlugSchema = z.enum(BRAND_SLUGS);
 
 // ============================================================================
+// DEALER HOURS
+// ============================================================================
+// Stored in dealers.hours TEXT column as JSON.stringify(DealerHours).
+// Format: array of entries where each entry covers one or more days-of-week.
+// dow: 0=Sun, 1=Mon, …, 6=Sat. open/close: "HH:MM" 24-hour OR null (= Closed).
+// Empty array OR null on the row = hours not configured (UI shows placeholder).
+export const dealerHoursEntrySchema = z.object({
+  dow: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+  open: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  close: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+}).refine(
+  (e) => (e.open === null) === (e.close === null),
+  { message: "open and close must both be null (Closed) or both set" },
+).refine(
+  (e) => e.open === null || e.close === null || e.open < e.close,
+  { message: "open time must be before close time" },
+);
+
+export const dealerHoursSchema = z.array(dealerHoursEntrySchema).max(7);
+export type DealerHours = z.infer<typeof dealerHoursSchema>;
+
+// ============================================================================
 // DEALERS
 // ============================================================================
 
@@ -338,6 +360,7 @@ const dealerBaseFields = {
   business_number: z.string().trim().max(40).nullable().optional(),
   gst_number: z.string().trim().max(40).nullable().optional(),
   amvic_number: z.string().trim().max(40).nullable().optional(),
+  hours: dealerHoursSchema.nullable().optional(),
 };
 
 /** Cross-field rule: dealer in AB must have AMVIC. salvage_yard exempt. */

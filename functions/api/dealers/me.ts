@@ -39,7 +39,12 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const setClause = fields.map(([k]) => `${k} = ?`).join(", ");
-  const values = fields.map(([, v]) => v ?? null);
+  const values = fields.map(([k, v]) => {
+    if (v === null || v === undefined) return null;
+    // hours stored as JSON TEXT
+    if (k === "hours") return JSON.stringify(v);
+    return v;
+  });
 
   try {
     await env.DB.prepare(

@@ -638,12 +638,11 @@ for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
         if (!listingId) return;
         soldBtn.disabled = true;
         try {
-          var res = await fetch('/api/listings/' + encodeURIComponent(listingId), {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'sold' }),
-          });
-          if (res.ok) {
+          var res = await fetch(
+            '/api/listings/' + encodeURIComponent(listingId) + '/mark-sold',
+            { method: 'POST' },
+          );
+          if (res.ok || res.status === 409) {
             window.location.href = '/dealer/listings/';
           } else {
             alert('Failed to mark as sold.');
