@@ -1,0 +1,74 @@
+---
+import Icon from '../atoms/Icon.astro';
+import ListingPhoto, { type ListingPhotoTone, type ListingPhotoFraming } from '../atoms/ListingPhoto.astro';
+
+interface Photo {
+  tone: ListingPhotoTone;
+  framing: ListingPhotoFraming;
+}
+
+interface Props {
+  photos: Photo[];
+  title: string;
+}
+
+const { photos, title } = Astro.props;
+---
+<dialog id="photo-lightbox" class="photo-lightbox-dialog" aria-label={`${title} — photo gallery`}>
+  <form method="dialog" class="photo-lightbox-header">
+    <button type="button" class="icon-btn" aria-label="Share" disabled>
+      <Icon name="share" size={20} />
+    </button>
+    <span class="photo-counter-text">
+      <span data-lightbox-current>1</span> / {photos.length}
+    </span>
+    <button type="submit" class="icon-btn" aria-label="Close">
+      <Icon name="close" size={22} />
+    </button>
+  </form>
+
+  <div class="photo-lightbox-main">
+    {photos.map((_p, i) => (
+      <input
+        type="radio"
+        name="lightbox-photo"
+        id={`lp-${i}`}
+        value={i}
+        checked={i === 0}
+        class="sr-only"
+        data-lightbox-radio
+      />
+    ))}
+    <div class="photo-lightbox-stage">
+      {photos.map((p, i) => (
+        <div class="photo-lightbox-slide" data-slide-idx={i} aria-hidden={i !== 0}>
+          <ListingPhoto tone={p.tone} framing={p.framing} />
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="photo-lightbox-thumbs">
+    {photos.map((p, i) => (
+      <label for={`lp-${i}`} class="photo-thumb" aria-label={`Photo ${i + 1}`}>
+        <ListingPhoto tone={p.tone} framing={p.framing} />
+      </label>
+    ))}
+  </div>
+</dialog>
+
+<script is:inline>
+  (function () {
+    var dialog = document.getElementById('photo-lightbox');
+    if (!dialog) return;
+    var radios = dialog.querySelectorAll('[data-lightbox-radio]');
+    var current = dialog.querySelector('[data-lightbox-current]');
+    radios.forEach(function (r, idx) {
+      r.addEventListener('change', function () {
+        if (r.checked && current) {
+          current.textContent = String(idx + 1);
+        }
+      });
+    });
+  })();
+</script>

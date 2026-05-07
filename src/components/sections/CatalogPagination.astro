@@ -2,24 +2,82 @@
 import Icon from '../atoms/Icon.astro';
 
 interface Props {
-  remaining: number;
+  initialShown?: number;
+  pageSize?: number;
 }
-const { remaining } = Astro.props;
+const { initialShown = 10, pageSize = 10 } = Astro.props;
 ---
-{remaining > 0 && (
-  <section style="padding:0 16px 32px">
-    <button
-      type="button"
-      class="btn btn-secondary btn-lg btn-block"
-      disabled
-      aria-disabled="true"
-      style="opacity:0.7;cursor:not-allowed"
-    >
-      Load more (<span class="num">{remaining}</span> remaining)
-      <Icon name="arrowRight" size={16} />
-    </button>
-    <p class="t-body-s ink-muted" style="text-align:center;margin-top:8px;font-size:12px">
-      Pagination wires up in Phase 2.
-    </p>
-  </section>
-)}
+<section
+  data-pagination
+  data-initial={initialShown}
+  data-page-size={pageSize}
+  style="padding:0 16px 32px"
+>
+  <button type="button" class="btn btn-secondary btn-lg btn-block" data-load-more>
+    <span data-load-more-label>Load more</span>
+    <Icon name="arrowRight" size={16} />
+  </button>
+</section>
+
+<script is:inline>
+  (function () {
+    var pagination = document.querySelector('[data-pagination]');
+    if (!pagination) return;
+    var initial = parseInt(pagination.getAttribute('data-initial') || '10', 10);
+    var pageSize = parseInt(pagination.getAttribute('data-page-size') || '10', 10);
+    var grid = document.getElementById('catalog-grid');
+    if (!grid) {
+      pagination.style.display = 'none';
+      return;
+    }
+    var btn = pagination.querySelector('[data-load-more]');
+    var label = pagination.querySelector('[data-load-more-label]');
+    var revealed = initial;
+
+    function paginate() {
+      var children = Array.prototype.slice.call(grid.querySelectorAll('[data-year]'));
+      var shown = 0;
+      var hidden = 0;
+      for (var i = 0; i < children.length; i++) {
+        var card = children[i];
+        if (card.style.display === 'none') {
+          card.classList.remove('paginated-hidden');
+          continue;
+        }
+        shown++;
+        if (shown > revealed) {
+          card.classList.add('paginated-hidden');
+          hidden++;
+        } else {
+          card.classList.remove('paginated-hidden');
+        }
+      }
+      if (hidden === 0) {
+        pagination.style.display = 'none';
+      } else {
+        pagination.style.display = '';
+        if (label) {
+          label.textContent = 'Load more (' + hidden + ' remaining)';
+        }
+      }
+    }
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        revealed += pageSize;
+        paginate();
+      });
+    }
+
+    document.addEventListener('catalog-filtered', function () {
+      revealed = initial;
+      paginate();
+    });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', paginate);
+    } else {
+      paginate();
+    }
+  })();
+</script>

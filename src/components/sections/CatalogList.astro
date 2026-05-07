@@ -24,7 +24,10 @@ const { featured, boosted, organic } = Astro.props;
       tone={featured.tone}
     />
   )}
-  <div style={`display:grid;grid-template-columns:1fr 1fr;gap:16px;${featured ? 'margin-top:16px' : ''}`}>
+  <div
+    id="catalog-grid"
+    style={`display:grid;grid-template-columns:1fr 1fr;gap:16px;${featured ? 'margin-top:16px' : ''}`}
+  >
     {boosted.map((l) => (
       <BoostedListingCard
         year={l.year}

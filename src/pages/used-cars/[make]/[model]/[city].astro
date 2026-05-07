@@ -158,7 +158,11 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
 
   <FilterPillBar />
 
-  <p class="t-body-s ink-muted" style="padding:12px 16px 0;font-size:12px">
+  <p
+    id="catalog-counter"
+    class="t-body-s ink-muted"
+    style="padding:12px 16px 0;font-size:12px"
+  >
     Showing <span class="num">{visibleCount}</span> of <span class="num">{catalog.totalCount}</span> listings
   </p>
 
@@ -169,7 +173,7 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
     citySlug={city!}
   />
 
-  <CatalogPagination remaining={catalog.remaining} />
+  <CatalogPagination initialShown={10} />
 
   <ModelCrossLinks
     brandSlug={make!}
@@ -184,4 +188,70 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
     items={modelFaqs}
     heading={`Common questions about ${brand.name} ${modelInfo.name}`}
   />
+
+  <script is:inline>
+    (function () {
+      window.applyCatalogFilters = function () {
+        var params = new URLSearchParams(window.location.search);
+        var rawYear = params.get('year') || '';
+        var yearFilter = rawYear.split(',').filter(Boolean);
+        var sortKey = params.get('sort') || 'newest';
+        var grid = document.getElementById('catalog-grid');
+        if (!grid) return;
+        var cards = Array.prototype.slice.call(grid.querySelectorAll('[data-year]'));
+        var visible = 0;
+        for (var i = 0; i < cards.length; i++) {
+          var card = cards[i];
+          var year = card.getAttribute('data-year');
+          var matchYear = yearFilter.length === 0 || yearFilter.indexOf(year) !== -1;
+          if (matchYear) {
+            card.style.display = '';
+            visible++;
+          } else {
+            card.style.display = 'none';
+          }
+        }
+        var visibleCards = cards.filter(function (c) { return c.style.display !== 'none'; });
+        visibleCards.sort(function (a, b) {
+          var aTier = a.getAttribute('data-tier') === 'boosted' ? 0 : 1;
+          var bTier = b.getAttribute('data-tier') === 'boosted' ? 0 : 1;
+          if (aTier !== bTier) return aTier - bTier;
+          if (sortKey === 'price-asc') {
+            return Number(a.getAttribute('data-price')) - Number(b.getAttribute('data-price'));
+          }
+          if (sortKey === 'price-desc') {
+            return Number(b.getAttribute('data-price')) - Number(a.getAttribute('data-price'));
+          }
+          if (sortKey === 'km-asc') {
+            return Number(a.getAttribute('data-mileage')) - Number(b.getAttribute('data-mileage'));
+          }
+          if (sortKey === 'year-desc') {
+            return Number(b.getAttribute('data-year')) - Number(a.getAttribute('data-year'));
+          }
+          return 0;
+        });
+        for (var j = 0; j < visibleCards.length; j++) {
+          grid.appendChild(visibleCards[j]);
+        }
+        var counter = document.getElementById('catalog-counter');
+        if (counter) {
+          counter.innerHTML = 'Showing <span class="num">' + visible + '</span> of <span class="num">' + cards.length + '</span> listings';
+        }
+        document.dispatchEvent(new CustomEvent('catalog-filtered'));
+      };
+
+      function init() {
+        if (window.location.search) {
+          window.applyCatalogFilters();
+        } else {
+          document.dispatchEvent(new CustomEvent('catalog-filtered'));
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </BaseLayout>

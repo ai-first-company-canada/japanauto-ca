@@ -29,6 +29,7 @@ const options: Array<{ k: string; label: string; sub: string }> = [
             name="sort"
             value={o.k}
             checked={i === 0}
+            data-sort-input
             style="position:absolute;opacity:0;pointer-events:none"
           />
           <span class="radio" aria-hidden="true" style="margin-top:2px"></span>
@@ -42,7 +43,8 @@ const options: Array<{ k: string; label: string; sub: string }> = [
     <div class="sheet-action">
       <button
         class="btn btn-primary btn-block"
-        type="submit"
+        type="button"
+        data-apply="sort"
         style="height:48px"
       >
         Apply sort
@@ -50,3 +52,49 @@ const options: Array<{ k: string; label: string; sub: string }> = [
     </div>
   </form>
 </dialog>
+
+<script is:inline>
+  (function () {
+    var dialog = document.getElementById('sort-filter');
+    if (!dialog) return;
+
+    function syncFromUrl() {
+      var params = new URLSearchParams(window.location.search);
+      var sortVal = params.get('sort') || 'newest';
+      var inputs = dialog.querySelectorAll('[data-sort-input]');
+      inputs.forEach(function (rb) {
+        rb.checked = rb.value === sortVal;
+      });
+    }
+
+    var pill = document.querySelector('[data-pill-key="sort"]');
+    if (pill) {
+      pill.addEventListener('click', syncFromUrl);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', syncFromUrl);
+    } else {
+      syncFromUrl();
+    }
+
+    var applyBtn = dialog.querySelector('[data-apply="sort"]');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', function () {
+        var checked = dialog.querySelector('[data-sort-input]:checked');
+        var val = checked ? checked.value : 'newest';
+        var params = new URLSearchParams(window.location.search);
+        if (val === 'newest') {
+          params.delete('sort');
+        } else {
+          params.set('sort', val);
+        }
+        var qs = params.toString();
+        var newUrl = window.location.pathname + (qs ? '?' + qs : '');
+        window.history.replaceState({}, '', newUrl);
+        dialog.close();
+        if (window.syncFilterPills) window.syncFilterPills();
+        if (window.applyCatalogFilters) window.applyCatalogFilters();
+      });
+    }
+  })();
+</script>

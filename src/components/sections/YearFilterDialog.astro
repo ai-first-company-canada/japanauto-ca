@@ -36,6 +36,8 @@ const years: Array<{ y: number; count: number; disabled?: boolean }> = [
             name="year"
             value={y}
             disabled={disabled}
+            checked
+            data-year-input
             style="position:absolute;opacity:0;pointer-events:none"
           />
           <span class="checkbox" aria-hidden="true"></span>
@@ -50,14 +52,16 @@ const years: Array<{ y: number; count: number; disabled?: boolean }> = [
       <div style="display:flex;gap:12px">
         <button
           class="btn btn-secondary"
-          type="reset"
+          type="button"
+          data-clear="year"
           style="flex:0 0 auto;height:48px;padding:0 16px"
         >
           Clear
         </button>
         <button
           class="btn btn-primary btn-block"
-          type="submit"
+          type="button"
+          data-apply="year"
           style="flex:1;height:48px"
         >
           Apply
@@ -66,3 +70,67 @@ const years: Array<{ y: number; count: number; disabled?: boolean }> = [
     </div>
   </form>
 </dialog>
+
+<script is:inline>
+  (function () {
+    var dialog = document.getElementById('year-filter');
+    if (!dialog) return;
+
+    function syncFromUrl() {
+      var params = new URLSearchParams(window.location.search);
+      var raw = params.get('year') || '';
+      var picked = raw.split(',').filter(Boolean);
+      var inputs = dialog.querySelectorAll('[data-year-input]');
+      inputs.forEach(function (cb) {
+        if (cb.disabled) {
+          cb.checked = false;
+          return;
+        }
+        cb.checked = picked.length === 0 || picked.indexOf(cb.value) !== -1;
+      });
+    }
+
+    var pill = document.querySelector('[data-pill-key="year"]');
+    if (pill) {
+      pill.addEventListener('click', syncFromUrl);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', syncFromUrl);
+    } else {
+      syncFromUrl();
+    }
+
+    var applyBtn = dialog.querySelector('[data-apply="year"]');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', function () {
+        var inputs = dialog.querySelectorAll('[data-year-input]:not([disabled])');
+        var checked = [];
+        var total = 0;
+        inputs.forEach(function (cb) {
+          total++;
+          if (cb.checked) checked.push(cb.value);
+        });
+        var params = new URLSearchParams(window.location.search);
+        if (checked.length === 0 || checked.length === total) {
+          params.delete('year');
+        } else {
+          params.set('year', checked.join(','));
+        }
+        var qs = params.toString();
+        var newUrl = window.location.pathname + (qs ? '?' + qs : '');
+        window.history.replaceState({}, '', newUrl);
+        dialog.close();
+        if (window.syncFilterPills) window.syncFilterPills();
+        if (window.applyCatalogFilters) window.applyCatalogFilters();
+      });
+    }
+
+    var clearBtn = dialog.querySelector('[data-clear="year"]');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        var inputs = dialog.querySelectorAll('[data-year-input]:not([disabled])');
+        inputs.forEach(function (cb) { cb.checked = true; });
+      });
+    }
+  })();
+</script>

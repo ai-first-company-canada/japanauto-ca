@@ -1,0 +1,143 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../components/sections/PageHeading.astro';
+import DealerCard from '../../components/sections/DealerCard.astro';
+import AmvicVerifyBlock from '../../components/sections/AmvicVerifyBlock.astro';
+import ListingFeed from '../../components/sections/ListingFeed.astro';
+import { DEALER_PROFILES, type DealerHours } from '../../data/dealer-stubs';
+import { MODELS_BY_BRAND } from '../../data/models-stubs';
+import { TIER_1_CITIES } from '../../data/brand-content';
+import { getCatalogForModelCity, type CatalogListing } from '../../data/catalog-stubs';
+
+export function getStaticPaths() {
+  return Object.keys(DEALER_PROFILES).map((slug) => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params;
+const dealer = DEALER_PROFILES[slug!]!;
+
+const allListings: CatalogListing[] = [];
+const seenSlugs = new Set<string>();
+for (const make of Object.keys(MODELS_BY_BRAND)) {
+  for (const model of MODELS_BY_BRAND[make]!) {
+    for (const city of TIER_1_CITIES) {
+      const cat = getCatalogForModelCity(make, model.slug, model.name, city.slug);
+      for (const l of [...cat.boosted, ...cat.organic]) {
+        if (l.dealer === dealer.name && !seenSlugs.has(l.slug)) {
+          seenSlugs.add(l.slug);
+          allListings.push(l);
+        }
+      }
+    }
+  }
+}
+
+const displayedListings = allListings.slice(0, Math.min(allListings.length, dealer.listingsCount));
+
+const DOW_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+type HoursSpec = {
+  '@type': 'OpeningHoursSpecification';
+  dayOfWeek: string;
+  opens: string;
+  closes: string;
+};
+
+const hoursSpecs: HoursSpec[] = dealer.hours.flatMap((h: DealerHours) => {
+  if (h.h.includes('Closed')) return [];
+  const parts = h.h.split(' – ');
+  const opens = parts[0];
+  const closes = parts[1];
+  if (!opens || !closes) return [];
+  return h.dow.map((dow) => ({
+    '@type': 'OpeningHoursSpecification' as const,
+    dayOfWeek: DOW_NAMES[dow]!,
+    opens,
+    closes,
+  }));
+});
+
+const title = `${dealer.name} — Used Japanese cars in ${dealer.city}, ${dealer.province} — japanauto.ca`;
+const description = `${dealer.name} is a ${dealer.badge.toLowerCase()} used Japanese car dealer in ${dealer.city}. ${displayedListings.length} listings available.`;
+const canonical = `https://japanauto.ca/dealers/${slug}/`;
+
+const schemaLD = [
+  {
+    '@type': 'AutoDealer',
+    '@id': canonical + '#dealer',
+    name: dealer.name,
+    telephone: dealer.phoneTel,
+    email: dealer.email,
+    url: dealer.webHref,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: dealer.address.split(',')[0]!.trim(),
+      addressLocality: dealer.city,
+      addressRegion: dealer.province,
+      addressCountry: 'CA',
+    },
+    openingHoursSpecification: hoursSpecs,
+    areaServed: dealer.city,
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Dealers', item: 'https://japanauto.ca/dealers/' },
+      { '@type': 'ListItem', position: 3, name: dealer.name, item: canonical },
+    ],
+  },
+];
+
+const subtitle = `${dealer.badge} · ${dealer.city}, ${dealer.province} · <span class="num">${displayedListings.length}</span> Japanese cars available`;
+---
+<BaseLayout {title} {description} {canonical} {schemaLD}>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">{`${dealer.name} dealer profile, ${dealer.city}, ${dealer.province}`}</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: 'Dealers', href: '/dealers/' },
+    { label: dealer.name },
+  ]} />
+
+  <PageHeading title={dealer.name} subtitle={subtitle} />
+
+  <DealerCard dealer={dealer} sold={false} />
+
+  {dealer.province === 'AB' && dealer.type === 'dealer' && dealer.amvic && (
+    <AmvicVerifyBlock dealer={dealer} />
+  )}
+
+  {displayedListings.length > 0 && (
+    <ListingFeed
+      heading={`${dealer.name} — current listings`}
+      listings={displayedListings.map((l) => ({
+        year: l.year,
+        make: l.make,
+        model: l.model,
+        trim: l.trim,
+        km: l.km,
+        drive: l.drive,
+        transmission: l.transmission,
+        price: l.price,
+        listed: l.listed,
+        dealer: l.dealer,
+        badge: l.badge,
+        reduced: l.reduced,
+        variant: l.variant,
+        tone: l.tone,
+        slug: l.slug,
+      }))}
+    />
+  )}
+</BaseLayout>

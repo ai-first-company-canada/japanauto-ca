@@ -28,7 +28,15 @@ const {
 const kmStr = km.toLocaleString('en-US');
 const priceStr = price.toLocaleString('en-US');
 ---
-<a href={href} class="card boosted" style="overflow:hidden;display:flex;flex-direction:column">
+<a
+  href={href}
+  class="card boosted"
+  data-year={year}
+  data-price={price}
+  data-mileage={km}
+  data-tier="boosted"
+  style="overflow:hidden;display:flex;flex-direction:column"
+>
   <div class="thumb">
     <CarSilhouette variant={variant} tone={tone} />
   </div>

@@ -16,23 +16,66 @@ const {
   <button
     type="button"
     class="pill"
+    data-pill-key="year"
     data-state={yearActive ? 'selected' : 'default'}
     onclick="document.getElementById('year-filter').showModal()"
     aria-label={`Filter by year — currently ${yearLabel}`}
   >
     <span style="color:var(--color-ink-muted)">Year:</span>
-    <span style="font-weight:600">{yearLabel}</span>
+    <span class="pill-value" style="font-weight:600">{yearLabel}</span>
     <Icon name="chevronDown" size={12} />
   </button>
   <button
     type="button"
     class="pill"
+    data-pill-key="sort"
     data-state="emphasis"
     onclick="document.getElementById('sort-filter').showModal()"
     aria-label={`Sort listings — currently ${sortLabel}`}
   >
     <span style="color:var(--color-ink-muted)">Sort:</span>
-    <span style="font-weight:600">{sortLabel}</span>
+    <span class="pill-value" style="font-weight:600">{sortLabel}</span>
     <Icon name="chevronDown" size={12} />
   </button>
 </div>
+
+<script is:inline>
+  (function () {
+    var SORT_LABELS = {
+      'newest': 'Newest first',
+      'price-asc': 'Price: low to high',
+      'price-desc': 'Price: high to low',
+      'km-asc': 'Mileage: low to high',
+      'year-desc': 'Year: newest to oldest',
+      'distance': 'Distance from me',
+    };
+    function syncPills() {
+      var params = new URLSearchParams(window.location.search);
+      var yearVal = params.get('year');
+      var sortVal = params.get('sort') || 'newest';
+      var yearPill = document.querySelector('[data-pill-key="year"]');
+      var sortPill = document.querySelector('[data-pill-key="sort"]');
+      if (yearPill) {
+        var yLabel = yearPill.querySelector('.pill-value');
+        if (yLabel) {
+          yLabel.textContent = yearVal
+            ? yearVal.split(',').sort().reverse().join(', ')
+            : 'All years';
+        }
+        yearPill.setAttribute('data-state', yearVal ? 'selected' : 'default');
+      }
+      if (sortPill) {
+        var sLabel = sortPill.querySelector('.pill-value');
+        if (sLabel) {
+          sLabel.textContent = SORT_LABELS[sortVal] || 'Newest first';
+        }
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', syncPills);
+    } else {
+      syncPills();
+    }
+    window.syncFilterPills = syncPills;
+  })();
+</script>

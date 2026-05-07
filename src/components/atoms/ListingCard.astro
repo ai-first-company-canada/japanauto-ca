@@ -37,7 +37,15 @@ const priceStyle = sold
   ? 'font-size:18px;font-weight:600;color:#0A0A0A;text-decoration:line-through;opacity:0.5;letter-spacing:-0.01em'
   : 'font-size:18px;font-weight:600;color:#0A0A0A;letter-spacing:-0.01em';
 ---
-<a href={href} class="card" style="overflow:hidden;display:flex;flex-direction:column">
+<a
+  href={href}
+  class="card"
+  data-year={year}
+  data-price={price}
+  data-mileage={km}
+  data-tier="organic"
+  style="overflow:hidden;display:flex;flex-direction:column"
+>
   <div class="thumb">
     <CarSilhouette variant={variant} tone={tone} />
   </div>

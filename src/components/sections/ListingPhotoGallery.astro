@@ -22,10 +22,25 @@ const main = photos[0]!;
   >
     <ListingPhoto tone={main.tone} framing={main.framing} />
 
+    <button
+      type="button"
+      class="photo-main-button"
+      aria-label="View all photos"
+      onclick="document.getElementById('photo-lightbox').showModal()"
+    ></button>
+
     <div style="position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:5px;pointer-events:none">
       {photos.map((_, i) => (
         <span style={`width:6px;height:6px;border-radius:3px;background:${i === 0 ? 'var(--color-accent)' : 'rgba(140,140,140,0.6)'}`}></span>
       ))}
     </div>
+
+    <button
+      type="button"
+      class="photo-counter-overlay"
+      onclick="document.getElementById('photo-lightbox').showModal()"
+    >
+      {photos.length} photos · Tap to view all
+    </button>
   </div>
 </section>

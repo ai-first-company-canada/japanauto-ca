@@ -17,6 +17,7 @@ import ListingFeed from '../../../components/sections/ListingFeed.astro';
 import CrossCmaListings from '../../../components/sections/CrossCmaListings.astro';
 import FaqSection from '../../../components/sections/FaqSection.astro';
 import StickyContactBar from '../../../components/sections/StickyContactBar.astro';
+import PhotoLightbox from '../../../components/sections/PhotoLightbox.astro';
 
 import { TIER_1_CITIES } from '../../../data/brand-content';
 import { MODELS_BY_BRAND } from '../../../data/models-stubs';
@@ -246,6 +247,10 @@ const stickyPhoto = photos[0]!;
   />
 
   <ListingPhotoGallery
+    photos={photos}
+    title={`${listing.year} ${listing.make} ${listing.model} ${listing.trim}`}
+  />
+  <PhotoLightbox
     photos={photos}
     title={`${listing.year} ${listing.make} ${listing.model} ${listing.trim}`}
   />
