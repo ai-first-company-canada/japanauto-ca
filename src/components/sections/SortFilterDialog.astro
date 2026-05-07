@@ -88,7 +88,7 @@ const options: Array<{ k: string; label: string; sub: string }> = [
         } else {
           params.set('sort', val);
         }
-        var qs = params.toString();
+        var qs = params.toString().replaceAll('%2C', ',');
         var newUrl = window.location.pathname + (qs ? '?' + qs : '');
         window.history.replaceState({}, '', newUrl);
         dialog.close();

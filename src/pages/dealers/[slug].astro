@@ -112,7 +112,7 @@ const subtitle = `${dealer.badge} · ${dealer.city}, ${dealer.province} · <span
 
   <PageHeading title={dealer.name} subtitle={subtitle} />
 
-  <DealerCard dealer={dealer} sold={false} />
+  <DealerCard dealer={dealer} sold={false} showProfileLink={false} />
 
   {dealer.province === 'AB' && dealer.type === 'dealer' && dealer.amvic && (
     <AmvicVerifyBlock dealer={dealer} />

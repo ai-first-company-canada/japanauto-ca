@@ -116,7 +116,7 @@ const years: Array<{ y: number; count: number; disabled?: boolean }> = [
         } else {
           params.set('year', checked.join(','));
         }
-        var qs = params.toString();
+        var qs = params.toString().replaceAll('%2C', ',');
         var newUrl = window.location.pathname + (qs ? '?' + qs : '');
         window.history.replaceState({}, '', newUrl);
         dialog.close();

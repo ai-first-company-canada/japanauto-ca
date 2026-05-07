@@ -4,9 +4,10 @@ import type { DealerProfile } from '../../data/dealer-stubs';
 interface Props {
   dealer: DealerProfile;
   sold: boolean;
+  showProfileLink?: boolean;
 }
 
-const { dealer, sold } = Astro.props;
+const { dealer, sold, showProfileLink = true } = Astro.props;
 
 const initial = dealer.name.charAt(0);
 
@@ -14,13 +15,11 @@ interface ContactRow {
   label: string;
   value: string;
   href: string;
-  ext?: boolean;
 }
 
 const contactRows: ContactRow[] = [
   { label: 'Phone', value: dealer.phone, href: `tel:${dealer.phoneTel}` },
   { label: 'Email', value: dealer.email, href: `mailto:${dealer.email}` },
-  { label: 'Web',   value: `${dealer.web} →`, href: `/dealers/${dealer.slug}/`, ext: false },
 ];
 ---
 <section style="padding:32px 16px 0">
@@ -71,8 +70,6 @@ const contactRows: ContactRow[] = [
           </span>
           <a
             href={c.href}
-            target={c.ext ? '_blank' : undefined}
-            rel={c.ext ? 'noopener' : undefined}
             style="font-size:14px;color:var(--color-ink-strong);text-decoration:none;font-weight:500"
           >
             {c.value}
@@ -81,14 +78,16 @@ const contactRows: ContactRow[] = [
       ))}
     </div>
 
-    <a
-      href={`/dealers/${dealer.slug}/`}
-      style="display:inline-block;margin-top:16px;font-size:13px;font-weight:500;color:var(--color-accent);text-decoration:none"
-    >
-      {sold
-        ? 'View other listings from this dealer →'
-        : `View dealer profile and all ${dealer.listingsCount} listings →`}
-    </a>
+    {showProfileLink && (
+      <a
+        href={`/dealers/${dealer.slug}/`}
+        style="display:inline-block;margin-top:16px;font-size:13px;font-weight:500;color:var(--color-accent);text-decoration:none"
+      >
+        {sold
+          ? 'View other listings from this dealer →'
+          : `View dealer profile and all ${dealer.listingsCount} listings →`}
+      </a>
+    )}
   </div>
 </section>
 
