@@ -41,7 +41,6 @@ const groups: Array<{ title: string; items: Array<{ label: string; href: string 
       { label: 'List your inventory', href: '/dealers/list/' },
       { label: 'How it works', href: '/dealers/how-it-works/' },
       { label: 'Pricing', href: '/dealers/pricing/' },
-      { label: 'Sign in', href: '/sign-in/' },
     ],
   },
   {
@@ -53,6 +52,14 @@ const groups: Array<{ title: string; items: Array<{ label: string; href: string 
       { label: 'Privacy', href: '/privacy/' },
     ],
   },
+];
+
+interface AccountItem { label: string; href: string; state: 'signed-in' | 'signed-out'; }
+const accountItems: AccountItem[] = [
+  { label: 'Sign in',                state: 'signed-out', href: '/dealer/login/' },
+  { label: 'Create dealer account',  state: 'signed-out', href: '/dealer/signup/' },
+  { label: 'Dashboard',              state: 'signed-in',  href: '/dealer/dashboard/' },
+  { label: 'Sign out',               state: 'signed-in',  href: '/dealer/logout/' },
 ];
 ---
 <dialog id="menu-drawer" class="dialog-fullscreen" aria-label="Site menu">
@@ -104,9 +111,38 @@ const groups: Array<{ title: string; items: Array<{ label: string; href: string 
     </section>
   ))}
 
+  <section style="border-top:1px solid var(--color-divider)">
+    <h3 class="t-caption" style="padding:20px 16px 8px;font-size:11px">Account</h3>
+    <ul>
+      {accountItems.map((it) => (
+        <li data-auth-state={it.state} style="display:none">
+          <a
+            href={it.href}
+            style="display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px;font-size:16px;font-weight:500;color:var(--color-ink-strong)"
+          >
+            <span>{it.label}</span>
+            <Icon name="chevronRight" size={18} />
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
   <div style="padding:32px 16px 24px;border-top:1px solid var(--color-divider)">
     <p class="t-caption ink-muted" style="font-size:10px;line-height:16px;text-transform:none;letter-spacing:0">
       © 2026 japanauto.ca · Made in Canada
     </p>
   </div>
 </dialog>
+
+<script is:inline>
+  (function () {
+    var hasSession = document.cookie.split('; ').some(function (c) {
+      return c.indexOf('jc_session=') === 0 && c !== 'jc_session=';
+    });
+    var state = hasSession ? 'signed-in' : 'signed-out';
+    document.querySelectorAll('[data-auth-state="' + state + '"]').forEach(function (el) {
+      el.style.display = '';
+    });
+  })();
+</script>

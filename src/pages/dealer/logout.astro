@@ -1,0 +1,19 @@
+---
+import AuthLayout from '../../layouts/AuthLayout.astro';
+---
+<AuthLayout
+  title="Signing out — japanauto.ca"
+  description="Signing out of your dealer account"
+  canonical="https://japanauto.ca/dealer/logout/"
+>
+  <p class="t-body-m" style="text-align:center;padding:48px 0">Signing out…</p>
+
+  <script is:inline>
+    (async function () {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (_) { /* ignore */ }
+      window.location.href = '/';
+    })();
+  </script>
+</AuthLayout>

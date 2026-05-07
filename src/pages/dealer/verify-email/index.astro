@@ -1,0 +1,34 @@
+---
+import AuthLayout from '../../../layouts/AuthLayout.astro';
+---
+<AuthLayout
+  title="Verify email — japanauto.ca"
+  description="Confirm your email address for your dealer account"
+  canonical="https://japanauto.ca/dealer/verify-email/"
+>
+  <h1 class="t-display-m" style="font-size:26px;line-height:32px;margin-bottom:8px">Verifying your email…</h1>
+
+  <div class="auth-info-box" data-info-box>
+    Token validation pending Phase 6 (Resend integration).
+    Once verification is live, your account will be marked verified automatically.
+    Contact <a href="mailto:support@japanauto.ca" style="color:var(--color-accent);font-weight:500">support@japanauto.ca</a>
+    if you need manual verification.
+  </div>
+
+  <p class="auth-link-row">
+    <a href="/dealer/login/">Back to sign in</a>
+  </p>
+
+  <script is:inline>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var token = params.get('token') || '';
+      if (!token) return;
+      fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token }),
+      }).catch(function () {});
+    })();
+  </script>
+</AuthLayout>

@@ -1,0 +1,304 @@
+---
+import AuthLayout from '../../layouts/AuthLayout.astro';
+import { TIER_1_CITIES } from '../../data/brand-content';
+
+const PROVINCES: Array<{ code: string; name: string }> = [
+  { code: 'AB', name: 'Alberta' },
+  { code: 'BC', name: 'British Columbia' },
+  { code: 'ON', name: 'Ontario' },
+  { code: 'QC', name: 'Québec' },
+  { code: 'MB', name: 'Manitoba' },
+  { code: 'SK', name: 'Saskatchewan' },
+  { code: 'NS', name: 'Nova Scotia' },
+  { code: 'NB', name: 'New Brunswick' },
+  { code: 'NL', name: 'Newfoundland and Labrador' },
+  { code: 'PE', name: 'Prince Edward Island' },
+  { code: 'YT', name: 'Yukon' },
+  { code: 'NT', name: 'Northwest Territories' },
+  { code: 'NU', name: 'Nunavut' },
+];
+---
+<AuthLayout
+  title="Create dealer account — japanauto.ca"
+  description="Create a japanauto.ca dealer account to list used Japanese cars across Canada"
+  canonical="https://japanauto.ca/dealer/signup/"
+>
+  <h1 class="t-display-m" style="font-size:26px;line-height:32px;margin-bottom:8px">Create dealer account</h1>
+  <p class="t-body-m ink-muted" style="margin-bottom:32px">List used Japanese cars on japanauto.ca</p>
+
+  <form id="signup-form" novalidate>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="name">Dealership name</label>
+      <input
+        class="auth-form-input"
+        id="name"
+        name="name"
+        type="text"
+        required
+        minlength="2"
+        maxlength="120"
+        autocomplete="organization"
+        placeholder="Maple Auto Group"
+      />
+      <div class="auth-form-error" data-field-error="name"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label">Account type</label>
+      <div class="auth-radio-group">
+        <label class="auth-radio-option">
+          <input type="radio" name="type" value="dealer" checked />
+          <span>Dealer</span>
+        </label>
+        <label class="auth-radio-option">
+          <input type="radio" name="type" value="salvage_yard" />
+          <span>Salvage yard</span>
+        </label>
+      </div>
+      <div class="auth-form-error" data-field-error="type"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="email">Email</label>
+      <input
+        class="auth-form-input"
+        id="email"
+        name="email"
+        type="email"
+        required
+        autocomplete="email"
+        placeholder="you@example.ca"
+      />
+      <div class="auth-form-error" data-field-error="email"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="password">Password</label>
+      <input
+        class="auth-form-input"
+        id="password"
+        name="password"
+        type="password"
+        required
+        minlength="10"
+        autocomplete="new-password"
+      />
+      <div class="auth-form-error" data-field-error="password">Use 10 or more characters</div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="phone">Phone</label>
+      <input
+        class="auth-form-input"
+        id="phone"
+        name="phone"
+        type="tel"
+        required
+        autocomplete="tel"
+        placeholder="(403) 555-1234"
+      />
+      <div class="auth-form-error" data-field-error="phone"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="province">Province</label>
+      <select class="auth-form-input" id="province" name="province" required>
+        <option value="">Select province</option>
+        {PROVINCES.map((p) => (
+          <option value={p.code}>{p.name}</option>
+        ))}
+      </select>
+      <div class="auth-form-error" data-field-error="province"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="city-select">City</label>
+      <select class="auth-form-input" id="city-select" name="city_select" required>
+        <option value="">Select city</option>
+        {TIER_1_CITIES.map((c) => (
+          <option value={c.name}>{c.name}</option>
+        ))}
+        <option value="__other__">Other (specify)</option>
+      </select>
+      <input
+        class="auth-form-input"
+        id="city-other"
+        name="city_other"
+        type="text"
+        minlength="2"
+        maxlength="80"
+        placeholder="City name"
+        style="display:none;margin-top:8px"
+      />
+      <div class="auth-form-error" data-field-error="city"></div>
+    </div>
+
+    <div class="auth-form-group" id="amvic-group" style="display:none">
+      <label class="auth-form-label" for="amvic_number">AMVIC number</label>
+      <input
+        class="auth-form-input"
+        id="amvic_number"
+        name="amvic_number"
+        type="text"
+        maxlength="40"
+        placeholder="e.g. 1234567"
+      />
+      <div class="auth-form-error" data-field-error="amvic_number">
+        AMVIC number is mandatory for dealers in Alberta
+      </div>
+    </div>
+
+    <div
+      class="auth-form-error"
+      data-form-error
+      style="text-align:center;margin-bottom:16px"
+    ></div>
+
+    <button class="btn btn-primary auth-submit" type="submit">Create account</button>
+
+    <p class="auth-link-row" style="font-size:11px;color:var(--color-ink-muted);margin-top:16px">
+      By creating an account you agree to our
+      <a href="/terms/" style="color:var(--color-ink-default);text-decoration:underline">Terms</a>
+      and
+      <a href="/privacy/" style="color:var(--color-ink-default);text-decoration:underline">Privacy Policy</a>.
+    </p>
+  </form>
+
+  <p class="auth-link-row">
+    Already have an account? <a href="/dealer/login/">Sign in</a>
+  </p>
+
+  <script is:inline>
+    (function () {
+      var form = document.getElementById('signup-form');
+      if (!form) return;
+
+      var provinceSel = form.querySelector('[name="province"]');
+      var amvicGroup = document.getElementById('amvic-group');
+      var amvicInput = amvicGroup ? amvicGroup.querySelector('input') : null;
+      var typeRadios = form.querySelectorAll('[name="type"]');
+      var citySelect = document.getElementById('city-select');
+      var cityOther = document.getElementById('city-other');
+      var btn = form.querySelector('button[type="submit"]');
+
+      function selectedType() {
+        var checked = form.querySelector('[name="type"]:checked');
+        return checked ? checked.value : 'dealer';
+      }
+
+      function toggleAmvic() {
+        var show = provinceSel.value === 'AB' && selectedType() === 'dealer';
+        if (!amvicGroup || !amvicInput) return;
+        if (show) {
+          amvicGroup.style.display = '';
+          amvicInput.required = true;
+        } else {
+          amvicGroup.style.display = 'none';
+          amvicInput.required = false;
+          amvicInput.value = '';
+        }
+      }
+
+      function toggleCityOther() {
+        if (!cityOther) return;
+        if (citySelect.value === '__other__') {
+          cityOther.style.display = '';
+          cityOther.required = true;
+        } else {
+          cityOther.style.display = 'none';
+          cityOther.required = false;
+          cityOther.value = '';
+        }
+      }
+
+      provinceSel.addEventListener('change', toggleAmvic);
+      typeRadios.forEach(function (r) { r.addEventListener('change', toggleAmvic); });
+      citySelect.addEventListener('change', toggleCityOther);
+      toggleAmvic();
+      toggleCityOther();
+
+      function clearErrors() {
+        form.querySelectorAll('[data-field-error]').forEach(function (el) {
+          el.textContent = '';
+        });
+        var formErr = form.querySelector('[data-form-error]');
+        if (formErr) formErr.textContent = '';
+      }
+
+      function setFormError(msg) {
+        var el = form.querySelector('[data-form-error]');
+        if (el) el.textContent = msg;
+      }
+
+      function slugify(s) {
+        return s.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 60) || 'dealer';
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        clearErrors();
+        btn.disabled = true;
+        btn.textContent = 'Creating account…';
+
+        var name = form.name.value.trim();
+        var cityRaw = citySelect.value === '__other__'
+          ? cityOther.value.trim()
+          : citySelect.value;
+
+        var payload = {
+          type: selectedType(),
+          name: name,
+          slug: slugify(name),
+          email: form.email.value.trim(),
+          password: form.password.value,
+          phone: form.phone.value.trim(),
+          city: cityRaw,
+          province: provinceSel.value,
+        };
+        if (amvicInput && amvicInput.value.trim()) {
+          payload.amvic_number = amvicInput.value.trim();
+        }
+
+        try {
+          var res = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.status === 201) {
+            window.location.href = '/dealer/dashboard/';
+            return;
+          }
+
+          var err = {};
+          try { err = await res.json(); } catch (_) {}
+
+          if (res.status === 422 && Array.isArray(err.issues)) {
+            err.issues.forEach(function (issue) {
+              var path = issue.path && issue.path[0];
+              if (!path) return;
+              var key = path === 'slug' ? 'name' : path;
+              var fieldEl = form.querySelector('[data-field-error="' + key + '"]');
+              if (fieldEl) fieldEl.textContent = issue.message;
+            });
+          } else if (res.status === 409) {
+            setFormError(err.message || 'Email already registered');
+          } else if (res.status === 429) {
+            setFormError('Too many signups from this network. Try again later.');
+          } else {
+            setFormError(err.message || 'Sign up failed. Try again.');
+          }
+        } catch (_) {
+          setFormError('Network error. Check your connection.');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Create account';
+        }
+      });
+    })();
+  </script>
+</AuthLayout>

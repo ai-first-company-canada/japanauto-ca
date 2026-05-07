@@ -1,0 +1,98 @@
+---
+import AuthLayout from '../../../layouts/AuthLayout.astro';
+---
+<AuthLayout
+  title="Reset password — japanauto.ca"
+  description="Set a new password for your dealer account"
+  canonical="https://japanauto.ca/dealer/reset-password/"
+>
+  <h1 class="t-display-m" style="font-size:26px;line-height:32px;margin-bottom:8px">Reset password</h1>
+  <p class="t-body-m ink-muted" style="margin-bottom:32px">
+    Choose a new password for your dealer account.
+  </p>
+
+  <form id="reset-form" novalidate>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="password">New password</label>
+      <input
+        class="auth-form-input"
+        id="password"
+        name="password"
+        type="password"
+        required
+        minlength="10"
+        autocomplete="new-password"
+      />
+      <div class="auth-form-error" data-field-error="new_password">Use 10 or more characters</div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="confirm">Confirm password</label>
+      <input
+        class="auth-form-input"
+        id="confirm"
+        name="confirm"
+        type="password"
+        required
+        minlength="10"
+        autocomplete="new-password"
+      />
+      <div class="auth-form-error" data-field-error="confirm"></div>
+    </div>
+
+    <div
+      class="auth-form-error"
+      data-form-error
+      style="text-align:center;margin-bottom:16px"
+    ></div>
+
+    <button class="btn btn-primary auth-submit" type="submit">Set new password</button>
+  </form>
+
+  <div class="auth-info-box" data-info-box style="display:none">
+    Reset link not yet active — Phase 6 wires Resend integration.
+    Contact <a href="mailto:support@japanauto.ca" style="color:var(--color-accent);font-weight:500">support@japanauto.ca</a>
+    for password issues.
+  </div>
+
+  <p class="auth-link-row">
+    <a href="/dealer/login/">Back to sign in</a>
+  </p>
+
+  <script is:inline>
+    (function () {
+      var form = document.getElementById('reset-form');
+      if (!form) return;
+      var btn = form.querySelector('button[type="submit"]');
+      var info = document.querySelector('[data-info-box]');
+      var params = new URLSearchParams(window.location.search);
+      var token = params.get('token') || '';
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        form.querySelectorAll('[data-field-error]').forEach(function (el) { el.textContent = ''; });
+        var formErr = form.querySelector('[data-form-error]');
+        if (formErr) formErr.textContent = '';
+
+        if (form.password.value !== form.confirm.value) {
+          var fieldEl = form.querySelector('[data-field-error="confirm"]');
+          if (fieldEl) fieldEl.textContent = 'Passwords do not match';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        try {
+          await fetch('/api/auth/password-reset/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token, new_password: form.password.value }),
+          });
+        } catch (_) {}
+        if (info) info.style.display = '';
+        btn.disabled = false;
+        btn.textContent = 'Set new password';
+      });
+    })();
+  </script>
+</AuthLayout>

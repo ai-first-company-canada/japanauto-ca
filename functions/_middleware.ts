@@ -20,6 +20,7 @@
 
 import type { Env } from "../types/env";
 import { resolveCity, type CityResolution } from "./api/_lib/geolocation";
+import { verifyAccessToken } from "./api/_lib/auth";
 
 /**
  * Pages Functions data bag — used to pass geolocation + bot detection
@@ -31,6 +32,29 @@ import { resolveCity, type CityResolution } from "./api/_lib/geolocation";
 export interface MiddlewareData {
   geo?: CityResolution;
   isBot?: boolean;
+  dealerId?: string;
+}
+
+/**
+ * Auth-guarded path predicate for /dealer/* routes.
+ *
+ * Public auth pages (login, signup, logout, forgot-password, reset-password/[token],
+ * verify-email/[token]) are exempt — visiting them while logged out is the whole
+ * point. Everything else under /dealer/ requires a valid jc_access JWT.
+ */
+function isDealerProtected(pathname: string): boolean {
+  if (!pathname.startsWith("/dealer/")) return false;
+  const trimmed = pathname.replace(/\/$/, "");
+  const exempt = new Set([
+    "/dealer/login",
+    "/dealer/signup",
+    "/dealer/logout",
+    "/dealer/forgot-password",
+  ]);
+  if (exempt.has(trimmed)) return false;
+  if (pathname.startsWith("/dealer/reset-password/")) return false;
+  if (pathname.startsWith("/dealer/verify-email/")) return false;
+  return true;
 }
 
 /**
@@ -86,6 +110,26 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 2. Bot tag (cheap UA sniff)
   const ua = request.headers.get("user-agent") ?? "";
   md.isBot = BOT_UA_RE.test(ua);
+
+  // 2b. Auth guard for /dealer/* paths (except auth pages themselves).
+  //     Redirects to /dealer/login?next=<path> when access token is missing
+  //     or invalid. JWT signature + expiry are verified here so downstream
+  //     handlers can rely on md.dealerId.
+  if (isDealerProtected(url.pathname)) {
+    const cookieHeader = request.headers.get("cookie") ?? "";
+    const accessMatch = /(?:^|;\s*)jc_access=([^;]+)/.exec(cookieHeader);
+    const accessToken = accessMatch?.[1];
+    const loginUrl = `${url.origin}/dealer/login/?next=${encodeURIComponent(url.pathname)}`;
+
+    if (!accessToken) {
+      return Response.redirect(loginUrl, 302);
+    }
+    const payload = await verifyAccessToken(accessToken, env);
+    if (!payload) {
+      return Response.redirect(loginUrl, 302);
+    }
+    md.dealerId = payload.sub;
+  }
 
   // 3. CORS preflight for /api/*
   if (isApi && request.method === "OPTIONS") {

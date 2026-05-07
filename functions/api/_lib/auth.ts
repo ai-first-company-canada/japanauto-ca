@@ -232,6 +232,9 @@ export function buildAuthCookies(
   return [
     `jc_access=${accessToken}; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=${accessTtl}`,
     `jc_refresh=${refreshToken}; Path=/api/auth; HttpOnly${secure}; SameSite=Lax; Max-Age=${refreshTtl}`,
+    // Non-HttpOnly UI hint cookie — value carries no auth, only presence is used
+    // by client JS to swap Sign in / Dashboard menu state. Mirrors refresh TTL.
+    `jc_session=1; Path=/${secure}; SameSite=Lax; Max-Age=${refreshTtl}`,
   ];
 }
 
@@ -240,5 +243,6 @@ export function buildLogoutCookies(env: Env): string[] {
   return [
     `jc_access=; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=0`,
     `jc_refresh=; Path=/api/auth; HttpOnly${secure}; SameSite=Lax; Max-Age=0`,
+    `jc_session=; Path=/${secure}; SameSite=Lax; Max-Age=0`,
   ];
 }
