@@ -128,7 +128,12 @@ export async function hashRefreshToken(token: string): Promise<string> {
 // Password hashing — PBKDF2-SHA256
 // ============================================================================
 
-const PBKDF2_ITERATIONS = 600_000;
+// Workers runtime hard-caps PBKDF2 at 100,000 iterations per WebCrypto.
+// (NotSupportedError: "iteration counts above 100000 are not supported".)
+// 100k SHA-256 is comparable to Django's default; verifyPassword reads the
+// iteration count from the stored hash, so we can migrate to Argon2 later
+// without invalidating existing passwords.
+const PBKDF2_ITERATIONS = 100_000;
 const PBKDF2_SALT_BYTES = 16;
 const PBKDF2_HASH_BYTES = 32;
 
