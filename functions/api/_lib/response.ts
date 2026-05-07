@@ -12,21 +12,35 @@ const JSON_HEADERS = {
   "cache-control": "private, no-store",
 } as const;
 
+/**
+ * Merge JSON defaults onto caller-supplied headers without dropping multi-value
+ * entries (specifically `set-cookie`). Spreading a `Headers` instance with
+ * `{...headers}` produces an empty object — it has no own enumerable keys —
+ * which is how every cookie this API ever set was silently swallowed.
+ */
+function mergeHeaders(init: HeadersInit | undefined): Headers {
+  const out = new Headers(init);
+  for (const [k, v] of Object.entries(JSON_HEADERS)) {
+    if (!out.has(k)) out.set(k, v);
+  }
+  return out;
+}
+
 /** 200 OK with JSON body. */
 export function json<T>(data: T, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(data), {
-    status: 200,
-    ...init,
-    headers: { ...JSON_HEADERS, ...(init.headers ?? {}) },
+    status: init.status ?? 200,
+    statusText: init.statusText,
+    headers: mergeHeaders(init.headers),
   });
 }
 
 /** 201 Created. */
 export function created<T>(data: T, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(data), {
-    status: 201,
-    ...init,
-    headers: { ...JSON_HEADERS, ...(init.headers ?? {}) },
+    status: init.status ?? 201,
+    statusText: init.statusText,
+    headers: mergeHeaders(init.headers),
   });
 }
 

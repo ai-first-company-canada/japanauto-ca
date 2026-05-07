@@ -154,7 +154,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const response = await next();
 
   // 5. Apply security headers + per-request CORS to API responses.
+  //    `new Headers(response.headers)` collapses multiple Set-Cookie entries
+  //    into one comma-joined value (Workers Headers iteration semantics), so
+  //    we lift them via getSetCookie() and re-append them individually.
+  const setCookies = response.headers.getSetCookie();
   const headers = new Headers(response.headers);
+  if (setCookies.length > 0) {
+    headers.delete("set-cookie");
+    for (const c of setCookies) headers.append("set-cookie", c);
+  }
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
 
   if (isApi) {
