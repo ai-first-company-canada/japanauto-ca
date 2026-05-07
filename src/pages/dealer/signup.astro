@@ -1,6 +1,5 @@
 ---
 import AuthLayout from '../../layouts/AuthLayout.astro';
-import { TIER_1_CITIES } from '../../data/brand-content';
 
 const PROVINCES: Array<{ code: string; name: string }> = [
   { code: 'AB', name: 'Alberta' },
@@ -83,7 +82,10 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         minlength="10"
         autocomplete="new-password"
       />
-      <div class="auth-form-error" data-field-error="password">Use 10 or more characters</div>
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Use at least 10 characters
+      </p>
+      <div class="auth-form-error" data-field-error="password"></div>
     </div>
 
     <div class="auth-form-group">
@@ -95,8 +97,11 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         type="tel"
         required
         autocomplete="tel"
-        placeholder="(403) 555-1234"
+        placeholder="+1 (403) 555-1234"
       />
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Canadian phone in any format. Example: (403) 555-1234
+      </p>
       <div class="auth-form-error" data-field-error="phone"></div>
     </div>
 
@@ -114,11 +119,7 @@ const PROVINCES: Array<{ code: string; name: string }> = [
     <div class="auth-form-group">
       <label class="auth-form-label" for="city-select">City</label>
       <select class="auth-form-input" id="city-select" name="city_select" required>
-        <option value="">Select city</option>
-        {TIER_1_CITIES.map((c) => (
-          <option value={c.name}>{c.name}</option>
-        ))}
-        <option value="__other__">Other (specify)</option>
+        <option value="">Select province first</option>
       </select>
       <input
         class="auth-form-input"
@@ -173,6 +174,13 @@ const PROVINCES: Array<{ code: string; name: string }> = [
       var form = document.getElementById('signup-form');
       if (!form) return;
 
+      var PROVINCE_CITIES = {
+        AB: [['calgary', 'Calgary'], ['edmonton', 'Edmonton']],
+        BC: [['vancouver', 'Vancouver']],
+        ON: [['toronto', 'Toronto'], ['ottawa', 'Ottawa']],
+        QC: [['montreal', 'Montreal']],
+      };
+
       var provinceSel = form.querySelector('[name="province"]');
       var amvicGroup = document.getElementById('amvic-group');
       var amvicInput = amvicGroup ? amvicGroup.querySelector('input') : null;
@@ -201,7 +209,7 @@ const PROVINCES: Array<{ code: string; name: string }> = [
 
       function toggleCityOther() {
         if (!cityOther) return;
-        if (citySelect.value === '__other__') {
+        if (citySelect.value === 'other') {
           cityOther.style.display = '';
           cityOther.required = true;
         } else {
@@ -211,18 +219,46 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         }
       }
 
-      provinceSel.addEventListener('change', toggleAmvic);
+      function syncCities() {
+        var prov = provinceSel.value;
+        citySelect.innerHTML = '';
+        var first = document.createElement('option');
+        first.value = '';
+        first.textContent = prov ? 'Select city' : 'Select province first';
+        citySelect.appendChild(first);
+        if (!prov) {
+          toggleCityOther();
+          return;
+        }
+        var options = PROVINCE_CITIES[prov] || [];
+        options.forEach(function (pair) {
+          var opt = document.createElement('option');
+          opt.value = pair[0];
+          opt.textContent = pair[1];
+          citySelect.appendChild(opt);
+        });
+        var other = document.createElement('option');
+        other.value = 'other';
+        other.textContent = 'Other (specify)';
+        citySelect.appendChild(other);
+        toggleCityOther();
+      }
+
+      provinceSel.addEventListener('change', function () {
+        toggleAmvic();
+        syncCities();
+      });
       typeRadios.forEach(function (r) { r.addEventListener('change', toggleAmvic); });
       citySelect.addEventListener('change', toggleCityOther);
       toggleAmvic();
-      toggleCityOther();
+      syncCities();
 
       function clearErrors() {
         form.querySelectorAll('[data-field-error]').forEach(function (el) {
           el.textContent = '';
         });
         var formErr = form.querySelector('[data-form-error]');
-        if (formErr) formErr.textContent = '';
+        if (formErr) formErr.innerHTML = '';
       }
 
       function setFormError(msg) {
@@ -237,6 +273,19 @@ const PROVINCES: Array<{ code: string; name: string }> = [
           .slice(0, 60) || 'dealer';
       }
 
+      function normalizePhone(raw) {
+        var trimmed = (raw || '').trim();
+        var digits = trimmed.replace(/\D/g, '');
+        if (digits.length === 10) return '+1' + digits;
+        if (digits.length === 11 && digits.charAt(0) === '1') return '+' + digits;
+        return trimmed;
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
         clearErrors();
@@ -244,9 +293,14 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         btn.textContent = 'Creating account…';
 
         var name = form.name.value.trim();
-        var cityRaw = citySelect.value === '__other__'
-          ? cityOther.value.trim()
-          : citySelect.value;
+        var cityName = '';
+        if (citySelect.value === 'other') {
+          cityName = cityOther.value.trim();
+        } else if (citySelect.value) {
+          var picked = (PROVINCE_CITIES[provinceSel.value] || [])
+            .find(function (p) { return p[0] === citySelect.value; });
+          cityName = picked ? picked[1] : citySelect.value;
+        }
 
         var payload = {
           type: selectedType(),
@@ -254,8 +308,8 @@ const PROVINCES: Array<{ code: string; name: string }> = [
           slug: slugify(name),
           email: form.email.value.trim(),
           password: form.password.value,
-          phone: form.phone.value.trim(),
-          city: cityRaw,
+          phone: normalizePhone(form.phone.value),
+          city: cityName,
           province: provinceSel.value,
         };
         if (amvicInput && amvicInput.value.trim()) {
@@ -276,15 +330,31 @@ const PROVINCES: Array<{ code: string; name: string }> = [
 
           var err = {};
           try { err = await res.json(); } catch (_) {}
+          var formErr = form.querySelector('[data-form-error]');
 
           if (res.status === 422 && Array.isArray(err.issues)) {
+            var mapped = 0;
+            var unmapped = [];
             err.issues.forEach(function (issue) {
               var path = issue.path && issue.path[0];
-              if (!path) return;
               var key = path === 'slug' ? 'name' : path;
-              var fieldEl = form.querySelector('[data-field-error="' + key + '"]');
-              if (fieldEl) fieldEl.textContent = issue.message;
+              var fieldEl = key
+                ? form.querySelector('[data-field-error="' + key + '"]')
+                : null;
+              if (fieldEl) {
+                fieldEl.textContent = issue.message;
+                mapped++;
+              } else {
+                unmapped.push((path ? path + ': ' : '') + issue.message);
+              }
             });
+            if (unmapped.length) {
+              formErr.innerHTML = unmapped.map(function (m) {
+                return '<div>' + escapeHtml(m) + '</div>';
+              }).join('');
+            } else if (mapped === 0) {
+              formErr.textContent = err.message || 'Validation failed';
+            }
           } else if (res.status === 409) {
             setFormError(err.message || 'Email already registered');
           } else if (res.status === 429) {

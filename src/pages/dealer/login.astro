@@ -66,12 +66,17 @@ import AuthLayout from '../../layouts/AuthLayout.astro';
           el.textContent = '';
         });
         var formErr = form.querySelector('[data-form-error]');
-        if (formErr) formErr.textContent = '';
+        if (formErr) formErr.innerHTML = '';
       }
 
       function setFormError(msg) {
         var el = form.querySelector('[data-form-error]');
         if (el) el.textContent = msg;
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
 
       form.addEventListener('submit', async function (e) {
@@ -103,12 +108,28 @@ import AuthLayout from '../../layouts/AuthLayout.astro';
           try { err = await res.json(); } catch (_) {}
 
           if (res.status === 422 && Array.isArray(err.issues)) {
+            var mapped = 0;
+            var unmapped = [];
             err.issues.forEach(function (issue) {
               var path = issue.path && issue.path[0];
-              if (!path) return;
-              var fieldEl = form.querySelector('[data-field-error="' + path + '"]');
-              if (fieldEl) fieldEl.textContent = issue.message;
+              var fieldEl = path
+                ? form.querySelector('[data-field-error="' + path + '"]')
+                : null;
+              if (fieldEl) {
+                fieldEl.textContent = issue.message;
+                mapped++;
+              } else {
+                unmapped.push((path ? path + ': ' : '') + issue.message);
+              }
             });
+            var formErr = form.querySelector('[data-form-error]');
+            if (unmapped.length) {
+              formErr.innerHTML = unmapped.map(function (m) {
+                return '<div>' + escapeHtml(m) + '</div>';
+              }).join('');
+            } else if (mapped === 0) {
+              formErr.textContent = err.message || 'Validation failed';
+            }
           } else if (res.status === 401) {
             setFormError('Invalid email or password');
           } else if (res.status === 429) {
