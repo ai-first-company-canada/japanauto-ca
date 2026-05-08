@@ -10,7 +10,7 @@ import FaqAccordion from '../../../components/atoms/FaqAccordion.astro';
 import Author from '../../../components/atoms/Author.astro';
 import {
   breadcrumbList, faqPage,
-  AUTHOR_BIOS, CATEGORY_LABELS, readingTime, stripUrl,
+  authorBio, deriveBlogCategory, CATEGORY_LABELS, readingTime, stripUrl,
 } from '../../../lib/schema-graph';
 
 export async function getStaticPaths() {
@@ -23,8 +23,9 @@ const d = entry.data;
 const { Content } = await render(entry);
 const url = Astro.url.toString();
 
-const author = AUTHOR_BIOS[d.author];
-const categoryLabel = CATEGORY_LABELS[d.category] ?? d.category;
+const author = authorBio(d.author);
+const categoryKey = deriveBlogCategory(d.slug, d.category);
+const categoryLabel = CATEGORY_LABELS[categoryKey] ?? categoryKey;
 const minRead = readingTime(d.estimated_word_count);
 const tldrShort = (d.tldr_draft ?? '').slice(0, 160).replace(/\s+\S*$/, '') + '…';
 

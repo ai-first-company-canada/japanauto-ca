@@ -8,7 +8,7 @@ import Footer from '../../components/sections/Footer.astro';
 import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
 import {
   breadcrumbList, itemList,
-  AUTHOR_BIOS, CATEGORY_LABELS, CATEGORY_ORDER, formatIsoDate,
+  authorBio, deriveBlogCategory, CATEGORY_LABELS, CATEGORY_ORDER, formatIsoDate,
 } from '../../lib/schema-graph';
 
 const url = Astro.url.toString();
@@ -17,9 +17,10 @@ const posts = await getCollection('blog');
 const byCategory = new Map<string, typeof posts>();
 for (const c of CATEGORY_ORDER) byCategory.set(c, []);
 for (const p of posts) {
-  const arr = byCategory.get(p.data.category) ?? [];
+  const cat = deriveBlogCategory(p.data.slug, p.data.category);
+  const arr = byCategory.get(cat) ?? [];
   arr.push(p);
-  byCategory.set(p.data.category, arr);
+  byCategory.set(cat, arr);
 }
 // Sort each category by pub_date desc, fall back to title for stability.
 for (const [k, arr] of byCategory) {
@@ -90,7 +91,7 @@ const schemaLD = [
         </header>
         <div style="display:flex;flex-direction:column;gap:12px">
           {items.map((p) => {
-            const author = AUTHOR_BIOS[p.data.author];
+            const author = authorBio(p.data.author);
             const tldr = (p.data.tldr_draft ?? '').slice(0, 140).replace(/\s+\S*$/, '') + '…';
             return (
               <a

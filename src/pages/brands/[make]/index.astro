@@ -23,6 +23,11 @@ const { Content } = await render(entry);
 const url = Astro.url.toString();
 const makeName = capitalize(d.make);
 
+// canadian_angle moved into body in Phase 4.2 — fall back to meta_description
+// for the opening paragraph and Schema.org Brand description.
+const brandDescription = d.canadian_angle ?? d.meta_description;
+const headline = d.h1 ?? d.suggested_h1;
+
 // Top 6 model tiles for this brand from the catalog stubs (Phase 1.2).
 // Phase 5 will replace this with a live D1 query.
 const models = (MODELS_BY_BRAND[d.make] ?? []).slice(0, 6);
@@ -36,7 +41,7 @@ const schemaLD = [
     '@type': 'Brand',
     '@id': `${url}#brand`,
     name: makeName,
-    description: d.canadian_angle,
+    description: brandDescription,
     sameAs: d.serp_competitors?.find((u) => /\.(ca|com)\/?$/.test(u) || /^https?:\/\/[^/]+\.(ca|com)\//i.test(u)) ? [d.serp_competitors[0]] : undefined,
   },
   {
@@ -80,7 +85,7 @@ const schemaLD = [
   />
 
   <section class="section" style="padding-top:8px">
-    <h1 class="t-display-l" style="font-size:32px;line-height:40px;margin-bottom:8px">{d.suggested_h1}</h1>
+    <h1 class="t-display-l" style="font-size:32px;line-height:40px;margin-bottom:8px">{headline}</h1>
     <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;max-width:680px">{d.meta_description}</p>
   </section>
 

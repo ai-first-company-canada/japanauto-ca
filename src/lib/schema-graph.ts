@@ -78,11 +78,23 @@ function absUrl(href: string, pageUrl: string): string {
   }
 }
 
-export const AUTHOR_BIOS: Record<
-  string,
-  { name: string; url: string; role: string }
-> = {
+export interface AuthorBio {
+  name: string;
+  url: string;
+  role: string;
+}
+
+// Author lookup accepts BOTH the Phase 4.1 skeleton slug form
+// (`marc-tremblay`) and the Phase 4.2 content-factory display-name form
+// (`Marc Tremblay`). Falls back to the editorial collective when no key
+// matches so a missing/typo author never breaks rendering.
+const AUTHOR_BIOS_BY_KEY: Record<string, AuthorBio> = {
   'marc-tremblay': {
+    name: 'Marc Tremblay',
+    url: `${SITE}/editorial-team/#marc-tremblay`,
+    role: 'Senior Editor — Eastern Canada',
+  },
+  'marc tremblay': {
     name: 'Marc Tremblay',
     url: `${SITE}/editorial-team/#marc-tremblay`,
     role: 'Senior Editor — Eastern Canada',
@@ -92,12 +104,55 @@ export const AUTHOR_BIOS: Record<
     url: `${SITE}/editorial-team/#sarah-chen`,
     role: 'Senior Editor — Western Canada',
   },
+  'sarah chen': {
+    name: 'Sarah Chen',
+    url: `${SITE}/editorial-team/#sarah-chen`,
+    role: 'Senior Editor — Western Canada',
+  },
   'japanauto-editorial': {
     name: 'japanauto.ca Editorial',
     url: `${SITE}/editorial-team/`,
     role: 'Editorial Team',
   },
+  'japanauto.ca editorial team': {
+    name: 'japanauto.ca Editorial',
+    url: `${SITE}/editorial-team/`,
+    role: 'Editorial Team',
+  },
 };
+
+const EDITORIAL_FALLBACK: AuthorBio = AUTHOR_BIOS_BY_KEY['japanauto-editorial']!;
+
+export function authorBio(raw: string | undefined): AuthorBio {
+  if (!raw) return EDITORIAL_FALLBACK;
+  return AUTHOR_BIOS_BY_KEY[raw.toLowerCase().trim()] ?? EDITORIAL_FALLBACK;
+}
+
+/** @deprecated retained for back-compat — call `authorBio()` instead. */
+export const AUTHOR_BIOS = AUTHOR_BIOS_BY_KEY;
+
+/**
+ * Phase 4.2 dropped `category` from blog frontmatter. When missing, infer
+ * one from slug heuristics. Mirrors the 5 categories of the Phase 4.1 hub.
+ */
+export function deriveBlogCategory(slug: string, fallback: string | undefined): string {
+  if (fallback) return fallback;
+  const s = slug.toLowerCase();
+  if (/(amvic|omvic|uvip|riv|gst|hst|pst|tax|regulation|safety-inspection|salvage)/.test(s)) {
+    return 'canada-regulations';
+  }
+  if (/(market|quarterly|recall|trends|adoption)/.test(s)) {
+    return 'news';
+  }
+  if (/(buying|how-to-buy|pre-purchase|inspection|guide)/.test(s)) {
+    return 'buying-guides';
+  }
+  if (/(parts|oem|aftermarket|filter|brake|battery|fluid)/.test(s)) {
+    return 'parts-101';
+  }
+  // Model deep-dives — anything with a brand+model combo
+  return 'model-deep-dives';
+}
 
 export const CATEGORY_LABELS: Record<string, string> = {
   'buying-guides': 'Buying guides',

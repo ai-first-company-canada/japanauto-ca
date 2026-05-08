@@ -18,9 +18,21 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
+// YAML 1.2 parses bare `2026-05-15` as a JS Date object. Phase 4.1 skeletons
+// quoted dates so they came through as strings; Phase 4.2 content factory
+// emits unquoted dates. Accept both shapes and normalize to an ISO-prefix
+// string the templates can render via formatIsoDate().
+const dateOrString = z.preprocess(
+  (v) => (v instanceof Date ? v.toISOString().slice(0, 10) : v),
+  z.string(),
+);
+
 // ---------------------------------------------------------------------------
 // brand
 // ---------------------------------------------------------------------------
+// Phase 4.2 content drop dropped some fields from frontmatter into the body
+// (canadian_angle, long_tail_keywords) — relaxed to optional. New fields
+// content factory added: author, h1.
 const brand = defineCollection({
   loader: glob({ pattern: '*.md', base: './src/content/brands' }),
   schema: z.object({
@@ -34,16 +46,18 @@ const brand = defineCollection({
     title_tag: z.string(),
     meta_description: z.string(),
     suggested_h1: z.string(),
+    h1: z.string().optional(),
     suggested_h2_blocks: z.array(z.string()).default([]),
     faq_questions: z.array(z.string()).default([]),
-    canadian_angle: z.string(),
+    canadian_angle: z.string().optional(),
     ai_citation_hooks: z.array(z.string()).default([]),
     serp_competitors: z.array(z.string()).default([]),
     serp_features_observed: z.string().optional(),
     confidence: z.enum(['high', 'medium', 'low']).default('medium'),
     notes: z.string().optional(),
+    author: z.string().optional(),
     body_status: z.enum(['skeleton', 'in-review', 'published']).default('skeleton'),
-    last_reviewed: z.string().optional(),
+    last_reviewed: dateOrString.optional(),
     reviewer_role: z.string().optional(),
   }),
 });
@@ -54,10 +68,12 @@ const brand = defineCollection({
 const blog = defineCollection({
   loader: glob({ pattern: '*.md', base: './src/content/blog' }),
   schema: z.object({
+    // Phase 4.2 dropped category from frontmatter — derive at render time
+    // from slug. why_this_topic and section_outline moved into body.
     category: z.enum([
       'buying-guides', 'model-deep-dives', 'canada-regulations',
       'parts-101', 'news',
-    ]),
+    ]).optional(),
     slug: z.string(),
     title: z.string(),
     h1: z.string(),
@@ -70,9 +86,9 @@ const blog = defineCollection({
     ]),
     estimated_search_volume: z.enum(['low', 'medium', 'high']),
     competition: z.enum(['low', 'medium', 'high']),
-    why_this_topic: z.string(),
+    why_this_topic: z.string().optional(),
     tldr_draft: z.string(),
-    section_outline: z.array(z.string()),
+    section_outline: z.array(z.string()).default([]),
     internal_links: z.array(z.string()).default([]),
     external_sources: z.array(z.string()).default([]),
     faq_questions: z.array(z.string()).default([]),
@@ -82,11 +98,10 @@ const blog = defineCollection({
     serp_features_observed: z.string().optional(),
     estimated_word_count: z.string().optional(),
     confidence: z.enum(['high', 'medium', 'low']).default('medium'),
-    author: z.enum(['marc-tremblay', 'sarah-chen', 'japanauto-editorial'])
-      .default('japanauto-editorial'),
+    author: z.string().default('japanauto-editorial'),
     reviewer_role: z.string().optional(),
-    pub_date: z.string().optional(),
-    last_reviewed: z.string().optional(),
+    pub_date: dateOrString.optional(),
+    last_reviewed: dateOrString.optional(),
     body_status: z.enum(['skeleton', 'in-review', 'published']).default('skeleton'),
     notes: z.string().optional(),
   }),
@@ -114,8 +129,9 @@ const glossary = defineCollection({
     ai_citation_hooks: z.array(z.string()).default([]),
     confidence: z.enum(['high', 'medium', 'low']).default('medium'),
     notes: z.string().optional(),
-    last_reviewed: z.string().optional(),
+    last_reviewed: dateOrString.optional(),
     reviewer_role: z.string().optional(),
+    author: z.string().optional(),
     body_status: z.enum(['skeleton', 'in-review', 'published']).default('skeleton'),
   }),
 });
