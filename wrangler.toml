@@ -65,8 +65,8 @@ USED_CAR_AGE_CAP_YEARS = "10"
 # delivery hash appears in every imagedelivery.net URL served to browsers).
 # Andrew sets these via Cloudflare Pages dashboard → Settings → Environment Variables
 # (production scope) so build-time inlining picks them up. Leave blank here.
-CLOUDFLARE_ACCOUNT_ID = ""
-PUBLIC_CLOUDFLARE_ACCOUNT_HASH = ""
+CLOUDFLARE_ACCOUNT_ID = "04ae31726622f48ccb5804e43f3731c9"
+PUBLIC_CLOUDFLARE_ACCOUNT_HASH = "_uF_SQXNbIqd9DzNhDYe4A"
 
 # ============================================================================
 # SECRETS (set via `wrangler pages secret put NAME --project-name japanauto`)
