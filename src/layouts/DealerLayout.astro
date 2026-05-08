@@ -9,6 +9,10 @@ interface Props {
 }
 const { title, canonical, activeTab } = Astro.props;
 const description = 'Dealer portal — japanauto.ca';
+// Cloudflare Images delivery hash — inlined at build time via astro.config.mjs
+// vite.define so client JS can build `imagedelivery.net/<hash>/<id>/<variant>`
+// URLs without a runtime fetch.
+const cfAccountHash = (import.meta.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '') as string;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -16,6 +20,7 @@ const description = 'Dealer portal — japanauto.ca';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#FFFFFF" />
+    <meta name="cf-account-hash" content={cfAccountHash} />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content="noindex, nofollow" />

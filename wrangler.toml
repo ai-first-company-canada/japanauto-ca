@@ -61,15 +61,24 @@ JWT_ACCESS_TTL_SECONDS = "900"          # 15 min
 JWT_REFRESH_TTL_SECONDS = "2592000"     # 30 days
 LISTING_DEFAULT_TTL_DAYS = "90"
 USED_CAR_AGE_CAP_YEARS = "10"
+# Cloudflare Images — public-by-design (account_id appears in dashboard URLs;
+# delivery hash appears in every imagedelivery.net URL served to browsers).
+# Andrew sets these via Cloudflare Pages dashboard → Settings → Environment Variables
+# (production scope) so build-time inlining picks them up. Leave blank here.
+CLOUDFLARE_ACCOUNT_ID = ""
+PUBLIC_CLOUDFLARE_ACCOUNT_HASH = ""
 
 # ============================================================================
-# SECRETS (set via `wrangler secret put NAME`)
+# SECRETS (set via `wrangler pages secret put NAME --project-name japanauto`)
 # ============================================================================
-# JWT_SECRET           — HMAC-SHA256 key (256+ bits)
-# STRIPE_SECRET_KEY    — sk_live_... or sk_test_...
-# STRIPE_WEBHOOK_SECRET — whsec_...
-# RESEND_API_KEY       — re_... for transactional emails
-# DAILY_IP_HASH_SALT   — rotates daily, used for contact_reveals.ip_hash
+# JWT_SECRET                  — HMAC-SHA256 key (256+ bits)
+# STRIPE_SECRET_KEY           — sk_live_... or sk_test_...
+# STRIPE_WEBHOOK_SECRET       — whsec_...
+# RESEND_API_KEY              — re_... for transactional emails
+# DAILY_IP_HASH_SALT          — rotates daily, used for contact_reveals.ip_hash
+# CLOUDFLARE_IMAGES_API_TOKEN — Account → Cloudflare Images: Edit. Used by
+#                               /api/media/upload-url to mint Direct Upload URLs.
+#                               Create at https://dash.cloudflare.com/profile/api-tokens
 #
 # All accessed via env.<NAME> in functions; never commit.
 
@@ -80,6 +89,8 @@ USED_CAR_AGE_CAP_YEARS = "10"
 [env.preview.vars]
 ENV = "preview"
 PUBLIC_SITE_URL = "https://preview.japanauto.ca"
+CLOUDFLARE_ACCOUNT_ID = ""
+PUBLIC_CLOUDFLARE_ACCOUNT_HASH = ""
 
 # [env.dev] removed — Cloudflare Pages only supports "preview" and "production"
 # named environments. For local dev, use `wrangler pages dev` which auto-injects

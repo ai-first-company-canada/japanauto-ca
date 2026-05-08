@@ -15,7 +15,9 @@
 import type { Env } from "../../../types/env";
 import {
   dealerSchema, listingSchema, citySchema, makeSchema, modelSchema,
+  mediaPublicSchema,
   type Dealer, type Listing, type City, type Make,
+  type MediaPublic, type MediaFinalizeInput,
 } from "../../../lib/schema";
 
 // ============================================================================
@@ -225,6 +227,130 @@ export async function getActiveFeaturedSlot(
     LIMIT 1
   `).bind(makeId, modelId, city).first();
   return row ? (row as unknown as FeaturedSlotRow) : null;
+}
+
+// ============================================================================
+// MEDIA (polymorphic — entity_type ∈ listing/part/dealer/featured_slot)
+// ============================================================================
+
+interface MediaRow {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  r2_key: string;
+  cf_image_id: string | null;
+  alt_text: string | null;
+  width: number | null;
+  height: number | null;
+  display_order: number;
+  is_primary: 0 | 1;
+  bytes: number | null;
+  created_at: number;
+}
+
+/**
+ * Convert a D1 media row to the public shape clients consume. Falls back to
+ * `r2_key` when `cf_image_id` is null (legacy R2-only rows would have a key
+ * like "listings/<id>/01.jpg"; current CF Images flow always sets cf_image_id
+ * and we mirror the same value into r2_key as `cf:<image_id>` to satisfy the
+ * NOT NULL constraint without conflicting with future R2 keys).
+ */
+function rowToMediaPublic(row: MediaRow): MediaPublic {
+  const image_id = row.cf_image_id ?? row.r2_key;
+  const data = {
+    id: row.id,
+    entity_type: row.entity_type,
+    entity_id: row.entity_id,
+    image_id,
+    alt_text: row.alt_text ?? "",
+    width: row.width,
+    height: row.height,
+    display_order: row.display_order,
+    is_primary: row.is_primary,
+    bytes: row.bytes,
+    created_at: row.created_at,
+  };
+  return mediaPublicSchema.parse(data);
+}
+
+/**
+ * Insert a media row after a successful Cloudflare Images Direct Upload.
+ * If `is_primary=1`, demote any existing primary for the same entity first
+ * (one primary per entity, enforced at app layer per migration comment).
+ */
+export async function createMedia(
+  env: Env, input: MediaFinalizeInput,
+): Promise<MediaPublic> {
+  const id = crypto.randomUUID();
+  const now = Math.floor(Date.now() / 1000);
+  const isPrimary = input.is_primary ? 1 : 0;
+  // r2_key is NOT NULL on the table; for CF-Images rows we encode the CF id
+  // with a `cf:` prefix so it stays unique and won't collide with future R2
+  // originals stored under e.g. "listings/<id>/01.jpg".
+  const r2Key = `cf:${input.image_id}`;
+
+  if (isPrimary === 1) {
+    await env.DB.prepare(
+      `UPDATE media SET is_primary = 0
+       WHERE entity_type = ? AND entity_id = ? AND is_primary = 1`,
+    ).bind(input.entity_type, input.entity_id).run();
+  }
+
+  await env.DB.prepare(
+    `INSERT INTO media (
+       id, entity_type, entity_id, r2_key, cf_image_id, alt_text,
+       width, height, display_order, is_primary, bytes, created_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).bind(
+    id, input.entity_type, input.entity_id, r2Key, input.image_id, input.alt_text,
+    input.width ?? null, input.height ?? null, input.display_order, isPrimary,
+    input.bytes ?? null, now,
+  ).run();
+
+  return rowToMediaPublic({
+    id, entity_type: input.entity_type, entity_id: input.entity_id,
+    r2_key: r2Key, cf_image_id: input.image_id, alt_text: input.alt_text,
+    width: input.width ?? null, height: input.height ?? null,
+    display_order: input.display_order, is_primary: isPrimary as 0 | 1,
+    bytes: input.bytes ?? null, created_at: now,
+  });
+}
+
+/** Photos for an entity, ordered display_order ASC then created_at ASC. */
+export async function getMediaForEntity(
+  env: Env, entityType: string, entityId: string,
+): Promise<MediaPublic[]> {
+  const result = await env.DB.prepare(
+    `SELECT * FROM media
+     WHERE entity_type = ? AND entity_id = ?
+     ORDER BY display_order ASC, created_at ASC`,
+  ).bind(entityType, entityId).all<MediaRow>();
+  return (result.results ?? []).map(rowToMediaPublic);
+}
+
+/**
+ * Delete a media row, but only if the requesting dealer owns the parent
+ * listing (the only entity_type wired up in Phase 2b3). Returns the deleted
+ * row's cf_image_id so a future cleanup worker can purge the underlying CF
+ * image asset; null when no row matched (not found or not owned).
+ *
+ * NOTE: only `entity_type='listing'` is enforced today. Dealer/part media
+ * lands in Phase 3 — extend this JOIN then.
+ */
+export async function deleteListingMediaById(
+  env: Env, mediaId: string, dealerId: string,
+): Promise<{ cf_image_id: string | null } | null> {
+  const row = await env.DB.prepare(
+    `SELECT m.id, m.cf_image_id
+       FROM media m
+       JOIN listings l ON l.id = m.entity_id
+      WHERE m.id = ? AND m.entity_type = 'listing' AND l.dealer_id = ?
+      LIMIT 1`,
+  ).bind(mediaId, dealerId).first<{ id: string; cf_image_id: string | null }>();
+  if (!row) return null;
+
+  await env.DB.prepare(`DELETE FROM media WHERE id = ?`).bind(mediaId).run();
+  return { cf_image_id: row.cf_image_id };
 }
 
 // ============================================================================

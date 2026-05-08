@@ -1,25 +1,44 @@
 /**
  * POST /api/media/upload-url
  *
- * Issues a one-time direct-upload URL to Cloudflare Images. The browser
- * uploads to that URL, then calls POST /api/media/finalize with the
- * returned image_id to record the row in `media`.
+ * Authenticated dealer mints a one-time Cloudflare Images Direct Creator
+ * Upload URL. The browser then PUTs the file directly to CF (server is not
+ * in the upload path), and finalises by calling POST /api/media/finalize
+ * with the returned `image_id`.
  *
- * STATUS: skeleton — actual Cloudflare Images integration TODO.
- *
- * Body: { entity_type: 'listing'|'part'|'dealer'|'featured_slot', entity_id, alt_text }
+ * Body: { entity_type: 'listing', entity_id: string }
+ *   (entity_id is verified — listing must belong to the authenticated dealer)
  *
  * Response 200:
  *   {
- *     upload_url: string,    // one-time URL (15 min TTL)
- *     image_id: string,      // returned to client; included in finalize call
+ *     upload_url: string,   // one-time, ~30 min TTL on CF side
+ *     image_id:   string,   // pass back to /finalize
  *   }
+ *
+ * Errors:
+ *   401 — missing/expired auth
+ *   403 — entity belongs to a different dealer
+ *   404 — entity not found
+ *   422 — invalid body
+ *   500 — Cloudflare Images config missing or upstream API error
+ *
+ * Reference:
+ *   https://developers.cloudflare.com/images/upload-images/direct-creator-upload/
  */
 
 import type { Env } from "../../../types/env";
 import { mediaUploadInputSchema, zodErrorToApiError } from "../../../lib/schema";
-import { jsonError, notImplemented, badRequest } from "../_lib/response";
+import {
+  json, jsonError, badRequest, notFound, forbidden, internalError,
+} from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
+import { getListingById } from "../_lib/db";
+
+interface CfDirectUploadResponse {
+  success: boolean;
+  errors?: Array<{ code: number; message: string }>;
+  result?: { id: string; uploadURL: string };
+}
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const auth = await requireDealer(request, env);
@@ -34,15 +53,54 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const err = zodErrorToApiError(parsed.error);
     return jsonError(422, err.error, err.message, err.issues);
   }
+  const { entity_type, entity_id } = parsed.data;
 
-  // TODO: ownership check — verify auth.dealerId owns the parsed.data.entity_id row.
-  // TODO: call Cloudflare Images Direct Upload endpoint:
-  //   POST https://api.cloudflare.com/client/v4/accounts/<account>/images/v2/direct_upload
-  //   with bearer token from env. Returns { uploadURL, id }.
-  // TODO: insert pending media row to D1 (or hold until finalize).
+  // Phase 2b3 wires listing media only. dealer/part/featured_slot land in Phase 3.
+  if (entity_type !== "listing") {
+    return jsonError(422, "validation_failed",
+      `entity_type='${entity_type}' upload not yet wired (Phase 3)`);
+  }
 
-  return notImplemented(
-    "Cloudflare Images direct-upload integration — TODO. " +
-    "Reference: https://developers.cloudflare.com/images/upload-images/direct-creator-upload/"
+  const listing = await getListingById(env, entity_id);
+  if (!listing) return notFound("Listing not found");
+  if (listing.dealer_id !== auth.dealerId) {
+    return forbidden("Cannot attach media to another dealer's listing");
+  }
+
+  const accountId = env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = env.CLOUDFLARE_IMAGES_API_TOKEN;
+  if (!accountId || !apiToken) {
+    return internalError(
+      "Cloudflare Images not configured — set CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_IMAGES_API_TOKEN",
+    );
+  }
+
+  // Cloudflare expects multipart/form-data even when no fields are sent. The
+  // optional `requireSignedURLs` and `metadata` fields aren't needed yet —
+  // photos are public and ownership is enforced at /finalize time.
+  const cfRes = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiToken}` },
+      body: new FormData(),
+    },
   );
+
+  if (!cfRes.ok) {
+    const errText = await cfRes.text();
+    console.error("CF Images direct_upload non-2xx", cfRes.status, errText);
+    return internalError("Image upload setup failed");
+  }
+
+  const cfData = await cfRes.json() as CfDirectUploadResponse;
+  if (!cfData.success || !cfData.result) {
+    console.error("CF Images direct_upload error", cfData.errors);
+    return internalError("Image upload setup failed");
+  }
+
+  return json({
+    upload_url: cfData.result.uploadURL,
+    image_id: cfData.result.id,
+  });
 };

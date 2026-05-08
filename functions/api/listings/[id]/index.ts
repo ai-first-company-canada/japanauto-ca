@@ -15,13 +15,14 @@ import {
   json, jsonError, notFound, forbidden, badRequest, internalError, noContent, conflict,
 } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
-import { getListingById } from "../../_lib/db";
+import { getListingById, getMediaForEntity } from "../../_lib/db";
 
 export const onRequestGet: PagesFunction<Env, "id"> = async ({ params, env }) => {
   const id = params.id as string;
   const listing = await getListingById(env, id);
   if (!listing) return notFound();
-  return json({ listing });
+  const photos = await getMediaForEntity(env, "listing", id);
+  return json({ listing, photos });
 };
 
 export const onRequestPatch: PagesFunction<Env, "id"> = async ({ request, env, params }) => {

@@ -233,6 +233,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const now = Math.floor(Date.now() / 1000);
   const ttlDays = parseInt(env.LISTING_DEFAULT_TTL_DAYS, 10);
   const expiresAt = now + ttlDays * 86400;
+  // Default 'draft' if the form omits status (back-compat with Phase 2c2a clients);
+  // Phase 2b3 form always sends 'active' or 'draft' explicitly.
+  const initialStatus = input.status ?? "draft";
 
   try {
     await env.DB.prepare(`
@@ -246,7 +249,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CAD', ?,
-        ?, ?, ?, ?, ?, 'draft', ?, 0, 0, 0, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, ?, ?
       )
     `).bind(
       id, auth.dealerId, input.make_id, input.model_id, input.year, input.trim ?? null, input.vin,
@@ -255,7 +258,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       input.engine_displacement ?? null, input.color_exterior ?? null, input.color_interior ?? null,
       input.mileage, input.condition, input.price, input.negotiable,
       input.city, input.province, slug, input.title, input.description ?? null,
-      expiresAt, now, now,
+      initialStatus, expiresAt, now, now,
     ).run();
   } catch (e) {
     if (e instanceof Error && /UNIQUE.*vin/i.test(e.message)) {
@@ -274,7 +277,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return internalError("Failed to create listing");
   }
 
-  return created({ id, slug, status: "draft" });
+  return created({ id, slug, status: initialStatus });
 };
 
 interface SlugInput {

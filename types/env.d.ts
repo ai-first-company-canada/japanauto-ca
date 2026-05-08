@@ -39,6 +39,10 @@ export interface Env {
   JWT_REFRESH_TTL_SECONDS: string;
   LISTING_DEFAULT_TTL_DAYS: string;
   USED_CAR_AGE_CAP_YEARS: string;
+  /** Cloudflare account id — used by /api/media/upload-url to call the Images API. Public (visible in dashboard URLs). */
+  CLOUDFLARE_ACCOUNT_ID: string;
+  /** Public delivery host hash for `https://imagedelivery.net/<hash>/<image_id>/<variant>`. Public by design. */
+  PUBLIC_CLOUDFLARE_ACCOUNT_HASH: string;
 
   // ==========================================================================
   // Secrets (wrangler secret put …)
@@ -48,6 +52,8 @@ export interface Env {
   STRIPE_WEBHOOK_SECRET: string;
   RESEND_API_KEY: string;
   DAILY_IP_HASH_SALT: string;
+  /** Cloudflare API token with `Account → Cloudflare Images: Edit` scope. Used by upload-url to mint direct-upload URLs. */
+  CLOUDFLARE_IMAGES_API_TOKEN: string;
 }
 
 /**

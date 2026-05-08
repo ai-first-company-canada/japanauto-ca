@@ -502,7 +502,10 @@ const listingBaseFields = {
   description: descriptionSchema,
 };
 
-export const listingCreateInputSchema = z.object(listingBaseFields);
+export const listingCreateInputSchema = z.object(listingBaseFields).extend({
+  /** Initial publish state — 'draft' (hidden) or 'active' (visible on catalog). */
+  status: z.enum(["draft", "active"]).optional(),
+});
 export type ListingCreateInput = z.infer<typeof listingCreateInputSchema>;
 
 export const listingUpdateInputSchema = z.object(listingBaseFields).partial().extend({
@@ -612,6 +615,45 @@ export const mediaUploadInputSchema = z.object({
   is_primary: z.boolean().default(false),
 });
 export type MediaUploadInput = z.infer<typeof mediaUploadInputSchema>;
+
+/**
+ * Body of POST /api/media/finalize, called after the browser PUTs the file
+ * directly to Cloudflare Images. `image_id` is the value returned by the
+ * upload-url handler.
+ */
+export const mediaFinalizeInputSchema = z.object({
+  entity_type: mediaEntityTypeSchema,
+  entity_id: idSchema,
+  image_id: z.string().trim().min(1).max(200),
+  alt_text: z.string().trim().min(1).max(200),
+  display_order: z.number().int().min(0).max(LIMITS.PHOTOS_PER_LISTING_MAX).default(0),
+  is_primary: z.boolean().default(false),
+  width: z.number().int().min(1).max(20000).nullable().optional(),
+  height: z.number().int().min(1).max(20000).nullable().optional(),
+  bytes: z.number().int().min(0).max(50_000_000).nullable().optional(),
+});
+export type MediaFinalizeInput = z.infer<typeof mediaFinalizeInputSchema>;
+
+/**
+ * Public-shape media row returned to the dealer UI. Mirrors the D1 row but
+ * with `image_id` added (derived from `cf_image_id`) for client convenience —
+ * the browser builds delivery URLs as
+ * `https://imagedelivery.net/<PUBLIC_CLOUDFLARE_ACCOUNT_HASH>/<image_id>/<variant>`.
+ */
+export const mediaPublicSchema = z.object({
+  id: idSchema,
+  entity_type: mediaEntityTypeSchema,
+  entity_id: idSchema,
+  image_id: z.string().min(1),
+  alt_text: z.string().min(1),
+  width: z.number().int().nullable(),
+  height: z.number().int().nullable(),
+  display_order: z.number().int().min(0),
+  is_primary: z.union([z.literal(0), z.literal(1)]),
+  bytes: z.number().int().nullable(),
+  created_at: timestampSchema,
+});
+export type MediaPublic = z.infer<typeof mediaPublicSchema>;
 
 // ============================================================================
 // FEATURED SLOTS (ADR-0007)

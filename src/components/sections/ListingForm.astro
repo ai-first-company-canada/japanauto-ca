@@ -345,13 +345,58 @@ for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
     </div>
   </fieldset>
 
-  <div
-    style="background:var(--color-bg-subtle);padding:24px;border-radius:8px;text-align:center;margin-bottom:24px"
-  >
-    <p class="t-body-s ink-muted">
-      Photo upload — Phase 2b3 wires Cloudflare Images Direct Upload
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">PHOTOS</legend>
+    <p class="t-body-s ink-muted" style="font-size:12px;margin-bottom:12px">
+      Up to 20 photos, 10&nbsp;MB max each. The first photo becomes the main thumbnail.
+      {mode === 'create' && (
+        <span style="display:block;margin-top:4px">
+          Save the listing first, then upload photos.
+        </span>
+      )}
     </p>
-  </div>
+
+    <div
+      data-photos-grid
+      style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:12px"
+    ></div>
+
+    <label
+      data-photo-label
+      class="btn btn-secondary"
+      style={mode === 'create'
+        ? 'cursor:not-allowed;opacity:0.5;width:100%;display:block;text-align:center'
+        : 'cursor:pointer;width:100%;display:block;text-align:center'}
+    >
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        data-photo-input
+        style="display:none"
+        disabled={mode === 'create'}
+      />
+      <span data-photo-label-text>+ Add photos</span>
+    </label>
+    <p
+      class="auth-form-error"
+      data-photo-error
+      style="margin-top:8px"
+    ></p>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">STATUS</legend>
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px">
+      <input type="radio" name="status" value="draft" />
+      <span>Draft — saved privately, not visible on the catalog</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px">
+      <input type="radio" name="status" value="active" checked />
+      <span>Active — visible to buyers immediately</span>
+    </label>
+    <div class="auth-form-error" data-field-error="status"></div>
+  </fieldset>
 
   <div
     class="auth-form-error"
@@ -499,6 +544,7 @@ for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
         negotiable: fd.get('negotiable') ? 1 : 0,
         title: (fd.get('title') || '').trim(),
         description: (fd.get('description') || '').trim() || undefined,
+        status: fd.get('status') || 'active',
       };
       // Derive province from city option's data-province attribute
       var citySelEl = form.querySelector('[name="city"]');
@@ -555,6 +601,14 @@ for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
       var negEl = form.querySelector('[name="negotiable"]');
       if (negEl) negEl.checked = l.negotiable === 1;
 
+      // Pre-select the matching status radio. 'sold'/'expired'/'flagged' don't
+      // have radio buttons — leave both unchecked so the dealer can see the
+      // implicit state and explicitly pick draft/active to transition out of it.
+      var statusRadios = form.querySelectorAll('input[name="status"]');
+      statusRadios.forEach(function (r) {
+        r.checked = r.value === l.status;
+      });
+
       // Resolve make_slug from make_id (reverse lookup)
       var makeSlug = '';
       Object.keys(MAKES_BY_SLUG).forEach(function (slug) {
@@ -563,6 +617,202 @@ for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
       if (makeSlug) makeSel.value = makeSlug;
       initialModelId = l.model_id;
       await syncModelOptions(initialModelId);
+
+      // Render existing photos (data.photos populated by GET /api/listings/:id)
+      photos = (data.photos || []).slice().sort(function (a, b) {
+        return (a.display_order || 0) - (b.display_order || 0);
+      });
+      renderPhotos();
+    }
+
+    // ============================================================================
+    // Photo upload (Cloudflare Images Direct Creator Upload)
+    // ============================================================================
+    var CF_HASH = (document.querySelector('meta[name="cf-account-hash"]') || {}).content || '';
+    var photos = [];
+    var photosGrid = form.querySelector('[data-photos-grid]');
+    var photoInput = form.querySelector('[data-photo-input]');
+    var photoLabel = form.querySelector('[data-photo-label]');
+    var photoLabelText = form.querySelector('[data-photo-label-text]');
+    var photoErr = form.querySelector('[data-photo-error]');
+    var MAX_PHOTOS = 20;
+    var MAX_BYTES = 10 * 1024 * 1024;
+
+    function escapeAttr(s) {
+      return String(s)
+        .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function imageUrl(image_id, variant) {
+      if (!CF_HASH || !image_id) return '';
+      return 'https://imagedelivery.net/' + CF_HASH + '/' +
+        encodeURIComponent(image_id) + '/' + (variant || 'public');
+    }
+
+    function renderPhotos() {
+      if (!photosGrid) return;
+      if (!photos.length) {
+        photosGrid.innerHTML = '';
+        return;
+      }
+      photosGrid.innerHTML = photos.map(function (p, i) {
+        var url = imageUrl(p.image_id, 'public');
+        var alt = escapeAttr(p.alt_text || ('Photo ' + (i + 1)));
+        var primaryBadge = p.is_primary === 1
+          ? '<span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px">MAIN</span>'
+          : '';
+        return '<div data-photo-id="' + escapeAttr(p.id) + '" ' +
+          'style="position:relative;aspect-ratio:4/3;background:var(--color-bg-subtle);border-radius:8px;overflow:hidden">' +
+          (url
+            ? '<img src="' + escapeAttr(url) + '" alt="' + alt + '" ' +
+              'style="width:100%;height:100%;object-fit:cover" />'
+            : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-ink-muted);font-size:11px">no preview</div>'
+          ) +
+          primaryBadge +
+          '<button type="button" data-delete-photo="' + escapeAttr(p.id) + '" ' +
+          'aria-label="Delete photo" ' +
+          'style="position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.7);color:#fff;border:0;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0">×</button>' +
+          '</div>';
+      }).join('');
+      photosGrid.querySelectorAll('[data-delete-photo]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          deletePhoto(btn.getAttribute('data-delete-photo'));
+        });
+      });
+    }
+
+    function setPhotoLabelBusy(busy, message) {
+      if (!photoLabel || !photoLabelText) return;
+      if (busy) {
+        photoLabel.style.cursor = 'not-allowed';
+        photoLabel.style.opacity = '0.6';
+        if (photoInput) photoInput.disabled = true;
+        photoLabelText.textContent = message || 'Uploading…';
+      } else {
+        photoLabel.style.cursor = 'pointer';
+        photoLabel.style.opacity = '1';
+        if (photoInput) photoInput.disabled = false;
+        photoLabelText.textContent = '+ Add photos';
+      }
+    }
+
+    async function uploadOne(file, listingId, displayOrder, isPrimary) {
+      // 1) Mint upload URL
+      var upRes = await fetch('/api/media/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity_type: 'listing',
+          entity_id: listingId,
+          alt_text: file.name.replace(/\.[^.]+$/, '').slice(0, 200) || 'photo',
+          display_order: displayOrder,
+          is_primary: isPrimary,
+        }),
+      });
+      if (!upRes.ok) throw new Error('upload-url HTTP ' + upRes.status);
+      var upData = await upRes.json();
+
+      // 2) PUT file directly to Cloudflare (multipart/form-data with single 'file' field)
+      var fd = new FormData();
+      fd.append('file', file);
+      var cfRes = await fetch(upData.upload_url, { method: 'POST', body: fd });
+      if (!cfRes.ok) throw new Error('cloudflare upload HTTP ' + cfRes.status);
+
+      // 3) Persist row in D1
+      var finRes = await fetch('/api/media/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity_type: 'listing',
+          entity_id: listingId,
+          image_id: upData.image_id,
+          alt_text: file.name.replace(/\.[^.]+$/, '').slice(0, 200) || 'photo',
+          display_order: displayOrder,
+          is_primary: isPrimary,
+          bytes: file.size,
+        }),
+      });
+      if (!finRes.ok) throw new Error('finalize HTTP ' + finRes.status);
+      var finData = await finRes.json();
+      return finData.media;
+    }
+
+    async function deletePhoto(mediaId) {
+      if (!mediaId) return;
+      if (!confirm('Delete this photo? This cannot be undone.')) return;
+      try {
+        var res = await fetch('/api/media/' + encodeURIComponent(mediaId), {
+          method: 'DELETE',
+        });
+        if (!res.ok && res.status !== 204) {
+          if (photoErr) photoErr.textContent = 'Failed to delete photo (HTTP ' + res.status + ').';
+          return;
+        }
+        photos = photos.filter(function (p) { return p.id !== mediaId; });
+        // If we deleted the primary, promote the new first photo client-side
+        // (server-side promotion happens on next finalize; this is just UX).
+        if (photos.length && !photos.some(function (p) { return p.is_primary === 1; })) {
+          photos[0].is_primary = 1;
+        }
+        renderPhotos();
+        if (photoErr) photoErr.textContent = '';
+      } catch (e) {
+        if (photoErr) photoErr.textContent = 'Network error deleting photo.';
+      }
+    }
+
+    if (photoInput) {
+      photoInput.addEventListener('change', async function () {
+        if (photoErr) photoErr.textContent = '';
+        var listingId = form.getAttribute('data-listing-id');
+        if (!listingId) {
+          if (photoErr) photoErr.textContent = 'Save the listing first, then add photos.';
+          photoInput.value = '';
+          return;
+        }
+        var files = Array.prototype.slice.call(photoInput.files || []);
+        if (!files.length) return;
+
+        if (photos.length + files.length > MAX_PHOTOS) {
+          if (photoErr) {
+            photoErr.textContent = 'You can have at most ' + MAX_PHOTOS +
+              ' photos per listing (currently ' + photos.length + ').';
+          }
+          photoInput.value = '';
+          return;
+        }
+
+        setPhotoLabelBusy(true, 'Uploading 1/' + files.length + '…');
+        var failed = [];
+        for (var i = 0; i < files.length; i++) {
+          var file = files[i];
+          if (file.size > MAX_BYTES) {
+            failed.push(file.name + ' (over 10 MB)');
+            continue;
+          }
+          if (!/^image\//.test(file.type)) {
+            failed.push(file.name + ' (not an image)');
+            continue;
+          }
+          setPhotoLabelBusy(true, 'Uploading ' + (i + 1) + '/' + files.length + '…');
+          try {
+            var media = await uploadOne(
+              file, listingId, photos.length,
+              /* is_primary */ photos.length === 0,
+            );
+            photos.push(media);
+            renderPhotos();
+          } catch (e) {
+            failed.push(file.name + ' (' + (e && e.message ? e.message : 'failed') + ')');
+          }
+        }
+        setPhotoLabelBusy(false);
+        photoInput.value = '';
+        if (failed.length && photoErr) {
+          photoErr.textContent = 'Some uploads failed: ' + failed.join('; ');
+        }
+      });
     }
 
     makeSel.addEventListener('change', function () {
