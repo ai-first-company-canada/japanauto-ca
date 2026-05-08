@@ -169,14 +169,16 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
       </div>
     </section>
 
-    <ListingFeed
-      heading="Latest Japanese cars in"
-      headingCity={true}
-      listings={LISTINGS}
-      ctaText="View all listings"
-      ctaHref="/used-cars/"
-      totalCount={1284}
-    />
+    <div data-latest-listings>
+      <ListingFeed
+        heading="Latest Japanese cars in"
+        headingCity={true}
+        listings={LISTINGS}
+        ctaText="View all listings"
+        ctaHref="/used-cars/"
+        totalCount={1284}
+      />
+    </div>
 
     <PopularModels models={POPULAR_MODELS} citySlug="toronto" />
 
@@ -202,4 +204,82 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
     <ChooseCityHero />
     <SellCta variant="abbreviated" />
   </div>
+
+  <script is:inline>
+    /* Phase 2c2b: replace the Latest stubs grid with real D1 listings if any
+       exist for the resolved city. Falls back to stubs when the API returns
+       empty (no data yet) or fails. */
+    (function () {
+      function escapeHTML(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+      function fmt(n) { return Number(n).toLocaleString('en-US'); }
+      function relTime(ts) {
+        var ageSec = Math.floor(Date.now() / 1000) - ts;
+        if (ageSec < 86400) return 'Listed today';
+        var d = Math.floor(ageSec / 86400);
+        if (d === 1) return 'Listed 1 day ago';
+        if (d < 7) return 'Listed ' + d + ' days ago';
+        if (d < 14) return 'Listed 1 week ago';
+        if (d < 30) return 'Listed ' + Math.floor(d / 7) + ' weeks ago';
+        return 'Listed ' + Math.floor(d / 30) + ' months ago';
+      }
+      function pretty(slug) {
+        return String(slug).split('-').map(function (w) {
+          return w.charAt(0).toUpperCase() + w.slice(1);
+        }).join(' ');
+      }
+      function cardHTML(l) {
+        var price = Math.round(l.price / 100);
+        var trim = l.trim ? ' ' + escapeHTML(l.trim) : '';
+        var img = l.primary_image_url
+          ? '<img src="' + escapeHTML(l.primary_image_url) + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" />'
+          : '';
+        return ''
+          + '<a href="/used-cars/listing/' + escapeHTML(l.slug) + '/" class="card" '
+          + 'data-year="' + l.year + '" data-price="' + price + '" data-mileage="' + l.mileage + '" '
+          + 'data-tier="' + (l.is_boosted ? 'boosted' : 'organic') + '" '
+          + 'style="overflow:hidden;display:flex;flex-direction:column">'
+          + '<div class="thumb" style="background:var(--color-bg-muted)">' + img + '</div>'
+          + '<div style="padding:14px;display:flex;flex-direction:column;gap:6px">'
+          + '<h3 class="t-h-s" style="font-size:14px;line-height:20px;font-weight:600">'
+          +   l.year + ' ' + escapeHTML(pretty(l.make_slug)) + ' ' + escapeHTML(pretty(l.model_slug)) + trim
+          + '</h3>'
+          + '<p class="t-body-s ink-muted" style="font-size:12px;line-height:16px">'
+          +   fmt(l.mileage) + ' km · ' + escapeHTML(l.transmission || 'Auto') + ' · ' + escapeHTML(l.drivetrain || 'AWD')
+          + '</p>'
+          + '<div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">'
+          +   '<span class="num" style="font-size:18px;font-weight:600;color:#0A0A0A;letter-spacing:-0.01em">CA$' + fmt(price) + '</span>'
+          + '</div>'
+          + '<p class="t-body-s ink-muted" style="font-size:11px;line-height:14px;margin-top:4px;color:var(--color-ink-subtle)">'
+          +   relTime(l.created_at) + ' · ' + escapeHTML(l.dealer_name)
+          + '</p>'
+          + '</div>'
+          + '</a>';
+      }
+
+      function run() {
+        var citySlug = document.documentElement.getAttribute('data-geo-city') || 'toronto';
+        fetch('/api/listings/recent?city=' + encodeURIComponent(citySlug) + '&limit=8', {
+          headers: { 'accept': 'application/json' },
+        }).then(function (r) {
+          if (!r.ok) return null;
+          return r.json();
+        }).then(function (data) {
+          if (!data || !data.listings || data.listings.length === 0) return;
+          var wrapper = document.querySelector('[data-latest-listings]');
+          if (!wrapper) return;
+          var grid = wrapper.querySelector('div[style*="grid-template-columns"]');
+          if (!grid) return;
+          grid.innerHTML = data.listings.map(cardHTML).join('');
+        }).catch(function () { /* keep stubs */ });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', run);
+      } else { run(); }
+    })();
+  </script>
 </BaseLayout>

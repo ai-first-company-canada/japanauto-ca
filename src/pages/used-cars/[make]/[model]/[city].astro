@@ -190,6 +190,90 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
   />
 
   <script is:inline>
+    /* Phase 2c2b: replace catalog-grid stubs with real D1 listings if any
+       exist for this (make, model, city). Falls back to stubs when the API
+       returns 404 (no model match yet) or empty boosted+organic. */
+    (function () {
+      function escapeHTML(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+      function fmt(n) { return Number(n).toLocaleString('en-US'); }
+      function relTime(ts) {
+        var ageSec = Math.floor(Date.now() / 1000) - ts;
+        if (ageSec < 86400) return 'Listed today';
+        var d = Math.floor(ageSec / 86400);
+        if (d === 1) return 'Listed 1 day ago';
+        if (d < 7) return 'Listed ' + d + ' days ago';
+        if (d < 14) return 'Listed 1 week ago';
+        if (d < 30) return 'Listed ' + Math.floor(d / 7) + ' weeks ago';
+        return 'Listed ' + Math.floor(d / 30) + ' months ago';
+      }
+      function pretty(slug) {
+        return String(slug).split('-').map(function (w) {
+          return w.charAt(0).toUpperCase() + w.slice(1);
+        }).join(' ');
+      }
+      function cardHTML(l) {
+        var price = Math.round(l.price / 100);
+        var trim = l.trim ? ' ' + escapeHTML(l.trim) : '';
+        var img = l.primary_image_url
+          ? '<img src="' + escapeHTML(l.primary_image_url) + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" />'
+          : '';
+        var tier = l.is_boosted ? 'boosted' : 'organic';
+        return ''
+          + '<a href="/used-cars/listing/' + escapeHTML(l.slug) + '/" class="card" '
+          + 'data-year="' + l.year + '" data-price="' + price + '" data-mileage="' + l.mileage + '" '
+          + 'data-tier="' + tier + '" '
+          + 'style="overflow:hidden;display:flex;flex-direction:column">'
+          + '<div class="thumb" style="background:var(--color-bg-muted)">' + img + '</div>'
+          + '<div style="padding:14px;display:flex;flex-direction:column;gap:6px">'
+          + (l.is_boosted
+              ? '<span class="badge" style="align-self:flex-start;margin-bottom:2px"><span class="dot"></span>Boosted</span>'
+              : '')
+          + '<h3 class="t-h-s" style="font-size:14px;line-height:20px;font-weight:600">'
+          +   l.year + ' ' + escapeHTML(pretty(l.make_slug)) + ' ' + escapeHTML(pretty(l.model_slug)) + trim
+          + '</h3>'
+          + '<p class="t-body-s ink-muted" style="font-size:12px;line-height:16px">'
+          +   fmt(l.mileage) + ' km · ' + escapeHTML(l.transmission || 'Auto') + ' · ' + escapeHTML(l.drivetrain || 'AWD')
+          + '</p>'
+          + '<div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">'
+          +   '<span class="num" style="font-size:18px;font-weight:600;color:#0A0A0A;letter-spacing:-0.01em">CA$' + fmt(price) + '</span>'
+          + '</div>'
+          + '<p class="t-body-s ink-muted" style="font-size:11px;line-height:14px;margin-top:4px;color:var(--color-ink-subtle)">'
+          +   relTime(l.created_at) + ' · ' + escapeHTML(l.dealer_name)
+          + '</p>'
+          + '</div>'
+          + '</a>';
+      }
+
+      var path = window.location.pathname;
+      var m = path.match(/\/used-cars\/([^/]+)\/([^/]+)\/([^/]+)\/?$/);
+      if (m) {
+        var make = m[1], model = m[2], city = m[3];
+        var params = new URLSearchParams({ make: make, model: model, city: city, per_page: '20' });
+        fetch('/api/listings?' + params.toString(), { headers: { 'accept': 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            var all = (data.boosted || []).concat(data.organic || []);
+            if (all.length === 0) return;
+            var grid = document.getElementById('catalog-grid');
+            if (!grid) return;
+            grid.innerHTML = all.map(cardHTML).join('');
+            var counter = document.getElementById('catalog-counter');
+            var total = (data.pagination && data.pagination.total) || all.length;
+            if (counter) {
+              counter.innerHTML = 'Showing <span class="num">' + all.length
+                + '</span> of <span class="num">' + total + '</span> listings';
+            }
+            if (typeof window.applyCatalogFilters === 'function') window.applyCatalogFilters();
+          })
+          .catch(function () { /* keep stubs */ });
+      }
+    })();
+
     (function () {
       window.applyCatalogFilters = function () {
         var params = new URLSearchParams(window.location.search);

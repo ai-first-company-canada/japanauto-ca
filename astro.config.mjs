@@ -2,13 +2,15 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 
-// Cloudflare Images delivery hash. Pulled from `process.env` at build time so
-// Cloudflare Pages → Build & Deploy → Environment Variables (production scope)
-// can set it once and have every static page render the correct meta tag.
-// Falls back to empty string for local builds without the var set.
+// Cloudflare Images delivery hash — inlined at build time. Set in Cloudflare
+// Pages → Build & Deploy → Environment Variables (production scope).
 const CF_ACCOUNT_HASH = process.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '';
 
-// https://astro.build/config
+// Pure-static build. Phase 2c2b dynamic routes (listing detail, dealer
+// profile) live in Pages Functions (functions/used-cars/listing/[slug].ts and
+// functions/dealers/[slug].ts) — they fetch D1 and return rendered HTML, so
+// the Astro page templates for those slugs emit empty getStaticPaths and the
+// Pages Function intercepts the request.
 export default defineConfig({
   site: 'https://japanauto.ca',
   build: {

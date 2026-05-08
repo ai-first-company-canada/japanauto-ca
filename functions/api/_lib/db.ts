@@ -104,7 +104,15 @@ export interface CatalogRow extends Listing {
   dealer_name: string;
   dealer_slug: string;
   dealer_amvic: string | null;
+  /** make.slug and make.name — joined by listRecentListings (legacy listCatalog leaves these undefined). */
+  make_slug?: string;
+  make_name?: string;
+  /** model.slug and model.name — joined by listRecentListings. */
+  model_slug?: string;
+  model_name?: string;
   primary_image_r2_key: string | null;
+  /** cf_image_id of the primary photo. listRecentListings populates this; legacy listCatalog leaves it undefined. */
+  primary_image_cf_id?: string | null;
   primary_image_alt: string | null;
   tier: 2 | 3;             // 2 = boosted, 3 = organic
   boost_amount: number;
@@ -156,6 +164,7 @@ export async function listCatalog(
       d.slug AS dealer_slug,
       d.amvic_number AS dealer_amvic,
       m.r2_key AS primary_image_r2_key,
+      m.cf_image_id AS primary_image_cf_id,
       m.alt_text AS primary_image_alt,
       CASE
         WHEN l.boost_until IS NOT NULL AND l.boost_until > CAST(strftime('%s','now') AS INTEGER) THEN 2
@@ -194,6 +203,69 @@ export async function listCatalog(
     rows: (result.results ?? []) as unknown as CatalogRow[],
     total: totalRow?.n ?? 0,
   };
+}
+
+/**
+ * Flexible "recent listings" query for homepage Latest section + dealer
+ * profile inventory feed. No make/model required; optional city filter,
+ * optional dealer_id filter. Returns same row shape as listCatalog so
+ * downstream card-building code is interchangeable.
+ */
+export interface RecentListingsParams {
+  city?: string | null;
+  dealerId?: string | null;
+  limit: number;
+}
+
+export async function listRecentListings(
+  env: Env, q: RecentListingsParams,
+): Promise<CatalogRow[]> {
+  const where: string[] = [`l.status = 'active'`];
+  const binds: (string | number)[] = [];
+  if (q.city) {
+    where.push(`l.city = ?`);
+    binds.push(q.city);
+  }
+  if (q.dealerId) {
+    where.push(`l.dealer_id = ?`);
+    binds.push(q.dealerId);
+  }
+  binds.push(q.limit);
+
+  const sql = `
+    SELECT
+      l.*,
+      d.name AS dealer_name,
+      d.slug AS dealer_slug,
+      d.amvic_number AS dealer_amvic,
+      mk.slug AS make_slug,
+      mk.name AS make_name,
+      md.slug AS model_slug,
+      md.name AS model_name,
+      m.r2_key AS primary_image_r2_key,
+      m.cf_image_id AS primary_image_cf_id,
+      m.alt_text AS primary_image_alt,
+      CASE
+        WHEN l.boost_until IS NOT NULL AND l.boost_until > CAST(strftime('%s','now') AS INTEGER) THEN 2
+        ELSE 3
+      END AS tier,
+      CASE
+        WHEN l.boost_until IS NOT NULL AND l.boost_until > CAST(strftime('%s','now') AS INTEGER) THEN l.boost_paid_cents
+        ELSE 0
+      END AS boost_amount
+    FROM listings l
+    JOIN dealers d ON d.id = l.dealer_id
+    JOIN makes mk ON mk.id = l.make_id
+    JOIN models md ON md.id = l.model_id
+    LEFT JOIN media m
+      ON m.entity_type = 'listing' AND m.entity_id = l.id AND m.is_primary = 1
+    WHERE ${where.join(" AND ")}
+    ORDER BY tier ASC, boost_amount DESC, l.created_at DESC
+    LIMIT ?
+  `;
+
+  const result = await env.DB.prepare(sql).bind(...binds).all();
+  return (result.results ?? []) as unknown as CatalogRow[];
 }
 
 export interface FeaturedSlotRow {

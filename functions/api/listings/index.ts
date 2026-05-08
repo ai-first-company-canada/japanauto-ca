@@ -125,8 +125,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     getActiveFeaturedSlot(env, make.id, model.id, q.city),
   ]);
 
-  // Build response
-  const r2BaseUrl = `${env.PUBLIC_SITE_URL}/cdn/`;          // placeholder; real URL pattern via Cloudflare Images
+  // Build response. CF Images URL pattern is
+  //   https://imagedelivery.net/<account-hash>/<image_id>/<variant>
+  // The hash is public-by-design and ships in every browser <img>.
+  const cfHash = env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? "";
+  const cfImage = (id: string | null | undefined, variant: string): string | null =>
+    id && cfHash ? `https://imagedelivery.net/${cfHash}/${id}/${variant}` : null;
+
   const cards: ListingCard[] = catalog.rows.map((row) => ({
     id: row.id,
     slug: row.slug,
@@ -141,9 +146,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     price: row.price,
     city: row.city,
     province: row.province as Province,
-    primary_image_url: row.primary_image_r2_key
-      ? `${r2BaseUrl}${row.primary_image_r2_key}`
-      : null,
+    primary_image_url: cfImage(row.primary_image_cf_id, "public"),
     dealer_name: row.dealer_name,
     dealer_slug: row.dealer_slug,
     dealer_amvic: row.dealer_amvic,
@@ -159,9 +162,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       slot_id: featuredRow.slot_id,
       promo_title: featuredRow.promo_title,
       promo_msrp_cents: featuredRow.promo_msrp_cents,
-      promo_image_url: featuredRow.promo_image_id
-        ? `${r2BaseUrl}${featuredRow.promo_image_id}`
-        : "",
+      promo_image_url: cfImage(featuredRow.promo_image_id, "public") ?? "",
       promo_url: featuredRow.promo_url,
       disclosure: featuredRow.disclosure,
       dealer_name: featuredRow.dealer_name,

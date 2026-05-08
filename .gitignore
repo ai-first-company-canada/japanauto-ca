@@ -20,6 +20,9 @@ pnpm-debug.log*
 # wrangler local state
 .wrangler/
 
+# wrangler `pages functions build` upload artifact
+_worker.bundle
+
 # Claude Code per-user settings
 .claude/settings.local.json
 
