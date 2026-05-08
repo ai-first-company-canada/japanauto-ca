@@ -546,5 +546,210 @@ export async function revokeRefreshToken(env: Env, tokenHash: string): Promise<v
   ).bind(now, tokenHash).run();
 }
 
+// ============================================================================
+// DONOR CARS (ADR-0008 — junkyard donor car directory)
+// ============================================================================
+
+export interface DonorCarDetailRow {
+  // donor_cars.*
+  id: string;
+  dealer_id: string;
+  slug: string;
+  year: number;
+  make_id: number;
+  model_id: number;
+  trim: string | null;
+  generation_code: string | null;
+  generation_range: string | null;
+  city_slug: string;
+  color_exterior: string;
+  color_exterior_full: string | null;
+  tone: string | null;
+  color_interior: string | null;
+  vin: string | null;
+  mileage: number | null;
+  engine: string | null;
+  transmission: string | null;
+  condition: "fully_available" | "partially_available" | "almost_depleted" | "depleted";
+  available_parts_notes: string | null;
+  compatible_makes: string | null;
+  compatible_models: string | null;
+  compatible_years: string | null;
+  compatible_trims: string | null;
+  price: number | null;
+  price_currency: string;
+  status: "draft" | "active" | "depleted" | "expired" | "flagged";
+  view_count: number;
+  contact_count: number;
+  created_at: number;
+  updated_at: number;
+  // joined dealer fields
+  dealer_name: string;
+  dealer_slug: string;
+  dealer_phone: string | null;
+  dealer_email: string;
+  dealer_website: string | null;
+  dealer_address_line1: string | null;
+  dealer_address_line2: string | null;
+  dealer_city: string;
+  dealer_province: string;
+  dealer_postal_code: string | null;
+  dealer_amvic: string | null;
+  dealer_verified: 0 | 1;
+  dealer_hours: Array<{ dow: number[]; open: string | null; close: string | null }> | null;
+  // joined make/model/city
+  make_slug: string;
+  make_name: string;
+  model_slug: string;
+  model_name: string;
+  city_name: string;
+  city_province: string;
+}
+
+/**
+ * Fetch a single donor car by slug, joined with its dealer, make, model, and
+ * city. Returns null if not found or status is not in (active, depleted) so
+ * draft / expired / flagged rows are hidden from public routes.
+ *
+ * `dealer_hours` is parsed from JSON TEXT into the typed structure here so
+ * Pages Function and JSON handler get a consistent shape.
+ */
+export async function getDonorCarBySlug(
+  env: Env, slug: string,
+): Promise<DonorCarDetailRow | null> {
+  const row = await env.DB.prepare(`
+    SELECT
+      dc.id, dc.dealer_id, dc.slug, dc.year, dc.make_id, dc.model_id, dc.trim,
+      dc.generation_code, dc.generation_range, dc.city_slug,
+      dc.color_exterior, dc.color_exterior_full, dc.tone, dc.color_interior,
+      dc.vin, dc.mileage, dc.engine, dc.transmission,
+      dc.condition, dc.available_parts_notes,
+      dc.compatible_makes, dc.compatible_models, dc.compatible_years, dc.compatible_trims,
+      dc.price, dc.price_currency, dc.status,
+      dc.view_count, dc.contact_count, dc.created_at, dc.updated_at,
+      d.name AS dealer_name, d.slug AS dealer_slug,
+      d.phone AS dealer_phone, d.email AS dealer_email, d.website AS dealer_website,
+      d.address_line1 AS dealer_address_line1, d.address_line2 AS dealer_address_line2,
+      d.city AS dealer_city, d.province AS dealer_province, d.postal_code AS dealer_postal_code,
+      d.amvic_number AS dealer_amvic, d.verified AS dealer_verified, d.hours AS dealer_hours,
+      mk.slug AS make_slug, mk.name AS make_name,
+      md.slug AS model_slug, md.name AS model_name,
+      ci.name AS city_name, ci.province AS city_province
+    FROM donor_cars dc
+    JOIN dealers d ON d.id = dc.dealer_id
+    JOIN makes mk ON mk.id = dc.make_id
+    JOIN models md ON md.id = dc.model_id
+    JOIN cities ci ON ci.slug = dc.city_slug
+    WHERE dc.slug = ? AND dc.status IN ('active','depleted')
+    LIMIT 1
+  `).bind(slug).first<Record<string, unknown>>();
+  if (!row) return null;
+
+  const raw = row.dealer_hours;
+  if (typeof raw === "string" && raw.length > 0) {
+    try { row.dealer_hours = JSON.parse(raw); }
+    catch { row.dealer_hours = null; }
+  } else if (raw === undefined || raw === null) {
+    row.dealer_hours = null;
+  }
+
+  return row as unknown as DonorCarDetailRow;
+}
+
+export interface DonorCardRow {
+  id: string;
+  slug: string;
+  year: number;
+  trim: string | null;
+  color_exterior: string;
+  tone: string | null;
+  mileage: number | null;
+  transmission: string | null;
+  generation_range: string | null;
+  condition: string;
+  created_at: number;
+  dealer_name: string;
+  dealer_slug: string;
+  city_name: string;
+  city_slug: string;
+  city_province: string;
+  primary_image_cf_id: string | null;
+  primary_image_alt: string | null;
+  // for the link href: /parts/listing/<slug>/
+}
+
+export interface DonorRelatedQuery {
+  excludeId: string;
+  dealerId?: string;
+  modelId?: number;
+  citySlug?: string;
+  limit: number;
+}
+
+/**
+ * Active donor cars matching the supplied filters, excluding the current
+ * detail-page row. Used for "More <model> donors at this junkyard" and
+ * "More <year-range> <model> donors in <city>" sections.
+ */
+export async function listRelatedDonors(
+  env: Env, q: DonorRelatedQuery,
+): Promise<DonorCardRow[]> {
+  const where: string[] = [`dc.status = 'active'`, `dc.id != ?`];
+  const binds: (string | number)[] = [q.excludeId];
+  if (q.dealerId) { where.push(`dc.dealer_id = ?`); binds.push(q.dealerId); }
+  if (q.modelId) { where.push(`dc.model_id = ?`); binds.push(q.modelId); }
+  if (q.citySlug) { where.push(`dc.city_slug = ?`); binds.push(q.citySlug); }
+  binds.push(q.limit);
+
+  const result = await env.DB.prepare(`
+    SELECT
+      dc.id, dc.slug, dc.year, dc.trim, dc.color_exterior, dc.tone,
+      dc.mileage, dc.transmission, dc.generation_range,
+      dc.condition, dc.created_at,
+      d.name AS dealer_name, d.slug AS dealer_slug,
+      ci.name AS city_name, ci.slug AS city_slug, ci.province AS city_province,
+      m.cf_image_id AS primary_image_cf_id, m.alt_text AS primary_image_alt
+    FROM donor_cars dc
+    JOIN dealers d ON d.id = dc.dealer_id
+    JOIN cities ci ON ci.slug = dc.city_slug
+    LEFT JOIN media m
+      ON m.entity_type = 'donor_car' AND m.entity_id = dc.id AND m.is_primary = 1
+    WHERE ${where.join(' AND ')}
+    ORDER BY dc.created_at DESC
+    LIMIT ?
+  `).bind(...binds).all<DonorCardRow>();
+  return result.results ?? [];
+}
+
+export interface DonorCityCountRow {
+  city_slug: string;
+  city_name: string;
+  city_province: string;
+  count: number;
+}
+
+/**
+ * Per-city aggregate counts for cross-CMA "Donor cars in other cities" grid.
+ * Excludes the city the user is currently looking at.
+ */
+export async function listDonorCountsByCity(
+  env: Env, makeId: number, modelId: number, excludeCity: string,
+): Promise<DonorCityCountRow[]> {
+  const result = await env.DB.prepare(`
+    SELECT
+      ci.slug AS city_slug, ci.name AS city_name, ci.province AS city_province,
+      COUNT(*) AS count
+    FROM donor_cars dc
+    JOIN cities ci ON ci.slug = dc.city_slug
+    WHERE dc.make_id = ? AND dc.model_id = ?
+      AND dc.status = 'active'
+      AND dc.city_slug != ?
+    GROUP BY ci.slug, ci.name, ci.province
+    ORDER BY count DESC, ci.name ASC
+    LIMIT 8
+  `).bind(makeId, modelId, excludeCity).all<DonorCityCountRow>();
+  return result.results ?? [];
+}
+
 // Re-exports for typed consumers
 export { modelSchema };
