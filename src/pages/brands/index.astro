@@ -1,0 +1,123 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+import FaqAccordion from '../../components/atoms/FaqAccordion.astro';
+import { breadcrumbList, faqPage, itemList, capitalize } from '../../lib/schema-graph';
+
+const url = Astro.url.toString();
+const brandsRaw = await getCollection('brand');
+
+// Stable display order — commercial weight, mirrors index.astro BRANDS array.
+const ORDER = ['toyota','honda','nissan','mazda','subaru','lexus','acura','infiniti','mitsubishi'];
+const brands = ORDER
+  .map((slug) => brandsRaw.find((b) => b.data.make === slug))
+  .filter((b): b is NonNullable<typeof b> => b !== undefined);
+
+// Listing counts mirror the homepage stub data — Phase 5 swaps in D1 numbers.
+const COUNTS: Record<string, number> = {
+  toyota: 78, honda: 64, nissan: 52, mazda: 41, subaru: 36,
+  lexus: 28, acura: 22, infiniti: 17, mitsubishi: 14,
+};
+
+const HUB_FAQ: Array<{ q: string; a: string }> = [
+  {
+    q: 'Which Japanese brand is most reliable in Canada?',
+    a: 'Toyota and Honda routinely lead long-term reliability surveys for vehicles sold in Canada. Lexus consistently ranks at the top of the luxury segment. Mazda and Subaru follow closely, with Subaru particularly strong in AWD-required regions.',
+  },
+  {
+    q: 'Are JDM imports legal in Canada?',
+    a: 'Yes, vehicles 15 years or older from the date of original manufacture can be imported into Canada under federal law. Provincial registration rules and Transport Canada compliance still apply. See our blog for a full walkthrough.',
+  },
+  {
+    q: 'Which Japanese brands offer AWD on every model?',
+    a: 'Subaru is the only Japanese manufacturer that offers symmetrical AWD on every model sold in Canada (except the BRZ). Most Toyota, Honda, Nissan, Mazda, Lexus, Acura, Infiniti, and Mitsubishi crossovers and SUVs offer AWD as a trim option.',
+  },
+  {
+    q: 'Where can I find used Japanese cars in my city?',
+    a: 'japanauto.ca aggregates listings from verified Canadian dealers and salvage yards across Tier-1 cities (Toronto, Montreal, Vancouver, Calgary, Edmonton, Ottawa). Use the city picker in the navbar to filter to your CMA.',
+  },
+];
+
+const schemaLD = [
+  {
+    '@type': 'CollectionPage',
+    '@id': `${url}#page`,
+    name: 'Used Japanese car brands in Canada',
+    description: 'Research Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, and Mitsubishi used cars on japanauto.ca.',
+    url,
+    inLanguage: 'en-CA',
+  },
+  itemList(
+    brands.map((b) => ({
+      name: capitalize(b.data.make),
+      url: `https://japanauto.ca/brands/${b.data.make}/`,
+    })),
+    'Japanese car brands sold in Canada',
+  ),
+  breadcrumbList(
+    [
+      { label: 'Home', href: '/' },
+      { label: 'Brands' },
+    ],
+    url,
+  ),
+  faqPage(HUB_FAQ.map((f) => f.q), HUB_FAQ.map((f) => f.a)),
+].filter(Boolean);
+---
+<BaseLayout
+  title="Used Japanese car brands in Canada — japanauto.ca"
+  description="Research used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, and Mitsubishi vehicles for sale across Canada. Brand-by-brand reliability, hybrid value, and AWD performance."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Brands' }]} />
+
+  <section class="section" style="padding-top:8px">
+    <h1 class="t-display-l" style="font-size:32px;line-height:40px;margin-bottom:8px">
+      Used Japanese car brands in Canada
+    </h1>
+    <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;max-width:680px">
+      Nine brands. Independent research, Canadian context — reliability data, hybrid value, AWD performance, and parts availability for every Japanese marque sold in Canada.
+    </p>
+  </section>
+
+  <section class="section">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+      {brands.map((b) => (
+        <a
+          href={`/brands/${b.data.make}/`}
+          class="card"
+          style="display:flex;flex-direction:column;justify-content:center;padding:18px;min-height:96px;gap:6px"
+        >
+          <span class="t-h-s" style="font-size:16px;line-height:22px;font-weight:600">{capitalize(b.data.make)}</span>
+          <span class="t-caption" style="font-size:10px;color:var(--color-ink-muted)">~{COUNTS[b.data.make] ?? 0} listed across Canada</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="t-h-l" style="font-size:20px;margin-bottom:12px">Common questions</h2>
+    <div style="border-top:1px solid var(--color-divider)">
+      {HUB_FAQ.map((f, i) => (
+        <FaqAccordion q={f.q} a={f.a} open={i < 2} />
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <p class="t-body-s ink-muted" style="font-size:11px;line-height:16px;font-style:italic">
+      Brand names referenced are trademarks of their respective owners. japanauto.ca is an independent marketplace and is not affiliated with any vehicle manufacturer.
+    </p>
+  </section>
+</BaseLayout>

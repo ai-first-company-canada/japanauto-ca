@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+
+const url = Astro.url.toString();
+const schemaLD = [
+  {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name: 'Editorial policy — japanauto.ca',
+    description: 'How we research, fact-check, and update articles on japanauto.ca.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+];
+---
+<BaseLayout
+  title="Editorial policy — japanauto.ca"
+  description="How japanauto.ca researches, fact-checks, and updates buying guides, regulatory explainers, and model deep-dives. AMVIC- and OMVIC-licensed advisor review for YMYL content."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'About', href: '/about/' },
+      { label: 'Editorial policy' },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:16px">Editorial policy</h1>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca publishes independent buying guides, regulatory explainers, and model deep-dives for Canadian buyers of used Japanese vehicles. We do not accept payment from manufacturers in exchange for editorial coverage. Sponsored placements, when they appear, are clearly labelled and isolated from editorial content.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Sourcing</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Every numerical or factual claim cites a primary source — Government of Canada (canada.ca, statcan.gc.ca, tc.canada.ca), provincial regulators (amvic.org, omvic.ca, vsa.bc.ca), manufacturer .ca sites, or peer-reviewed reliability data (Consumer Reports, J.D. Power Vehicle Dependability Study). We do not rely on third-party SEO blogs or aggregator estimates. Items marked <code style="font-family:var(--font-mono);font-size:13px;background:var(--color-bg-muted);padding:1px 6px;border-radius:3px">[verify Q3]</code> indicate figures pending revalidation against a current source.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Fact-checking</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Regulatory and YMYL content (taxes, dealer licensing, lien laws, salvage and rebuilt title rules) is reviewed by an independent AMVIC-licensed advisor (Alberta) or OMVIC-licensed advisor (Ontario) before publication. The reviewer is named in the article byline. Technical claims about engines, transmissions, and vehicle systems are cross-checked against manufacturer service publications.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Updates</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Each article carries a <strong style="color:var(--color-ink-strong);font-weight:600">Last reviewed</strong> date. Articles touching tax tables, regulatory fees, or fund maximums are reviewed at least quarterly. Articles touching reliability data and model recommendations are reviewed annually or when manufacturer recalls or major service campaigns are announced.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Corrections</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      If you spot a factual error, email <a href="mailto:editorial@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">editorial@japanauto.ca</a> with the article URL and a citation for the correct fact. Material corrections are noted at the bottom of the affected article with the date of the change.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Editorial team</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Editor names are <a href="/editorial-team/" style="color:var(--color-ink-strong);text-decoration:underline">disclosed on the editorial team page</a>. Author bylines reflect the editor who shaped the article; the licensed reviewer is credited separately for regulatory content.
+    </p>
+  </article>
+</BaseLayout>

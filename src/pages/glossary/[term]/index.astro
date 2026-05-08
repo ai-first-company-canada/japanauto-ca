@@ -1,0 +1,190 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Navbar from '../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
+import FaqAccordion from '../../../components/atoms/FaqAccordion.astro';
+import {
+  breadcrumbList, faqPage, GROUP_LABELS, formatIsoDate, stripUrl,
+} from '../../../lib/schema-graph';
+
+export async function getStaticPaths() {
+  const terms = await getCollection('glossary');
+  return terms.map((t) => ({ params: { term: t.data.slug }, props: { entry: t } }));
+}
+
+const { entry } = Astro.props;
+const d = entry.data;
+const { Content } = await render(entry);
+const url = Astro.url.toString();
+
+// Resolve related-term cards from the full glossary collection. Brief
+// `related_terms` entries are paths like `/glossary/omvic/`; some may point
+// at terms not yet in our 30-term v1 — those are skipped (not rendered as
+// 404 links).
+const allTerms = await getCollection('glossary');
+const termBySlug = new Map(allTerms.map((t) => [t.data.slug, t.data]));
+const relatedCards = (d.related_terms ?? [])
+  .map((href) => {
+    const m = href.match(/^\/glossary\/([a-z0-9-]+)\/?$/);
+    if (!m) return null;
+    const slug = m[1];
+    const t = termBySlug.get(slug);
+    if (!t) return null;
+    return {
+      href,
+      name: t.term,
+      blurb: (t.canonical_definition ?? '').slice(0, 110).replace(/\s+\S*$/, '') + '…',
+    };
+  })
+  .filter(Boolean) as Array<{ href: string; name: string; blurb: string }>;
+
+const groupLabel = GROUP_LABELS[d.group] ?? d.group;
+
+const schemaLD = [
+  {
+    '@type': 'DefinedTerm',
+    '@id': `${url}#term`,
+    name: d.term,
+    description: d.canonical_definition,
+    inLanguage: 'en-CA',
+    inDefinedTermSet: {
+      '@type': 'DefinedTermSet',
+      name: 'japanauto.ca glossary',
+      url: 'https://japanauto.ca/glossary/',
+    },
+    url,
+  },
+  breadcrumbList(
+    [
+      { label: 'Home', href: '/' },
+      { label: 'Glossary', href: '/glossary/' },
+      { label: d.term },
+    ],
+    url,
+  ),
+  ...(faqPage(d.related_questions) ? [faqPage(d.related_questions)!] : []),
+];
+---
+<BaseLayout
+  title={`${d.term} — japanauto.ca glossary`}
+  description={d.canonical_definition}
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Glossary', href: '/glossary/' },
+      { label: d.term },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <span class="t-caption" style="display:inline-block;margin-bottom:8px;color:var(--color-ink-muted)">
+      Glossary · {groupLabel}
+    </span>
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:8px">{d.term}</h1>
+    {d.last_reviewed && (
+      <p class="t-body-s ink-muted" style="font-size:12px;line-height:18px;margin-bottom:16px">
+        Last reviewed {formatIsoDate(d.last_reviewed)}{d.reviewer_role ? ` · Reviewed by ${d.reviewer_role}` : ''}
+      </p>
+    )}
+
+    <div
+      class="canonical"
+      style="border-left:3px solid var(--color-ink-strong);padding:14px 18px;background:var(--color-bg-subtle);border-radius:6px;margin:16px 0 24px"
+    >
+      <p class="t-body-l" style="font-size:16px;line-height:24px;color:var(--color-ink-strong);margin:0;font-weight:500">
+        {d.canonical_definition}
+      </p>
+    </div>
+
+    <div
+      class="tldr"
+      style="border-left:3px solid var(--color-accent);padding:12px 16px;background:#fff;border-radius:6px;margin:16px 0 24px;border:1px solid var(--color-divider);border-left-width:3px;border-left-color:var(--color-accent)"
+    >
+      <span class="t-caption" style="display:block;margin-bottom:6px">TL;DR</span>
+      <p class="t-body-m" style="font-size:14px;line-height:21px;color:var(--color-ink-default);margin:0">
+        {d.tldr_draft}
+      </p>
+    </div>
+
+    <div class="content-prose">
+      <Content />
+    </div>
+
+    {d.related_questions?.length > 0 && (
+      <section style="margin-top:32px">
+        <h2 class="t-h-l" style="font-size:20px;margin-bottom:12px">Common questions</h2>
+        <div style="border-top:1px solid var(--color-divider)">
+          {d.related_questions.map((q, i) => (
+            <FaqAccordion q={q} a="See the section above or browse related terms below for full context. Detailed answer coming Phase 4.2." open={i < 2} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {relatedCards.length > 0 && (
+      <section style="margin-top:32px">
+        <h2 class="t-h-l" style="font-size:20px;margin-bottom:12px">Related terms</h2>
+        <div style="display:grid;grid-template-columns:1fr;gap:8px">
+          {relatedCards.map((c) => (
+            <a
+              href={c.href}
+              class="card"
+              style="display:flex;flex-direction:column;gap:4px;padding:12px 14px;text-decoration:none"
+            >
+              <span class="t-h-s" style="font-size:14px;line-height:20px;color:var(--color-ink-strong)">{c.name}</span>
+              <span class="t-body-s ink-muted" style="font-size:12px;line-height:17px">{c.blurb}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {d.sources?.length > 0 && (
+      <section style="margin-top:32px">
+        <h3 class="t-h-m" style="font-size:16px;margin-bottom:8px">Sources</h3>
+        <ul style="display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:20px">
+          {d.sources.map((src) => (
+            <li>
+              · <a href={src} target="_blank" rel="noopener nofollow" style="color:var(--color-ink-default);text-decoration:underline">{stripUrl(src)}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </article>
+</BaseLayout>
+
+<style>
+  .content-prose h2 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+    color: var(--color-ink-strong);
+    margin: 24px 0 10px;
+  }
+  .content-prose h3 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    color: var(--color-ink-strong);
+    margin: 18px 0 6px;
+  }
+  .content-prose p {
+    font-size: 15px;
+    line-height: 23px;
+    color: var(--color-ink-default);
+    margin-bottom: 12px;
+  }
+</style>

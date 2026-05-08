@@ -1,0 +1,105 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+import { breadcrumbList, GROUP_LABELS } from '../../lib/schema-graph';
+
+const url = Astro.url.toString();
+const terms = await getCollection('glossary');
+
+const GROUP_ORDER = [
+  'vehicle-tech',
+  'brand-specific-tech',
+  'marketplace',
+  'canadian-regulations',
+  'parts',
+];
+
+const byGroup = new Map<string, typeof terms>();
+for (const g of GROUP_ORDER) byGroup.set(g, []);
+for (const t of terms) {
+  const arr = byGroup.get(t.data.group) ?? [];
+  arr.push(t);
+  byGroup.set(t.data.group, arr);
+}
+for (const arr of byGroup.values()) {
+  arr.sort((a, b) => a.data.term.localeCompare(b.data.term));
+}
+
+const schemaLD = [
+  {
+    '@type': 'DefinedTermSet',
+    '@id': `${url}#term-set`,
+    name: 'japanauto.ca glossary',
+    description: 'Plain-English definitions of Japanese-car terminology, Canadian automotive regulations, and salvage-yard parts vocabulary.',
+    url,
+    inLanguage: 'en-CA',
+    hasDefinedTerm: terms.map((t) => ({
+      '@type': 'DefinedTerm',
+      name: t.data.term,
+      url: `https://japanauto.ca/glossary/${t.data.slug}/`,
+    })),
+  },
+  breadcrumbList(
+    [
+      { label: 'Home', href: '/' },
+      { label: 'Glossary' },
+    ],
+    url,
+  ),
+];
+---
+<BaseLayout
+  title="Glossary — Japanese car terminology & Canadian regulations | japanauto.ca"
+  description="30 plain-English definitions: Japanese drivetrain technology (AWD, CVT, e-CVT, SH-AWD), Canadian regulations (AMVIC, OMVIC, UVIP), parts and marketplace terms (OEM, JDM, VIN)."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Glossary' }]} />
+
+  <section class="section" style="padding-top:8px">
+    <h1 class="t-display-l" style="font-size:32px;line-height:40px;margin-bottom:8px">
+      Glossary
+    </h1>
+    <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;max-width:680px">
+      Plain-English definitions of the Japanese-vehicle technology, Canadian automotive regulations, and salvage-yard vocabulary used across this site.
+    </p>
+  </section>
+
+  {GROUP_ORDER.map((g) => {
+    const items = byGroup.get(g) ?? [];
+    if (!items.length) return null;
+    return (
+      <section class="section">
+        <header style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+          <h2 class="t-h-l" style="font-size:20px">{GROUP_LABELS[g] ?? g}</h2>
+          <span class="t-caption" style="font-size:10px;color:var(--color-ink-muted)">{items.length} term{items.length === 1 ? '' : 's'}</span>
+        </header>
+        <div style="display:grid;grid-template-columns:1fr;gap:6px">
+          {items.map((t) => {
+            const blurb = (t.data.canonical_definition ?? '').slice(0, 120).replace(/\s+\S*$/, '') + '…';
+            return (
+              <a
+                href={`/glossary/${t.data.slug}/`}
+                class="card"
+                style="display:flex;flex-direction:column;gap:4px;padding:14px;text-decoration:none"
+              >
+                <span class="t-h-s" style="font-size:14px;line-height:20px;color:var(--color-ink-strong)">{t.data.term}</span>
+                <span class="t-body-s ink-muted" style="font-size:12px;line-height:17px">{blurb}</span>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    );
+  })}
+</BaseLayout>

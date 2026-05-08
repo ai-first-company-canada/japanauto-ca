@@ -1,0 +1,188 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Navbar from '../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
+import FaqAccordion from '../../../components/atoms/FaqAccordion.astro';
+import Author from '../../../components/atoms/Author.astro';
+import {
+  breadcrumbList, faqPage,
+  AUTHOR_BIOS, CATEGORY_LABELS, readingTime, stripUrl,
+} from '../../../lib/schema-graph';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((p) => ({ params: { slug: p.data.slug }, props: { entry: p } }));
+}
+
+const { entry } = Astro.props;
+const d = entry.data;
+const { Content } = await render(entry);
+const url = Astro.url.toString();
+
+const author = AUTHOR_BIOS[d.author];
+const categoryLabel = CATEGORY_LABELS[d.category] ?? d.category;
+const minRead = readingTime(d.estimated_word_count);
+const tldrShort = (d.tldr_draft ?? '').slice(0, 160).replace(/\s+\S*$/, '') + '…';
+
+const schemaLD = [
+  {
+    '@type': 'BlogPosting',
+    '@id': `${url}#article`,
+    headline: d.h1,
+    description: d.tldr_draft.slice(0, 200),
+    inLanguage: 'en-CA',
+    url,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    ...(d.pub_date ? { datePublished: d.pub_date } : {}),
+    ...(d.last_reviewed ? { dateModified: d.last_reviewed } : (d.pub_date ? { dateModified: d.pub_date } : {})),
+    author: {
+      '@type': 'Person',
+      name: author.name,
+      url: author.url,
+    },
+    ...(d.reviewer_role
+      ? {
+          reviewedBy: {
+            '@type': 'Person',
+            name: d.reviewer_role,
+          },
+        }
+      : {}),
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+    articleSection: categoryLabel,
+    keywords: [d.primary_keyword, ...d.secondary_keywords].join(', '),
+  },
+  breadcrumbList(
+    [
+      { label: 'Home', href: '/' },
+      { label: 'Blog', href: '/blog/' },
+      { label: d.h1 },
+    ],
+    url,
+  ),
+  ...(faqPage(d.faq_questions) ? [faqPage(d.faq_questions)!] : []),
+];
+---
+<BaseLayout
+  title={d.title}
+  description={tldrShort}
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Blog', href: '/blog/' },
+      { label: d.h1 },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <span class="t-caption" style="display:inline-block;margin-bottom:8px;color:var(--color-ink-muted)">
+      {categoryLabel} · {minRead} min read
+    </span>
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:12px">{d.h1}</h1>
+
+    <Author
+      name={author.name}
+      role={author.role}
+      authorUrl={author.url}
+      reviewerRole={d.reviewer_role}
+      pubDate={d.pub_date}
+      lastReviewed={d.last_reviewed}
+    />
+
+    <div
+      class="tldr"
+      style="border-left:3px solid var(--color-accent);padding:12px 16px;background:var(--color-bg-subtle);border-radius:6px;margin:24px 0"
+    >
+      <span class="t-caption" style="display:block;margin-bottom:6px">TL;DR</span>
+      <p class="t-body-m" style="font-size:14px;line-height:21px;color:var(--color-ink-default);margin:0">
+        {d.tldr_draft}
+      </p>
+    </div>
+
+    {d.section_outline?.length > 0 && (
+      <nav
+        aria-label="In this guide"
+        style="border:1px solid var(--color-divider);border-radius:8px;padding:12px 16px;margin:16px 0 24px"
+      >
+        <span class="t-caption" style="display:block;margin-bottom:8px">In this guide</span>
+        <ol style="display:flex;flex-direction:column;gap:6px;padding-left:20px;list-style:decimal;color:var(--color-ink-default);font-size:14px;line-height:21px">
+          {d.section_outline.map((s) => <li>{s}</li>)}
+        </ol>
+      </nav>
+    )}
+
+    <div class="content-prose">
+      <Content />
+    </div>
+
+    {d.faq_questions?.length > 0 && (
+      <section style="margin-top:32px">
+        <h2 class="t-h-l" style="font-size:20px;margin-bottom:12px">Common questions</h2>
+        <div style="border-top:1px solid var(--color-divider)">
+          {d.faq_questions.map((q, i) => (
+            <FaqAccordion q={q} a="Detailed answer coming Phase 4.2 — see related guides below or browse the relevant section." open={i < 2} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {d.external_sources?.length > 0 && (
+      <section style="margin-top:32px">
+        <h3 class="t-h-m" style="font-size:16px;margin-bottom:8px">Sources</h3>
+        <ul style="display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:20px">
+          {d.external_sources.map((src) => (
+            <li>
+              · <a href={src} target="_blank" rel="noopener nofollow" style="color:var(--color-ink-default);text-decoration:underline">{stripUrl(src)}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {d.internal_links?.length > 0 && (
+      <section style="margin-top:24px">
+        <h3 class="t-h-m" style="font-size:16px;margin-bottom:8px">Related on japanauto.ca</h3>
+        <ul style="display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:21px">
+          {d.internal_links.map((href) => (
+            <li>· <a href={href} style="color:var(--color-ink-default);text-decoration:underline">{href}</a></li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </article>
+</BaseLayout>
+
+<style>
+  .content-prose h2 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+    color: var(--color-ink-strong);
+    margin: 28px 0 12px;
+  }
+  .content-prose h3 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    color: var(--color-ink-strong);
+    margin: 20px 0 8px;
+  }
+  .content-prose p {
+    font-size: 15px;
+    line-height: 23px;
+    color: var(--color-ink-default);
+    margin-bottom: 14px;
+  }
+</style>

@@ -1,0 +1,58 @@
+---
+/**
+ * Author byline — used on blog posts. E-E-A-T scaffolding for Phase 4.2 body
+ * content. Keep visually minimal; the editorial team page is where the
+ * structure is fully disclosed.
+ */
+import { formatIsoDate } from '../../lib/schema-graph';
+
+interface Props {
+  name: string;
+  role?: string;
+  authorUrl?: string;
+  reviewerRole?: string;
+  pubDate?: string;
+  lastReviewed?: string;
+}
+const {
+  name,
+  role,
+  authorUrl,
+  reviewerRole,
+  pubDate,
+  lastReviewed,
+} = Astro.props;
+---
+<aside
+  class="byline"
+  style="display:flex;flex-direction:column;gap:4px;margin:16px 0 24px;padding:12px 14px;border:1px solid var(--color-divider);border-radius:8px;background:var(--color-bg-subtle)"
+>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span
+      aria-hidden="true"
+      style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:var(--color-ink-strong);color:#fff;font-size:13px;font-weight:600"
+    >
+      {name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+    </span>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="t-h-s" style="font-size:13px;font-weight:600">
+        {authorUrl ? <a href={authorUrl} style="color:var(--color-ink-strong)">{name}</a> : name}
+      </span>
+      {role && (
+        <span class="t-body-s ink-muted" style="font-size:11px;line-height:14px">{role}</span>
+      )}
+    </div>
+  </div>
+  {(pubDate || lastReviewed) && (
+    <div class="t-body-s ink-muted" style="font-size:11px;line-height:16px">
+      {pubDate && <span>Published {formatIsoDate(pubDate)}</span>}
+      {pubDate && lastReviewed && <span> · </span>}
+      {lastReviewed && <span>Last reviewed {formatIsoDate(lastReviewed)}</span>}
+    </div>
+  )}
+  {reviewerRole && (
+    <div class="t-body-s ink-muted" style="font-size:11px;line-height:16px">
+      Fact-checked by {reviewerRole}
+    </div>
+  )}
+</aside>

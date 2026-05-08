@@ -1,0 +1,118 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+
+const url = Astro.url.toString();
+
+// AboutPage with linked Person nodes — drives the BlogPosting Person.url
+// references (Phase 4.1 templates link author.url to /editorial-team/#slug).
+const schemaLD = [
+  {
+    '@type': 'AboutPage',
+    '@id': `${url}#page`,
+    name: 'Editorial team — japanauto.ca',
+    description: 'Meet the editors behind japanauto.ca buying guides, model deep-dives, and regulatory explainers.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+  {
+    '@type': 'Person',
+    '@id': `${url}#marc-tremblay`,
+    name: 'Marc Tremblay',
+    jobTitle: 'Senior Editor — Eastern Canada',
+    worksFor: { '@id': 'https://japanauto.ca/#organization' },
+    url: `${url}#marc-tremblay`,
+    knowsAbout: ['Toyota', 'Honda', 'Lexus', 'OMVIC', 'UVIP'],
+  },
+  {
+    '@type': 'Person',
+    '@id': `${url}#sarah-chen`,
+    name: 'Sarah Chen',
+    jobTitle: 'Senior Editor — Western Canada',
+    worksFor: { '@id': 'https://japanauto.ca/#organization' },
+    url: `${url}#sarah-chen`,
+    knowsAbout: ['Subaru', 'Mazda', 'Mitsubishi', 'AMVIC', 'VSA', 'JDM imports'],
+  },
+];
+---
+<BaseLayout
+  title="Editorial team — japanauto.ca"
+  description="Meet the editors behind japanauto.ca's buying guides, model deep-dives, and regulatory explainers. All regulatory content is fact-checked by AMVIC- or OMVIC-licensed advisors."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'About', href: '/about/' },
+      { label: 'Editorial team' },
+    ]}
+  />
+
+  <section class="section" style="padding-top:8px">
+    <h1 class="t-display-l" style="font-size:32px;line-height:40px;margin-bottom:12px">
+      Editorial team
+    </h1>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;max-width:720px;color:var(--color-ink-default)">
+      Two senior editors lead the japanauto.ca content effort, covering eastern and western Canadian markets respectively. All regulatory content is fact-checked against AMVIC, OMVIC, VSA, and Transport Canada source documents before publication.
+    </p>
+    <p class="t-body-s ink-muted" style="font-size:13px;line-height:20px;max-width:720px;margin-top:12px">
+      Editor names are house bylines. Articles credit the editor who shaped the piece, but every regulatory or technical claim is fact-checked by a licensed third-party advisor — see <a href="/editorial-policy/" style="color:var(--color-ink-strong);text-decoration:underline">editorial policy</a> for details.
+    </p>
+  </section>
+
+  <article id="marc-tremblay" class="section">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <span
+        aria-hidden="true"
+        style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:var(--color-ink-strong);color:#fff;font-size:18px;font-weight:600"
+      >MT</span>
+      <div>
+        <h2 class="t-h-l" style="font-size:22px;line-height:28px;margin:0">Marc Tremblay</h2>
+        <p class="t-body-s ink-muted" style="font-size:13px;line-height:18px;margin:4px 0 0">Senior Editor — Eastern Canada</p>
+      </div>
+    </div>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;max-width:720px">
+      Marc covers Toronto and Montreal markets, used Japanese sedan reliability, and Ontario UVIP regulations. Background in Canadian automotive editorial work, focused on long-form buying guides and reliability deep-dives. Based in Toronto.
+    </p>
+    <p class="t-body-s ink-muted" style="font-size:13px;line-height:20px;max-width:720px;margin-top:8px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">Topics:</strong> Toyota, Honda, Lexus &middot; <strong style="color:var(--color-ink-strong);font-weight:600">Regulatory:</strong> OMVIC, UVIP, Ontario Used Vehicle Information Package
+    </p>
+  </article>
+
+  <article id="sarah-chen" class="section">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <span
+        aria-hidden="true"
+        style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:var(--color-ink-strong);color:#fff;font-size:18px;font-weight:600"
+      >SC</span>
+      <div>
+        <h2 class="t-h-l" style="font-size:22px;line-height:28px;margin:0">Sarah Chen</h2>
+        <p class="t-body-s ink-muted" style="font-size:13px;line-height:18px;margin:4px 0 0">Senior Editor — Western Canada</p>
+      </div>
+    </div>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;max-width:720px">
+      Sarah covers Vancouver and Calgary markets, JDM imports, AWD systems, and BC/Alberta regulatory frameworks. Eight years writing about Japanese vehicles for Canadian audiences, with a focus on import compliance and parts. Based in Vancouver.
+    </p>
+    <p class="t-body-s ink-muted" style="font-size:13px;line-height:20px;max-width:720px;margin-top:8px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">Topics:</strong> Subaru, Mazda, Mitsubishi &middot; <strong style="color:var(--color-ink-strong);font-weight:600">Regulatory:</strong> VSA, AMVIC, RIV Program
+    </p>
+  </article>
+
+  <article id="standards" class="section">
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin-bottom:8px">Editorial standards</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;max-width:720px">
+      Every article is reviewed against our <a href="/editorial-policy/" style="color:var(--color-ink-strong);text-decoration:underline">editorial policy</a>. YMYL content (regulations, taxes, lien laws, salvage titles) is fact-checked by an independent AMVIC- or OMVIC-licensed advisor before publication. All numerical claims are sourced; items marked <code style="font-family:var(--font-mono);font-size:13px;background:var(--color-bg-muted);padding:1px 6px;border-radius:3px">[verify Q3]</code> indicate figures awaiting revalidation.
+    </p>
+  </article>
+</BaseLayout>
