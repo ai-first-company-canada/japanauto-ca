@@ -1,0 +1,31 @@
+---
+export interface FeaturedYard {
+  name: string;
+  city: string;
+  province: string;
+  count: number;
+  brands: string;
+  href?: string;
+}
+interface Props {
+  yard: FeaturedYard;
+}
+const { yard } = Astro.props;
+const href = yard.href ?? '#';
+---
+<a
+  class="card"
+  href={href}
+  style="width:220px;flex-shrink:0;padding:16px;text-decoration:none;display:flex;flex-direction:column;gap:4px"
+>
+  <span style="font-size:15px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.005em;line-height:20px">
+    {yard.name}
+  </span>
+  <span style="font-size:13px;color:var(--color-ink-muted)">
+    {yard.city}, {yard.province}
+  </span>
+  <span class="t-caption" style="margin-top:8px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted)">
+    <span class="num">{yard.count}</span> donors · {yard.brands}
+  </span>
+  <span style="margin-top:12px;font-size:13px;font-weight:500;color:var(--color-accent)">Browse →</span>
+</a>

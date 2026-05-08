@@ -1,0 +1,24 @@
+---
+interface Props {
+  range: string;          // e.g. '2014–2018'
+  code?: string;          // e.g. 'E170'
+  count: number;
+  note?: string;
+}
+const {
+  range,
+  code,
+  count,
+  note = 'Most parts interchangeable within generation',
+} = Astro.props;
+---
+<header style="padding:0 16px;margin-bottom:16px">
+  <h2 class="t-h-l" style="font-size:22px;line-height:30px;font-weight:600;letter-spacing:-0.01em;color:var(--color-ink-strong);margin:0">
+    <span class="num">{range}</span> generation{code ? (
+      <span style="color:var(--color-ink-muted);font-weight:500"> ({code})</span>
+    ) : null}
+  </h2>
+  <p class="t-caption" style="margin:4px 0 0;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted)">
+    <span class="num">{count}</span> donor cars · {note}
+  </p>
+</header>

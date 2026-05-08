@@ -1,0 +1,69 @@
+---
+import ListingPhoto, { type ListingPhotoTone } from '../atoms/ListingPhoto.astro';
+
+interface Props {
+  href?: string;
+  year: number;
+  make: string;
+  model: string;
+  trim?: string | null;
+  color: string;
+  tone?: ListingPhotoTone;
+  km?: number | null;
+  trans?: string | null;
+  yard: string;
+  city: string;
+  listed?: string;
+  isNew?: boolean;
+  generationLabel: string;   // e.g. "2014–2018 GENERATION"
+}
+const {
+  href = '#',
+  year,
+  make,
+  model,
+  trim,
+  color,
+  tone = 'silver',
+  km,
+  trans,
+  yard,
+  city,
+  listed,
+  isNew = false,
+  generationLabel,
+} = Astro.props;
+
+const kmText = typeof km === 'number'
+  ? `${km.toLocaleString('en-US')} km`
+  : 'mileage on request';
+const transText = trans ?? 'transmission on request';
+---
+<a
+  class="card"
+  href={href}
+  style="display:flex;flex-direction:column;overflow:hidden;text-decoration:none;position:relative"
+>
+  <div style="aspect-ratio:4 / 3;width:100%;position:relative;overflow:hidden;background:var(--color-bg-muted)">
+    <ListingPhoto tone={tone} framing="three-quarter" />
+    {isNew && (
+      <span style="position:absolute;top:8px;left:8px;background:var(--color-accent);color:#fff;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px">
+        New today
+      </span>
+    )}
+  </div>
+  <div style="padding:12px 12px 14px;display:flex;flex-direction:column;gap:4px">
+    <span class="t-caption" style="font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted)">
+      Donor car · {generationLabel}
+    </span>
+    <span style="font-size:15px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.005em;line-height:20px">
+      <span class="num">{year}</span> {make} {model}{trim ? ` ${trim}` : ''}
+    </span>
+    <span style="font-size:13px;color:var(--color-ink-default);line-height:18px">
+      {color} · <span class="num">{kmText}</span> · {transText}
+    </span>
+    <span class="t-caption" style="margin-top:4px;font-size:10px;font-weight:500;letter-spacing:0.04em;text-transform:none;color:var(--color-ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+      {yard} · {city}{listed ? ` · ${listed}` : ''}
+    </span>
+  </div>
+</a>

@@ -1,0 +1,29 @@
+---
+export interface CityCountEntry {
+  city: string;
+  province: string;
+  slug: string;
+  count: number;
+  href: string;
+}
+interface Props {
+  cities: CityCountEntry[];
+}
+const { cities } = Astro.props;
+---
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:8px">
+  {cities.map((c) => (
+    <a
+      class="card"
+      href={c.href}
+      style="padding:12px 14px;text-decoration:none;display:flex;flex-direction:column;gap:2px"
+    >
+      <span style="font-size:14px;font-weight:600;color:var(--color-ink-strong)">
+        {c.city}
+      </span>
+      <span class="t-caption ink-muted" style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">
+        <span class="num">{c.count}</span> donors
+      </span>
+    </a>
+  ))}
+</div>

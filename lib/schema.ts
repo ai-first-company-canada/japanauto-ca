@@ -71,17 +71,36 @@ export type Transmission = (typeof TRANSMISSIONS)[number];
 export const DRIVETRAINS = ["fwd", "rwd", "awd", "4wd"] as const;
 export type Drivetrain = (typeof DRIVETRAINS)[number];
 
-export const PART_CATEGORIES = [
-  "engine", "transmission", "body", "electrical", "interior", "exterior",
-  "suspension", "brakes", "wheels_tires", "exhaust", "cooling", "fuel_system",
-  "glass", "lights", "accessories", "other",
+/**
+ * Donor-car concept (ADR-0008 — junkyard donor car directory). Replaces the
+ * granular parts catalog rejected in iteration-2. Status enum mirrors the
+ * `donor_cars.condition` and `donor_cars.status` columns in migration 0005.
+ */
+export const DONOR_CAR_CONDITIONS = [
+  "fully_available", "partially_available", "almost_depleted", "depleted",
 ] as const;
-export type PartCategory = (typeof PART_CATEGORIES)[number];
+export type DonorCarCondition = (typeof DONOR_CAR_CONDITIONS)[number];
 
-export const PART_CONDITIONS = ["new", "used", "refurbished", "oem"] as const;
-export type PartCondition = (typeof PART_CONDITIONS)[number];
+export const DONOR_CAR_STATUSES = [
+  "draft", "active", "depleted", "expired", "flagged",
+] as const;
+export type DonorCarStatus = (typeof DONOR_CAR_STATUSES)[number];
 
-export const MEDIA_ENTITY_TYPES = ["listing", "part", "dealer", "featured_slot"] as const;
+export const DONOR_CAR_TRANSMISSIONS = ["manual", "automatic", "cvt", "dct"] as const;
+export type DonorCarTransmission = (typeof DONOR_CAR_TRANSMISSIONS)[number];
+
+/**
+ * Tone keys for the placeholder donor-car illustration (`ListingPhoto`).
+ * The set is the intersection of palette keys exposed by `ListingPhoto.astro`
+ * with the colors junkyards realistically describe.
+ */
+export const DONOR_CAR_TONES = [
+  "silver", "midnight", "white", "pearl", "black", "red",
+  "blue", "grey", "crimson", "graphite", "sand", "forest", "bronze",
+] as const;
+export type DonorCarTone = (typeof DONOR_CAR_TONES)[number];
+
+export const MEDIA_ENTITY_TYPES = ["listing", "donor_car", "dealer", "featured_slot"] as const;
 export type MediaEntityType = (typeof MEDIA_ENTITY_TYPES)[number];
 
 export const FEATURED_SLOT_STATUSES = ["pending", "active", "paused", "ended"] as const;
@@ -265,9 +284,6 @@ export const listingYearSchema = z.number()
     }
   });
 
-/** Unrestricted year for parts compatibility (no age cap). */
-export const partYearSchema = z.number().int().min(1900).max(2100);
-
 export const priceSchema = z.number()
   .int()
   .min(0)
@@ -290,11 +306,6 @@ export const timestampSchema = z.number().int().min(0).max(4_102_444_800); // ~ 
 export const cadCurrencySchema = z.literal("CAD");
 export const countrySchema = z.literal("CA");
 
-/** JSON arrays for parts compatibility — zod-validated stringified arrays. */
-export const compatibleMakesSchema = z.array(z.enum(BRAND_SLUGS)).min(1);
-export const compatibleYearsSchema = z.array(partYearSchema).min(1);
-export const compatibleModelsSchema = z.array(slugSchema).min(1);
-
 // ============================================================================
 // DOMAIN ENUM SCHEMAS
 // ============================================================================
@@ -308,8 +319,10 @@ export const bodyTypeSchema = z.enum(BODY_TYPES);
 export const fuelTypeSchema = z.enum(FUEL_TYPES);
 export const transmissionSchema = z.enum(TRANSMISSIONS);
 export const drivetrainSchema = z.enum(DRIVETRAINS);
-export const partCategorySchema = z.enum(PART_CATEGORIES);
-export const partConditionSchema = z.enum(PART_CONDITIONS);
+export const donorCarConditionSchema = z.enum(DONOR_CAR_CONDITIONS);
+export const donorCarStatusSchema = z.enum(DONOR_CAR_STATUSES);
+export const donorCarTransmissionSchema = z.enum(DONOR_CAR_TRANSMISSIONS);
+export const donorCarToneSchema = z.enum(DONOR_CAR_TONES);
 export const mediaEntityTypeSchema = z.enum(MEDIA_ENTITY_TYPES);
 export const featuredSlotStatusSchema = z.enum(FEATURED_SLOT_STATUSES);
 export const boostOrderStatusSchema = z.enum(BOOST_ORDER_STATUSES);
@@ -548,44 +561,77 @@ export const catalogQuerySchema = z.object({
 export type CatalogQuery = z.infer<typeof catalogQuerySchema>;
 
 // ============================================================================
-// PARTS
+// DONOR CARS (ADR-0008 — junkyard donor car directory; replaces granular parts)
+// ============================================================================
+// Field shape mirrors `donor_cars` columns in migration 0005. App-layer rules:
+//   * dealer.type MUST equal 'salvage_yard' for any insert.
+//   * compatible_* fields are JSON-stringified arrays in the DB; the *Input
+//     schemas accept native arrays (validated below) and the API layer
+//     stringifies before insert.
+//   * No rolling age cap — donor cars from older generations are valuable.
 // ============================================================================
 
-const partBaseFields = {
-  title: titleSchema,
-  category: partCategorySchema,
-  subcategory: z.string().trim().max(60).nullable().optional(),
-  description: descriptionSchema,
-  /** JSON-stringified array of brand slugs, or null. */
-  compatible_makes: z.string().nullable().optional(),
-  compatible_models: z.string().nullable().optional(),
-  compatible_years: z.string().nullable().optional(),
-  part_number: z.string().trim().max(60).nullable().optional(),
-  oem_number: z.string().trim().max(60).nullable().optional(),
-  condition: partConditionSchema,
-  warranty_days: z.number().int().min(0).max(3650).nullable().optional(),
-  price: priceSchema,
+const donorYearSchema = z.number().int().min(1980).max(2030);
+
+const donorCompatibleMakesSchema  = z.array(z.enum(BRAND_SLUGS)).min(1);
+const donorCompatibleModelsSchema = z.array(slugSchema).min(1);
+const donorCompatibleYearsSchema  = z.array(donorYearSchema).min(1);
+const donorCompatibleTrimsSchema  = z.array(z.string().trim().min(1).max(40)).min(1);
+
+const donorCarBaseFields = {
+  year: donorYearSchema,
+  make_id: z.number().int().positive(),
+  model_id: z.number().int().positive(),
+  trim: z.string().trim().max(60).nullable().optional(),
+  generation_code: z.string().trim().max(20).nullable().optional(),
+  generation_range: z.string().trim().max(20).nullable().optional(),
+  city_slug: slugSchema,
+  color_exterior: z.string().trim().min(1).max(40),
+  color_exterior_full: z.string().trim().max(60).nullable().optional(),
+  tone: donorCarToneSchema.nullable().optional(),
+  color_interior: z.string().trim().max(40).nullable().optional(),
+  vin: vinSchema.nullable().optional(),
+  mileage: z.number().int().min(0).max(9_999_999).nullable().optional(),
+  engine: z.string().trim().max(80).nullable().optional(),
+  transmission: donorCarTransmissionSchema.nullable().optional(),
+  condition: donorCarConditionSchema.default("fully_available"),
+  available_parts_notes: z.string().trim().max(2000).nullable().optional(),
+  compatible_makes: donorCompatibleMakesSchema.nullable().optional(),
+  compatible_models: donorCompatibleModelsSchema.nullable().optional(),
+  compatible_years: donorCompatibleYearsSchema.nullable().optional(),
+  compatible_trims: donorCompatibleTrimsSchema.nullable().optional(),
+  price: priceSchema.nullable().optional(),
 };
 
-export const partCreateInputSchema = z.object(partBaseFields);
-export type PartCreateInput = z.infer<typeof partCreateInputSchema>;
+export const donorCarCreateInputSchema = z.object(donorCarBaseFields).extend({
+  status: z.enum(["draft", "active"]).optional(),
+});
+export type DonorCarCreateInput = z.infer<typeof donorCarCreateInputSchema>;
 
-export const partUpdateInputSchema = z.object(partBaseFields).partial();
-export type PartUpdateInput = z.infer<typeof partUpdateInputSchema>;
+export const donorCarUpdateInputSchema = z.object(donorCarBaseFields).partial().extend({
+  status: z.enum(["active", "depleted", "expired"]).optional(),
+});
+export type DonorCarUpdateInput = z.infer<typeof donorCarUpdateInputSchema>;
 
-export const partSchema = z.object({
+/** Full D1 row. JSON columns come back as strings — keep them stringified here. */
+export const donorCarSchema = z.object({
   id: idSchema,
   dealer_id: idSchema,
-  ...partBaseFields,
   slug: slugSchema,
+  ...donorCarBaseFields,
+  // Override the array forms so the read-side accepts the DB's stringified JSON.
+  compatible_makes: z.string().nullable(),
+  compatible_models: z.string().nullable(),
+  compatible_years: z.string().nullable(),
+  compatible_trims: z.string().nullable(),
   price_currency: cadCurrencySchema,
-  status: listingStatusSchema,
+  status: donorCarStatusSchema,
   view_count: z.number().int().min(0),
   contact_count: z.number().int().min(0),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
-export type Part = z.infer<typeof partSchema>;
+export type DonorCar = z.infer<typeof donorCarSchema>;
 
 // ============================================================================
 // MEDIA
@@ -733,7 +779,7 @@ export type EmailVerifyInput = z.infer<typeof emailVerifyInputSchema>;
 // ============================================================================
 
 export const contactRevealInputSchema = z.object({
-  entity_type: z.enum(["listing", "part", "dealer"]),
+  entity_type: z.enum(["listing", "donor_car", "dealer"]),
   entity_id: idSchema,
 });
 export type ContactRevealInput = z.infer<typeof contactRevealInputSchema>;

@@ -15,7 +15,7 @@ related: ["[[d1-schema]]", "[[validation-zod]]", "[[migrations/README]]", "[[adr
 1. **Constants** — enum-значения как `as const` массивы (PROVINCES, BRAND_SLUGS, LISTING_STATUSES, BODY_TYPES, FUEL_TYPES, …) + `LIMITS` объект (TITLE_MAX, PRICE_MAX_CENTS, USED_CAR_AGE_CAP_YEARS, …).
 2. **Helpers** — `currentYear()`, `listingYearWindow()`, `unixNow()`, `isValidVinChecksum()`, `normalizePostalCode()`, `normalizePhone()`.
 3. **Primitive schemas** — `provinceSchema`, `postalCodeSchema`, `phoneSchema`, `vinSchema`, `slugSchema`, `emailSchema`, `listingYearSchema`, `partYearSchema`, `priceSchema`, `mileageSchema`, `idSchema`, `timestampSchema`.
-4. **Domain enum schemas** — `dealerTypeSchema`, `subscriptionTierSchema`, `listingStatusSchema`, `listingConditionSchema`, `bodyTypeSchema`, `fuelTypeSchema`, `transmissionSchema`, `drivetrainSchema`, `partCategorySchema`, `partConditionSchema`, …
+4. **Domain enum schemas** — `dealerTypeSchema`, `subscriptionTierSchema`, `listingStatusSchema`, `listingConditionSchema`, `bodyTypeSchema`, `fuelTypeSchema`, `transmissionSchema`, `drivetrainSchema`, `donorCarConditionSchema`, `donorCarStatusSchema`, …
 5. **Table schemas** — для каждой D1 таблицы пара `*CreateInputSchema` + полная `*Schema` (read-side row). Где применимо — `*UpdateInputSchema` (partial). Public-safe view (`dealerPublicSchema` без `password_hash` / `stripe_customer_id`).
 6. **Cross-field refinements** — `amvicRefiner` для AB dealers, `active_until > active_from` для featured slots.
 7. **Auth payloads** — `loginInputSchema`, `refreshTokenInputSchema`, `passwordResetRequest/Confirm`, `emailVerifyInput`.
@@ -75,7 +75,7 @@ const E164_NANP_RE = /^\+1[2-9]\d{2}[2-9]\d{6}$/;  // area code [2-9], exchange 
 ### 6. Polymorphic media — schema с union entity_type
 
 ```ts
-mediaEntityTypeSchema = z.enum(["listing", "part", "dealer", "featured_slot"]);
+mediaEntityTypeSchema = z.enum(["listing", "donor_car", "dealer", "featured_slot"]);
 ```
 
 Application layer (Workers) проверяет ownership через `entity_type` + `entity_id` lookup. Schema lib не enforce-ит FK (D1 тоже не enforce-ит — polymorphic by design).

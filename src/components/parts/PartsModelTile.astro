@@ -1,0 +1,19 @@
+---
+interface Props {
+  name: string;
+  slug: string;
+  count: number;
+  href: string;
+}
+const { name, count, href } = Astro.props;
+---
+<a
+  class="card"
+  href={href}
+  style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:20px 8px;text-decoration:none;min-height:92px"
+>
+  <span style="font-size:16px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.005em">{name}</span>
+  <span class="t-caption ink-muted" style="font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">
+    <span class="num">{count}</span> donors
+  </span>
+</a>

@@ -198,9 +198,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
 
-  // Salvage_yards cannot create cars — they create parts.
+  // Salvage_yards cannot create cars — they create donor cars (Phase 3.3 — /api/donor-cars).
   if (auth.dealerType !== "dealer") {
-    return jsonError(403, "forbidden", "Only dealers can create car listings; salvage yards use /api/parts");
+    return jsonError(403, "forbidden", "Only dealers can create car listings; salvage yards list donor cars");
   }
 
   // Rate limit by dealer subscription tier

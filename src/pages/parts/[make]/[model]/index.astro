@@ -1,0 +1,180 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Navbar from '../../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../../../components/sections/PageHeading.astro';
+import FaqSection from '../../../../components/sections/FaqSection.astro';
+import GenerationHeader from '../../../../components/parts/GenerationHeader.astro';
+import CrossLinkModelCard from '../../../../components/parts/CrossLinkModelCard.astro';
+import CityCountGrid from '../../../../components/parts/CityCountGrid.astro';
+import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
+import { MODELS_BY_BRAND } from '../../../../data/models-stubs';
+import { generationsFor } from '../../../../data/generations';
+import { modelFaqs } from '../../../../data/parts-faqs';
+import { modelCopyFor } from '../../../../data/parts-model-copy';
+
+export function getStaticPaths() {
+  const out: Array<{ params: { make: string; model: string } }> = [];
+  for (const make of Object.keys(MODELS_BY_BRAND)) {
+    for (const m of MODELS_BY_BRAND[make]!) {
+      out.push({ params: { make, model: m.slug } });
+    }
+  }
+  return out;
+}
+
+const { make, model } = Astro.params;
+const brand = BRAND_CONTENT[make!]!;
+const modelInfo = (MODELS_BY_BRAND[make!] ?? []).find((m) => m.slug === model)!;
+const generations = generationsFor(make!, model!);
+const copy = modelCopyFor(make!, model!, brand.name, modelInfo.name);
+const faqs = modelFaqs(brand.name, modelInfo.name);
+
+// Donor count is 0 on launch — every generation block renders empty state.
+const generationBlocks = generations.map((g) => ({ ...g, count: 0, donors: [] as never[] }));
+const totalDonors = 0;
+const yardCount = 0;
+
+// Cross-link to up to 5 other models in the same brand.
+const otherModels = (MODELS_BY_BRAND[make!] ?? [])
+  .filter((m) => m.slug !== model)
+  .slice(0, 5)
+  .map((m) => ({ name: m.name, slug: m.slug, count: 0 }));
+
+// City variants: 6 Tier-1 cities.
+const otherCities = TIER_1_CITIES.map((c) => ({
+  city: c.name,
+  province: c.province,
+  slug: c.slug,
+  count: 0,
+  href: `/parts/${make}/${model}/${c.slug}/`,
+}));
+
+const title = `Used ${brand.name} ${modelInfo.name} parts in Canada — japanauto.ca`;
+const description = `Used ${brand.name} ${modelInfo.name} parts from Canadian salvage yards. Donor cars grouped by generation — call the junkyard to find your part.`;
+const canonical = `https://japanauto.ca/parts/${make}/${model}/`;
+
+const schemaLD = [
+  {
+    '@type': 'WebPage',
+    '@id': `${canonical}#webpage`,
+    url: canonical,
+    name: title,
+    description,
+    breadcrumb: { '@id': `${canonical}#breadcrumb` },
+    inLanguage: 'en-CA',
+  },
+  {
+    '@type': 'BreadcrumbList',
+    '@id': `${canonical}#breadcrumb`,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',           item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Parts',          item: 'https://japanauto.ca/parts/' },
+      { '@type': 'ListItem', position: 3, name: brand.name,       item: `https://japanauto.ca/parts/${make}/` },
+      { '@type': 'ListItem', position: 4, name: modelInfo.name,   item: canonical },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    name: `${brand.name} ${modelInfo.name} donor cars in Canada`,
+    numberOfItems: totalDonors,
+    itemListElement: [],
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+
+const subtitleHtml =
+  totalDonors > 0
+    ? `<span class="num">${totalDonors}</span> donor cars across <span class="num">${yardCount}</span> junkyards · Updated today`
+    : 'Donor cars listing as junkyards onboard · Updated today';
+---
+<BaseLayout {title} {description} {canonical} {schemaLD}>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">Used {brand.name} {modelInfo.name} parts in Canada</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home',            href: '/' },
+    { label: 'Parts',           href: '/parts/' },
+    { label: brand.name,        href: `/parts/${make}/` },
+    { label: modelInfo.name },
+  ]} />
+
+  <PageHeading
+    title={`Used ${brand.name} ${modelInfo.name} parts in Canada`}
+    subtitle={subtitleHtml}
+  />
+
+  <section style="padding:20px 16px 0">
+    {copy.intro.map((p, i) => (
+      <p style={`margin:${i === 0 ? '0' : '12px 0 0'};font-size:15px;line-height:23px;color:var(--color-ink-default)`}>
+        {p}
+      </p>
+    ))}
+  </section>
+
+  {generationBlocks.map((gen, gi) => (
+    <section style={`padding:${gi === 0 ? '32px 0 0' : '40px 0 0'}`}>
+      <GenerationHeader
+        range={gen.range}
+        code={gen.code === 'all' ? undefined : gen.code}
+        count={gen.count}
+        note={gen.note ?? 'Most parts interchangeable within generation'}
+      />
+      <div style="padding:0 16px">
+        {gen.donors.length === 0 ? (
+          <p class="t-body-m ink-muted" style="font-size:14px;line-height:21px;background:var(--color-bg-subtle);border-radius:12px;padding:16px;margin:0">
+            No donor cars listed yet in this generation.
+            <a href="/dealer/signup/?type=salvage_yard" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">Run a junkyard? List your inventory.</a>
+          </p>
+        ) : null}
+      </div>
+    </section>
+  ))}
+
+  {otherModels.length > 0 && (
+    <section style="padding:40px 0 0">
+      <h2 class="t-h-l" style="padding:0 16px;font-size:22px;line-height:30px;font-weight:600;letter-spacing:-0.01em;color:var(--color-ink-strong);margin:0 0 12px">
+        More {brand.name} models with donor cars →
+      </h2>
+      <div style="display:flex;gap:8px;padding:0 16px 4px;overflow-x:auto;scrollbar-width:none">
+        {otherModels.map((m) => (
+          <CrossLinkModelCard name={m.name} count={m.count} href={`/parts/${make}/${m.slug}/`} />
+        ))}
+      </div>
+    </section>
+  )}
+
+  <section style="padding:40px 16px 0">
+    <h2 class="t-h-s" style="font-size:17px;line-height:24px;font-weight:600;color:var(--color-ink-strong);margin:0 0 12px">
+      {brand.name} {modelInfo.name} parts in Canadian cities
+    </h2>
+    <CityCountGrid cities={otherCities} />
+  </section>
+
+  <section style="padding:40px 16px 0">
+    <h2 class="t-h-l" style="font-size:22px;line-height:30px;font-weight:600;letter-spacing:-0.01em;color:var(--color-ink-strong);margin:0 0 12px">
+      How {modelInfo.name} parts compatibility works
+    </h2>
+    {copy.compatibility.map((p, i) => (
+      <p style={`margin:${i === 0 ? '0' : '12px 0 0'};font-size:15px;line-height:23px;color:var(--color-ink-default)`}>
+        {p}
+      </p>
+    ))}
+  </section>
+
+  <FaqSection items={faqs} heading={`Common questions about ${brand.name} ${modelInfo.name} parts`} />
+</BaseLayout>

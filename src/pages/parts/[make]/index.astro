@@ -1,0 +1,140 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Navbar from '../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../../components/sections/PageHeading.astro';
+import FaqSection from '../../../components/sections/FaqSection.astro';
+import PartsModelTile from '../../../components/parts/PartsModelTile.astro';
+import { BRAND_CONTENT } from '../../../data/brand-content';
+import { MODELS_BY_BRAND } from '../../../data/models-stubs';
+import { makeFaqs } from '../../../data/parts-faqs';
+import { makeCopyFor } from '../../../data/parts-make-copy';
+
+export function getStaticPaths() {
+  return Object.keys(BRAND_CONTENT).map((make) => ({ params: { make } }));
+}
+
+const { make } = Astro.params;
+const brand = BRAND_CONTENT[make!]!;
+const models = (MODELS_BY_BRAND[make!] ?? []).map((m) => ({
+  ...m,
+  count: 0,                                    // donor_cars empty on launch
+}));
+const totalDonors = 0;
+const yardCount = 0;
+const copy = makeCopyFor(make!, brand.name);
+const faqs = makeFaqs(brand.name);
+
+const title = `Used ${brand.name} parts in Canada — japanauto.ca`;
+const description = `Used ${brand.name} parts from Canadian salvage yards. Donor cars across major cities — pick a model to find a donor, then call the junkyard.`;
+const canonical = `https://japanauto.ca/parts/${make}/`;
+
+const schemaLD = [
+  {
+    '@type': 'WebPage',
+    '@id': `${canonical}#webpage`,
+    url: canonical,
+    name: title,
+    description,
+    breadcrumb: { '@id': `${canonical}#breadcrumb` },
+    inLanguage: 'en-CA',
+  },
+  {
+    '@type': 'BreadcrumbList',
+    '@id': `${canonical}#breadcrumb`,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',     item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Parts',    item: 'https://japanauto.ca/parts/' },
+      { '@type': 'ListItem', position: 3, name: brand.name, item: canonical },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    name: `${brand.name} models with donor cars in Canada`,
+    itemListElement: models.map((m, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: `${brand.name} ${m.name}`,
+      url: `https://japanauto.ca/parts/${make}/${m.slug}/`,
+    })),
+  },
+  {
+    '@type': 'Brand',
+    name: brand.name,
+    description: copy.aboutParagraphs[0] ?? `${brand.name} parts available across Canada.`,
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+
+const subtitleHtml =
+  totalDonors > 0
+    ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> junkyards · Updated today`
+    : 'Donor cars listing as junkyards onboard · Updated today';
+---
+<BaseLayout {title} {description} {canonical} {schemaLD}>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">Used {brand.name} parts in Canada</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home',      href: '/' },
+    { label: 'Parts',     href: '/parts/' },
+    { label: brand.name },
+  ]} />
+
+  <PageHeading
+    title={`${brand.name} donor cars in Canada`}
+    subtitle={subtitleHtml}
+  />
+
+  <section style="padding:0 16px">
+    <h2 class="t-h-l" style="font-size:22px;line-height:30px;font-weight:600;letter-spacing:-0.01em;color:var(--color-ink-strong);margin:0 0 16px">
+      Pick your model
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+      {models.map((m) => (
+        <PartsModelTile
+          name={m.name}
+          slug={m.slug}
+          count={m.count}
+          href={`/parts/${make}/${m.slug}/`}
+        />
+      ))}
+    </div>
+  </section>
+
+  <section style="padding:32px 16px 0">
+    <h2 class="t-h-m" style="font-size:18px;line-height:26px;font-weight:600;letter-spacing:-0.005em;color:var(--color-ink-strong);margin:0 0 12px">
+      {copy.aboutTitle}
+    </h2>
+    {copy.aboutParagraphs.map((p, i) => (
+      <p style={`margin:${i === 0 ? '0' : '12px 0 0'};font-size:15px;line-height:23px;color:var(--color-ink-default)`}>
+        {p}
+      </p>
+    ))}
+  </section>
+
+  <FaqSection items={faqs} heading={`Common questions about ${brand.name} parts`} />
+
+  {totalDonors === 0 && (
+    <section style="padding:24px 16px 0">
+      <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">
+        No donor cars listed yet for {brand.name} — junkyards are launching their inventory now.
+        Run a junkyard? <a href="/dealer/signup/?type=salvage_yard" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
+      </p>
+    </section>
+  )}
+</BaseLayout>

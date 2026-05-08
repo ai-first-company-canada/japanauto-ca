@@ -1,0 +1,159 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Navbar from '../../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../../../components/sections/PageHeading.astro';
+import FaqSection from '../../../../components/sections/FaqSection.astro';
+import PartsModelTile from '../../../../components/parts/PartsModelTile.astro';
+import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
+import { MODELS_BY_BRAND } from '../../../../data/models-stubs';
+import { makeFaqs } from '../../../../data/parts-faqs';
+import { makeCopyFor } from '../../../../data/parts-make-copy';
+
+export function getStaticPaths() {
+  const out: Array<{ params: { make: string; city: string } }> = [];
+  for (const make of Object.keys(BRAND_CONTENT)) {
+    for (const c of TIER_1_CITIES) {
+      out.push({ params: { make, city: c.slug } });
+    }
+  }
+  return out;
+}
+
+const { make, city } = Astro.params;
+const brand = BRAND_CONTENT[make!]!;
+const cityInfo = TIER_1_CITIES.find((c) => c.slug === city)!;
+const cityShort = `${cityInfo.name}, ${cityInfo.province}`;
+
+const models = (MODELS_BY_BRAND[make!] ?? []).map((m) => ({
+  ...m,
+  count: 0,
+}));
+const totalDonors = 0;
+const yardCount = 0;
+const copy = makeCopyFor(make!, brand.name);
+const faqs = makeFaqs(brand.name);
+
+const title = `Used ${brand.name} parts in ${cityShort} — japanauto.ca`;
+const description = `Used ${brand.name} parts from salvage yards in ${cityInfo.name}. Donor cars at local junkyards — pick a model to find a donor, then call.`;
+const canonical = `https://japanauto.ca/parts/${make}/${city}/`;
+
+const schemaLD = [
+  {
+    '@type': 'WebPage',
+    '@id': `${canonical}#webpage`,
+    url: canonical,
+    name: title,
+    description,
+    breadcrumb: { '@id': `${canonical}#breadcrumb` },
+    inLanguage: 'en-CA',
+  },
+  {
+    '@type': 'BreadcrumbList',
+    '@id': `${canonical}#breadcrumb`,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',         item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Parts',        item: 'https://japanauto.ca/parts/' },
+      { '@type': 'ListItem', position: 3, name: brand.name,     item: `https://japanauto.ca/parts/${make}/` },
+      { '@type': 'ListItem', position: 4, name: cityInfo.name,  item: canonical },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    name: `${brand.name} models with donor cars in ${cityInfo.name}`,
+    itemListElement: models.map((m, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: `${brand.name} ${m.name}`,
+      url: `https://japanauto.ca/parts/${make}/${m.slug}/${city}/`,
+    })),
+  },
+  {
+    '@type': 'Place',
+    name: cityInfo.name,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: cityInfo.name,
+      addressRegion: cityInfo.province,
+      addressCountry: 'CA',
+    },
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+
+const subtitleHtml =
+  totalDonors > 0
+    ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> ${cityInfo.name} junkyards · Updated today`
+    : `Donor cars listing as ${cityInfo.name} junkyards onboard · Updated today`;
+---
+<BaseLayout {title} {description} {canonical} {schemaLD} geoFallbackCity={city!}>
+  <Navbar slot="navbar" cityShort={cityShort} />
+  <MenuDrawer slot="menu-drawer" cityShort={cityShort} cityName={cityInfo.name} />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">Used {brand.name} parts in {cityShort}</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home',         href: '/' },
+    { label: 'Parts',        href: '/parts/' },
+    { label: brand.name,     href: `/parts/${make}/` },
+    { label: cityInfo.name },
+  ]} />
+
+  <PageHeading
+    title={`${brand.name} donor cars in ${cityInfo.name}`}
+    subtitle={subtitleHtml}
+  />
+
+  <section style="padding:0 16px">
+    <h2 class="t-h-l" style="font-size:22px;line-height:30px;font-weight:600;letter-spacing:-0.01em;color:var(--color-ink-strong);margin:0 0 16px">
+      Pick your {brand.name} model
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+      {models.map((m) => (
+        <PartsModelTile
+          name={m.name}
+          slug={m.slug}
+          count={m.count}
+          href={`/parts/${make}/${m.slug}/${city}/`}
+        />
+      ))}
+    </div>
+  </section>
+
+  <section style="padding:32px 16px 0">
+    <h2 class="t-h-m" style="font-size:18px;line-height:26px;font-weight:600;letter-spacing:-0.005em;color:var(--color-ink-strong);margin:0 0 12px">
+      {copy.aboutTitle.replace(' in Canada', ` in ${cityInfo.name}`)}
+    </h2>
+    {copy.aboutParagraphs.map((p, i) => (
+      <p style={`margin:${i === 0 ? '0' : '12px 0 0'};font-size:15px;line-height:23px;color:var(--color-ink-default)`}>
+        {p}
+      </p>
+    ))}
+    <p style="margin:12px 0 0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
+      In {cityInfo.name}, expect 30-day mechanical warranty as standard. Local pickup is the norm; cross-{cityInfo.province} shipping is available for smaller items via Canada Post and Purolator.
+    </p>
+  </section>
+
+  <FaqSection items={faqs} heading={`Common questions about ${brand.name} parts in ${cityInfo.name}`} />
+
+  {totalDonors === 0 && (
+    <section style="padding:24px 16px 0">
+      <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">
+        No {brand.name} donor cars listed yet in {cityInfo.name} — junkyards are launching their inventory now.
+        Run a junkyard in {cityInfo.name}? <a href="/dealer/signup/?type=salvage_yard" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
+      </p>
+    </section>
+  )}
+</BaseLayout>

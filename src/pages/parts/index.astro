@@ -1,0 +1,247 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../components/sections/PageHeading.astro';
+import FaqSection from '../../components/sections/FaqSection.astro';
+import Icon from '../../components/atoms/Icon.astro';
+import PartsBrandTile from '../../components/parts/PartsBrandTile.astro';
+import FeaturedYardCard from '../../components/parts/FeaturedYardCard.astro';
+import EducationalBlock from '../../components/parts/EducationalBlock.astro';
+import { BRAND_CONTENT, TIER_1_CITIES } from '../../data/brand-content';
+import { PARTS_HUB_FAQS } from '../../data/parts-faqs';
+import { featuredYardsNational } from '../../data/featured-yards-seed';
+
+const brandRows = Object.entries(BRAND_CONTENT).map(([slug, b]) => ({
+  slug,
+  name: b.name,
+  count: 0,                           // donor_cars table empty on launch
+}));
+
+const totalDonors = 0;
+const yardCount = featuredYardsNational().length;
+const cityCount = TIER_1_CITIES.length;
+
+const popularSearches = [
+  { label: 'Toyota Corolla 2014–2018 parts in Calgary', href: '/parts/toyota/corolla/calgary/' },
+  { label: 'Honda Civic 2016–2021 parts in Toronto',    href: '/parts/honda/civic/toronto/' },
+  { label: 'Toyota Camry 2018–2024 parts in Vancouver', href: '/parts/toyota/camry/vancouver/' },
+  { label: 'Toyota RAV4 2019–2024 parts in Edmonton',   href: '/parts/toyota/rav4/edmonton/' },
+  { label: 'Honda CR-V 2017–2022 parts in Montreal',    href: '/parts/honda/cr-v/montreal/' },
+  { label: 'Subaru Outback 2015–2019 parts in Ottawa',  href: '/parts/subaru/outback/ottawa/' },
+  { label: 'Mazda3 2014–2018 parts in Toronto',         href: '/parts/mazda/mazda3/toronto/' },
+  { label: 'Nissan Rogue 2014–2020 parts in Calgary',   href: '/parts/nissan/rogue/calgary/' },
+];
+
+const featuredYards = featuredYardsNational();
+
+const title = 'Used Japanese car parts in Canada — japanauto.ca';
+const description = `Used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi parts from Canadian salvage yards. Donor cars across ${cityCount} major cities — call the yard to find your part.`;
+const canonical = 'https://japanauto.ca/parts/';
+
+const schemaLD = [
+  {
+    '@type': 'WebPage',
+    '@id': `${canonical}#webpage`,
+    url: canonical,
+    name: title,
+    description,
+    breadcrumb: { '@id': `${canonical}#breadcrumb` },
+    inLanguage: 'en-CA',
+  },
+  {
+    '@type': 'BreadcrumbList',
+    '@id': `${canonical}#breadcrumb`,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',  item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Parts', item: canonical },
+    ],
+  },
+  {
+    '@type': 'ItemList',
+    name: 'Japanese car brands with donor cars in Canada',
+    itemListElement: brandRows.map((b, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: b.name,
+      url: `https://japanauto.ca/parts/${b.slug}/`,
+    })),
+  },
+  ...featuredYards.map((y) => ({
+    '@type': 'AutoPartsStore',
+    name: y.name,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: y.city,
+      addressRegion: y.province,
+      addressCountry: 'CA',
+    },
+  })),
+  {
+    '@type': 'FAQPage',
+    mainEntity: PARTS_HUB_FAQS.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+
+const subtitleHtml =
+  totalDonors > 0
+    ? `<span class="num">${totalDonors.toLocaleString('en-US')}</span> donor cars · ${cityCount} cities · 9 makes covered`
+    : `${cityCount} active cities · 9 makes covered · listings opening as junkyards onboard`;
+---
+<BaseLayout {title} {description} {canonical} {schemaLD}>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">Used Japanese car parts in Canada</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: 'Parts' },
+  ]} />
+
+  <PageHeading
+    title="Japanese car parts in Canada"
+    subtitle={subtitleHtml}
+  />
+
+  <EducationalBlock
+    heading="Why we don't list individual parts"
+    paragraphs={[
+      "Finding the right used part for your car requires specific knowledge — the exact engine code, trim package, factory options. We don't ask you to filter through hundreds of part entries.",
+      "Instead, we show you which junkyards have a donor car like yours. Pick a donor of your make, model, and generation. Call the junkyard.",
+      "Their staff has the car in front of them, the right tools, and the parts databases. They'll find what you need in minutes.",
+    ]}
+  />
+
+  <section style="padding:32px 16px 0">
+    <h2 class="t-h-l" style="font-size:22px;line-height:30px;font-weight:600;letter-spacing:-0.01em;color:var(--color-ink-strong);margin:0 0 16px">
+      Pick your make
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+      {brandRows.map((b) => (
+        <PartsBrandTile name={b.name} slug={b.slug} count={b.count} />
+      ))}
+    </div>
+  </section>
+
+  <section style="padding:32px 0 0" aria-labelledby="featured-yards-heading">
+    <div style="padding:0 16px">
+      <h2 id="featured-yards-heading" class="t-h-l" style="font-size:22px;line-height:30px;font-weight:600;letter-spacing:-0.01em;color:var(--color-ink-strong);margin:0">
+        Featured junkyards
+      </h2>
+      <p class="t-body-s ink-muted" style="margin-top:4px;margin-bottom:16px;font-size:13px;color:var(--color-ink-muted)">
+        Long-time inventory partners with active donor inventory. Featured selection launches as more junkyards onboard.
+      </p>
+    </div>
+    <div style="position:relative">
+      <div
+        id="featured-yards-carousel"
+        style="display:flex;gap:8px;padding:0 16px 4px;overflow-x:auto;scrollbar-width:none"
+      >
+        {featuredYards.map((y) => (
+          <FeaturedYardCard yard={y} />
+        ))}
+      </div>
+      <div style="position:absolute;top:0;right:0;bottom:0;width:32px;background:linear-gradient(to right, rgba(255,255,255,0), var(--color-bg));pointer-events:none"></div>
+    </div>
+    <div
+      id="featured-yards-dots"
+      style="display:flex;justify-content:center;gap:6px;padding:14px 0 0"
+      aria-hidden="true"
+    >
+      {featuredYards.map((_, i) => (
+        <span
+          data-yard-dot={i}
+          style={`width:8px;height:8px;border-radius:50%;background:${i === 0 ? 'var(--color-accent)' : 'transparent'};border:1px solid var(--color-ink-subtle);opacity:${i === 0 ? '1' : '0.6'}`}
+        />
+      ))}
+    </div>
+  </section>
+
+  <section style="padding:32px 16px 0">
+    <h2 class="t-h-s" style="font-size:17px;line-height:24px;font-weight:600;color:var(--color-ink-strong);margin:0 0 12px">
+      Popular parts searches
+    </h2>
+    <ul style="list-style:none;padding:0;margin:0">
+      {popularSearches.map((q, i) => (
+        <li style={`border-top:${i === 0 ? '1px solid var(--color-divider)' : 'none'};border-bottom:1px solid var(--color-divider)`}>
+          <a
+            href={q.href}
+            style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;font-size:15px;color:var(--color-ink-default);text-decoration:none;line-height:22px"
+          >
+            <span>{q.label}</span>
+            <span style="color:var(--color-ink-muted);flex-shrink:0;display:inline-flex">
+              <Icon name="chevronRight" size={14} />
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section style="padding:32px 16px 0">
+    <h2 class="t-h-m" style="font-size:18px;line-height:26px;font-weight:600;letter-spacing:-0.005em;color:var(--color-ink-strong);margin:0 0 12px">
+      About used Japanese car parts in Canada
+    </h2>
+    <p style="margin:0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
+      Most used parts in Canada come from junkyards (also called salvage yards or auto recyclers) that specialize in Japanese makes. These yards source donor cars from insurance write-offs, end-of-life trade-ins, and JDM importers — then dismantle them part by part as buyers call.
+    </p>
+    <p style="margin:12px 0 0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
+      Warranty norms vary: <span class="num">30</span>-day warranty is standard on mechanical parts, with some yards offering 60–90 days for engines and transmissions. Body panels and interior trim are typically as-is. Parts are matched to donor cars by generation — a 2015 Corolla bumper fits any 2014–2018 Corolla, but not a 2019.
+    </p>
+    <p style="margin:12px 0 0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
+      For body panels (doors, fenders, bumpers, hoods), color matters: yards stock panels in their factory color, and a mismatched panel costs $300–$800 to repaint at a body shop. Always tell the junkyard your car's color when asking about body parts.
+    </p>
+  </section>
+
+  <FaqSection items={PARTS_HUB_FAQS} heading="Common questions about used parts" />
+
+  {totalDonors === 0 && (
+    <section style="padding:24px 16px 0">
+      <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">
+        No donor cars listed yet — featured junkyards are launching their inventory now.
+        Run a junkyard? <a href="/dealer/signup/?type=salvage_yard" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
+      </p>
+    </section>
+  )}
+
+  <script is:inline>
+    (function () {
+      var carousel = document.getElementById('featured-yards-carousel');
+      var dotsBox = document.getElementById('featured-yards-dots');
+      if (!carousel || !dotsBox) return;
+      var dots = Array.prototype.slice.call(dotsBox.querySelectorAll('[data-yard-dot]'));
+      if (dots.length === 0) return;
+      function update() {
+        var children = carousel.children;
+        if (children.length === 0) return;
+        var w = children[0].getBoundingClientRect().width + 8; // gap
+        var idx = Math.round(carousel.scrollLeft / w);
+        idx = Math.max(0, Math.min(dots.length - 1, idx));
+        for (var i = 0; i < dots.length; i++) {
+          var active = i === idx;
+          dots[i].style.background = active ? 'var(--color-accent)' : 'transparent';
+          dots[i].style.opacity = active ? '1' : '0.6';
+          if (active) dots[i].setAttribute('aria-current', 'true');
+          else dots[i].removeAttribute('aria-current');
+        }
+      }
+      var t;
+      carousel.addEventListener('scroll', function () {
+        clearTimeout(t);
+        t = setTimeout(update, 50);
+      }, { passive: true });
+      window.addEventListener('resize', update, { passive: true });
+      update();
+    })();
+  </script>
+</BaseLayout>
