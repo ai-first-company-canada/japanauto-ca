@@ -1,0 +1,33 @@
+---
+import DealerLayout from '../../../layouts/DealerLayout.astro';
+import DonorForm from '../../../components/sections/DonorForm.astro';
+---
+<DealerLayout
+  title="Edit donor car — japanauto.ca"
+  canonical="https://japanauto.ca/dealer/donors/edit/"
+  activeTab="donors"
+>
+  <a
+    href="/dealer/donors/"
+    style="font-size:13px;color:var(--color-ink-muted);margin-bottom:8px;display:inline-block"
+  >← Back to donors</a>
+  <h1 class="t-display-m" style="font-size:26px;margin-bottom:24px">Edit donor car</h1>
+  <DonorForm mode="edit" />
+
+  <script is:inline>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get('id');
+      var form = document.querySelector('form[data-donor-form]');
+      if (!id) {
+        var main = document.querySelector('main');
+        if (main) {
+          main.innerHTML =
+            '<p class="t-body-m" style="text-align:center;padding:48px 0">No donor ID provided.</p>';
+        }
+        return;
+      }
+      if (form) form.setAttribute('data-donor-id', id);
+    })();
+  </script>
+</DealerLayout>

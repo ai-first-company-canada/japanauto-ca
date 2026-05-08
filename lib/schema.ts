@@ -374,6 +374,10 @@ const dealerBaseFields = {
   gst_number: z.string().trim().max(40).nullable().optional(),
   amvic_number: z.string().trim().max(40).nullable().optional(),
   hours: dealerHoursSchema.nullable().optional(),
+  // Phase 3.3 — salvage-yard onboarding fields (also valid on dealer rows)
+  specializes_in: z.string().trim().max(200).nullable().optional(),
+  bio: z.string().trim().max(2000).nullable().optional(),
+  founded_year: z.number().int().min(1900).max(2030).nullable().optional(),
 };
 
 /** Cross-field rule: dealer in AB must have AMVIC. salvage_yard exempt. */
@@ -389,10 +393,26 @@ const amvicRefiner = <
   }
 };
 
+/** Cross-field rule (Phase 3.3): salvage_yard signup requires specializes_in. */
+const specializesInRefiner = <
+  T extends { type: DealerType; specializes_in?: string | null }
+>(data: T, ctx: z.RefinementCtx): void => {
+  if (data.type === "salvage_yard" && !data.specializes_in?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["specializes_in"],
+      message: "Salvage yards must list which makes they specialize in",
+    });
+  }
+};
+
 export const dealerCreateInputSchema = z.object({
   ...dealerBaseFields,
   password: z.string().min(10).max(200),
-}).superRefine(amvicRefiner);
+}).superRefine((data, ctx) => {
+  amvicRefiner(data, ctx);
+  specializesInRefiner(data, ctx);
+});
 export type DealerCreateInput = z.infer<typeof dealerCreateInputSchema>;
 
 export const dealerUpdateInputSchema = z.object({
@@ -404,6 +424,13 @@ export const dealerUpdateInputSchema = z.object({
       type: data.type,
       province: data.province,
       amvic_number: data.amvic_number ?? null,
+    }, ctx);
+  }
+  // Re-run specializes_in check only when both fields present in patch
+  if (data.type && "specializes_in" in data) {
+    specializesInRefiner({
+      type: data.type,
+      specializes_in: data.specializes_in ?? null,
     }, ctx);
   }
 });

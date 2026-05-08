@@ -209,6 +209,56 @@ const CITIES: Array<[string, string, string]> = [
 
     <fieldset
       class="auth-form-group"
+      data-salvage-only
+      style="border:0;padding:0;margin:0 0 24px;display:none"
+    >
+      <legend class="t-caption" style="margin-bottom:8px">SALVAGE YARD</legend>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-specializes">Specializes in</label>
+        <input
+          class="auth-form-input"
+          id="pf-specializes"
+          name="specializes_in"
+          type="text"
+          maxlength="200"
+          placeholder="e.g. Toyota, Honda, Subaru"
+        />
+        <div class="auth-form-error" data-field-error="specializes_in"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-bio">About your yard (optional)</label>
+        <textarea
+          class="auth-form-input"
+          id="pf-bio"
+          name="bio"
+          rows="3"
+          maxlength="2000"
+          placeholder="Shown on donor-car detail pages"
+          style="height:auto;padding:12px 14px;resize:vertical;min-height:80px"
+        ></textarea>
+        <div class="auth-form-error" data-field-error="bio"></div>
+      </div>
+
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="pf-founded">Year founded (optional)</label>
+        <input
+          class="auth-form-input"
+          id="pf-founded"
+          name="founded_year"
+          type="number"
+          min="1900"
+          max="2030"
+          inputmode="numeric"
+          placeholder="e.g. 1995"
+        />
+        <div class="auth-form-error" data-field-error="founded_year"></div>
+      </div>
+    </fieldset>
+
+    <fieldset
+      class="auth-form-group"
       style="border:1px solid var(--color-divider);border-radius:8px;padding:16px;margin:0 0 24px"
     >
       <legend
@@ -294,6 +344,16 @@ const CITIES: Array<[string, string, string]> = [
         if (amvicInput) amvicInput.required = show;
       }
 
+      function toggleSalvageFields() {
+        var isSalvage = selectedType() === 'salvage_yard';
+        var blocks = form.querySelectorAll('[data-salvage-only]');
+        blocks.forEach(function (b) {
+          b.style.display = isSalvage ? '' : 'none';
+        });
+        var spec = form.querySelector('[name="specializes_in"]');
+        if (spec) spec.required = isSalvage;
+      }
+
       function setFormError(msg) {
         if (formErr) formErr.textContent = msg;
       }
@@ -352,7 +412,12 @@ const CITIES: Array<[string, string, string]> = [
       }
 
       provinceSelect.addEventListener('change', toggleAmvic);
-      typeRadios.forEach(function (r) { r.addEventListener('change', toggleAmvic); });
+      typeRadios.forEach(function (r) {
+        r.addEventListener('change', function () {
+          toggleAmvic();
+          toggleSalvageFields();
+        });
+      });
 
       // City select → mirror province
       citySelect.addEventListener('change', function () {
@@ -442,6 +507,9 @@ const CITIES: Array<[string, string, string]> = [
           setVal('province', d.province || '');
           setVal('amvic_number', d.amvic_number || '');
           setVal('description', d.description || '');
+          setVal('specializes_in', d.specializes_in || '');
+          setVal('bio', d.bio || '');
+          setVal('founded_year', d.founded_year ? String(d.founded_year) : '');
           setRadio(d.type || 'dealer');
 
           // City stored as slug — match option.value directly.
@@ -451,6 +519,7 @@ const CITIES: Array<[string, string, string]> = [
           });
           applyHoursToEditor(d.hours);
           toggleAmvic();
+          toggleSalvageFields();
         } catch (e) {
           console.error(e);
           setFormError('Network error loading profile.');
@@ -469,6 +538,13 @@ const CITIES: Array<[string, string, string]> = [
         // Send city slug (option.value), not display name — matches listings.city storage.
         var citySlug = citySelect.value || '';
 
+        var foundedYearRaw = (fd.get('founded_year') || '').toString().trim();
+        var foundedYear = null;
+        if (foundedYearRaw) {
+          var n = parseInt(foundedYearRaw, 10);
+          if (Number.isInteger(n)) foundedYear = n;
+        }
+
         var payload = {
           type: selectedType(),
           name: (fd.get('name') || '').toString().trim(),
@@ -480,6 +556,9 @@ const CITIES: Array<[string, string, string]> = [
           postal_code: (fd.get('postal_code') || '').toString().trim() || null,
           province: fd.get('province') || '',
           amvic_number: (fd.get('amvic_number') || '').toString().trim() || null,
+          specializes_in: (fd.get('specializes_in') || '').toString().trim() || null,
+          bio: (fd.get('bio') || '').toString().trim() || null,
+          founded_year: foundedYear,
           hours: collectHoursFromEditor(),
         };
         if (citySlug) payload.city = citySlug;

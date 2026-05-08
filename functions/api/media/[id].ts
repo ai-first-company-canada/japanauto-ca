@@ -10,7 +10,7 @@
 import type { Env } from "../../../types/env";
 import { noContent, notFound } from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
-import { deleteListingMediaById } from "../_lib/db";
+import { deleteOwnedMediaById } from "../_lib/db";
 
 export const onRequestDelete: PagesFunction<Env, "id"> = async (
   { request, env, params },
@@ -19,7 +19,7 @@ export const onRequestDelete: PagesFunction<Env, "id"> = async (
   if (auth instanceof Response) return auth;
 
   const id = params.id as string;
-  const result = await deleteListingMediaById(env, id, auth.dealerId);
+  const result = await deleteOwnedMediaById(env, id, auth.dealerId);
   if (!result) return notFound("Media not found or not yours");
 
   if (result.cf_image_id) {

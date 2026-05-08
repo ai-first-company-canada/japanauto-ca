@@ -32,7 +32,7 @@ import {
   json, jsonError, badRequest, notFound, forbidden, internalError,
 } from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
-import { getListingById } from "../_lib/db";
+import { getListingById, getDonorCarById } from "../_lib/db";
 
 interface CfDirectUploadResponse {
   success: boolean;
@@ -55,16 +55,23 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
   const { entity_type, entity_id } = parsed.data;
 
-  // Phase 2b3 wires listing media only. dealer/part/featured_slot land in Phase 3.
-  if (entity_type !== "listing") {
+  // Phase 2b3 wired listings; Phase 3.3 added donor_cars. dealer + featured_slot
+  // upload paths still pending — they need handler-side ownership checks too.
+  if (entity_type === "listing") {
+    const listing = await getListingById(env, entity_id);
+    if (!listing) return notFound("Listing not found");
+    if (listing.dealer_id !== auth.dealerId) {
+      return forbidden("Cannot attach media to another dealer's listing");
+    }
+  } else if (entity_type === "donor_car") {
+    const donor = await getDonorCarById(env, entity_id);
+    if (!donor) return notFound("Donor car not found");
+    if (donor.dealer_id !== auth.dealerId) {
+      return forbidden("Cannot attach media to another dealer's donor car");
+    }
+  } else {
     return jsonError(422, "validation_failed",
-      `entity_type='${entity_type}' upload not yet wired (Phase 3)`);
-  }
-
-  const listing = await getListingById(env, entity_id);
-  if (!listing) return notFound("Listing not found");
-  if (listing.dealer_id !== auth.dealerId) {
-    return forbidden("Cannot attach media to another dealer's listing");
+      `entity_type='${entity_type}' upload not yet wired`);
   }
 
   const accountId = env.CLOUDFLARE_ACCOUNT_ID;

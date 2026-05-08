@@ -57,14 +57,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         id, type, name, slug, email, password_hash, phone, website, description,
         address_line1, address_line2, city, province, postal_code,
         lat, lng, business_number, gst_number, amvic_number,
+        specializes_in, bio, founded_year,
         verified, subscription_tier, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'free', ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'free', ?, ?)
     `).bind(
       id, input.type, input.name, input.slug, input.email, passwordHash,
       input.phone ?? null, input.website ?? null, input.description ?? null,
       input.address_line1 ?? null, input.address_line2 ?? null, input.city,
       input.province, input.postal_code ?? null, input.lat ?? null, input.lng ?? null,
       input.business_number ?? null, input.gst_number ?? null, input.amvic_number ?? null,
+      input.specializes_in ?? null, input.bio ?? null, input.founded_year ?? null,
       now, now,
     ).run();
   } catch (e) {
@@ -102,6 +104,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     country: "CA", lat: input.lat ?? null, lng: input.lng ?? null,
     business_number: input.business_number ?? null, gst_number: input.gst_number ?? null,
     amvic_number: input.amvic_number ?? null,
+    specializes_in: input.specializes_in ?? null, bio: input.bio ?? null,
+    founded_year: input.founded_year ?? null,
     verified: 0, subscription_tier: "free", subscription_status: null,
     created_at: now, updated_at: now,
   });

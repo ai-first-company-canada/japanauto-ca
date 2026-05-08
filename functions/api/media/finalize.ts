@@ -34,7 +34,7 @@ import {
   created, jsonError, badRequest, notFound, forbidden,
 } from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
-import { getListingById, createMedia } from "../_lib/db";
+import { getListingById, getDonorCarById, createMedia } from "../_lib/db";
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const auth = await requireDealer(request, env);
@@ -51,15 +51,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
   const input = parsed.data;
 
-  if (input.entity_type !== "listing") {
+  if (input.entity_type === "listing") {
+    const listing = await getListingById(env, input.entity_id);
+    if (!listing) return notFound("Listing not found");
+    if (listing.dealer_id !== auth.dealerId) {
+      return forbidden("Cannot attach media to another dealer's listing");
+    }
+  } else if (input.entity_type === "donor_car") {
+    const donor = await getDonorCarById(env, input.entity_id);
+    if (!donor) return notFound("Donor car not found");
+    if (donor.dealer_id !== auth.dealerId) {
+      return forbidden("Cannot attach media to another dealer's donor car");
+    }
+  } else {
     return jsonError(422, "validation_failed",
-      `entity_type='${input.entity_type}' finalize not yet wired (Phase 3)`);
-  }
-
-  const listing = await getListingById(env, input.entity_id);
-  if (!listing) return notFound("Listing not found");
-  if (listing.dealer_id !== auth.dealerId) {
-    return forbidden("Cannot attach media to another dealer's listing");
+      `entity_type='${input.entity_type}' finalize not yet wired`);
   }
 
   const media = await createMedia(env, input);

@@ -402,27 +402,130 @@ export async function getMediaForEntity(
 
 /**
  * Delete a media row, but only if the requesting dealer owns the parent
- * listing (the only entity_type wired up in Phase 2b3). Returns the deleted
- * row's cf_image_id so a future cleanup worker can purge the underlying CF
- * image asset; null when no row matched (not found or not owned).
+ * entity. Phase 2b3 covered listing rows; Phase 3.3 extends to donor_cars.
  *
- * NOTE: only `entity_type='listing'` is enforced today. Dealer/part media
- * lands in Phase 3 — extend this JOIN then.
+ * Implemented as a UNION-shaped query so a single round-trip both verifies
+ * ownership and reads cf_image_id. Returns the deleted row's cf_image_id so
+ * a future cleanup worker can purge the underlying CF image asset; null when
+ * no row matched (not found or not owned).
  */
-export async function deleteListingMediaById(
+export async function deleteOwnedMediaById(
   env: Env, mediaId: string, dealerId: string,
 ): Promise<{ cf_image_id: string | null } | null> {
   const row = await env.DB.prepare(
     `SELECT m.id, m.cf_image_id
        FROM media m
-       JOIN listings l ON l.id = m.entity_id
-      WHERE m.id = ? AND m.entity_type = 'listing' AND l.dealer_id = ?
+       LEFT JOIN listings   l  ON m.entity_type = 'listing'   AND l.id  = m.entity_id
+       LEFT JOIN donor_cars dc ON m.entity_type = 'donor_car' AND dc.id = m.entity_id
+      WHERE m.id = ?
+        AND (
+          (m.entity_type = 'listing'   AND l.dealer_id  = ?)
+          OR (m.entity_type = 'donor_car' AND dc.dealer_id = ?)
+        )
       LIMIT 1`,
-  ).bind(mediaId, dealerId).first<{ id: string; cf_image_id: string | null }>();
+  ).bind(mediaId, dealerId, dealerId).first<{ id: string; cf_image_id: string | null }>();
   if (!row) return null;
 
   await env.DB.prepare(`DELETE FROM media WHERE id = ?`).bind(mediaId).run();
   return { cf_image_id: row.cf_image_id };
+}
+
+/** Back-compat alias — pre-Phase-3.3 callers used `deleteListingMediaById`. */
+export const deleteListingMediaById = deleteOwnedMediaById;
+
+// ============================================================================
+// DONOR CARS — CRUD helpers (Phase 3.3 dashboard)
+// ============================================================================
+
+/**
+ * Fetch a single donor by id (no status filter). Used by the dashboard edit
+ * page and ownership checks in PATCH/DELETE handlers.
+ */
+export async function getDonorCarById(
+  env: Env, id: string,
+): Promise<Record<string, unknown> | null> {
+  const row = await env.DB.prepare(
+    `SELECT * FROM donor_cars WHERE id = ? LIMIT 1`
+  ).bind(id).first<Record<string, unknown>>();
+  return row ?? null;
+}
+
+export interface DonorCarListRow {
+  id: string;
+  dealer_id: string;
+  slug: string;
+  year: number;
+  make_id: number;
+  model_id: number;
+  trim: string | null;
+  generation_code: string | null;
+  generation_range: string | null;
+  city_slug: string;
+  color_exterior: string;
+  color_exterior_full: string | null;
+  tone: string | null;
+  color_interior: string | null;
+  vin: string | null;
+  mileage: number | null;
+  engine: string | null;
+  transmission: string | null;
+  condition: string;
+  available_parts_notes: string | null;
+  compatible_makes: string | null;
+  compatible_models: string | null;
+  compatible_years: string | null;
+  compatible_trims: string | null;
+  price: number | null;
+  price_currency: string;
+  status: string;
+  view_count: number;
+  contact_count: number;
+  created_at: number;
+  updated_at: number;
+  make_slug: string | null;
+  make_name: string | null;
+  model_slug: string | null;
+  model_name: string | null;
+}
+
+/**
+ * List donor cars for a dealer (dashboard). Joins makes + models so the UI
+ * can show "2015 Toyota Corolla LE" without an N+1 follow-up.
+ */
+export async function listDonorsForDealer(
+  env: Env, dealerId: string, limit: number,
+): Promise<DonorCarListRow[]> {
+  const result = await env.DB.prepare(`
+    SELECT
+      dc.*,
+      mk.slug AS make_slug, mk.name AS make_name,
+      md.slug AS model_slug, md.name AS model_name
+    FROM donor_cars dc
+    LEFT JOIN makes  mk ON mk.id = dc.make_id
+    LEFT JOIN models md ON md.id = dc.model_id
+    WHERE dc.dealer_id = ?
+    ORDER BY dc.created_at DESC
+    LIMIT ?
+  `).bind(dealerId, limit).all<DonorCarListRow>();
+  return result.results ?? [];
+}
+
+/**
+ * Atomic mark-depleted: set both `condition` and `status` to 'depleted'
+ * iff the row is not already depleted. Mirrors `markListingSold`.
+ * Returns the updated row, or null on conflict (already depleted).
+ */
+export async function markDonorDepleted(
+  env: Env, id: string,
+): Promise<Record<string, unknown> | null> {
+  const now = Math.floor(Date.now() / 1000);
+  const row = await env.DB.prepare(
+    `UPDATE donor_cars
+     SET condition = 'depleted', status = 'depleted', updated_at = ?
+     WHERE id = ? AND condition != 'depleted'
+     RETURNING *`,
+  ).bind(now, id).first<Record<string, unknown>>();
+  return row ?? null;
 }
 
 // ============================================================================

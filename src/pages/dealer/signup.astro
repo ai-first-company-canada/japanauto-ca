@@ -149,6 +149,51 @@ const PROVINCES: Array<{ code: string; name: string }> = [
       </div>
     </div>
 
+    <div class="auth-form-group" data-salvage-only style="display:none">
+      <label class="auth-form-label" for="specializes_in">Specializes in</label>
+      <input
+        class="auth-form-input"
+        id="specializes_in"
+        name="specializes_in"
+        type="text"
+        maxlength="200"
+        placeholder="e.g. Toyota, Honda, Subaru"
+      />
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Comma-separated brands you stock as donor cars.
+      </p>
+      <div class="auth-form-error" data-field-error="specializes_in"></div>
+    </div>
+
+    <div class="auth-form-group" data-salvage-only style="display:none">
+      <label class="auth-form-label" for="bio">About your yard (optional)</label>
+      <textarea
+        class="auth-form-input"
+        id="bio"
+        name="bio"
+        rows="3"
+        maxlength="2000"
+        placeholder="A short description shown on donor-car pages"
+        style="height:auto;padding:12px 14px;resize:vertical;min-height:80px"
+      ></textarea>
+      <div class="auth-form-error" data-field-error="bio"></div>
+    </div>
+
+    <div class="auth-form-group" data-salvage-only style="display:none">
+      <label class="auth-form-label" for="founded_year">Year founded (optional)</label>
+      <input
+        class="auth-form-input"
+        id="founded_year"
+        name="founded_year"
+        type="number"
+        min="1900"
+        max="2030"
+        inputmode="numeric"
+        placeholder="e.g. 1995"
+      />
+      <div class="auth-form-error" data-field-error="founded_year"></div>
+    </div>
+
     <div
       class="auth-form-error"
       data-form-error
@@ -207,6 +252,23 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         }
       }
 
+      function toggleSalvageFields() {
+        var isSalvage = selectedType() === 'salvage_yard';
+        var blocks = form.querySelectorAll('[data-salvage-only]');
+        blocks.forEach(function (b) {
+          b.style.display = isSalvage ? '' : 'none';
+        });
+        var spec = form.querySelector('[name="specializes_in"]');
+        if (spec) {
+          spec.required = isSalvage;
+          if (!isSalvage) spec.value = '';
+        }
+        var bio = form.querySelector('[name="bio"]');
+        if (bio && !isSalvage) bio.value = '';
+        var fy = form.querySelector('[name="founded_year"]');
+        if (fy && !isSalvage) fy.value = '';
+      }
+
       function toggleCityOther() {
         if (!cityOther) return;
         if (citySelect.value === 'other') {
@@ -248,9 +310,15 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         toggleAmvic();
         syncCities();
       });
-      typeRadios.forEach(function (r) { r.addEventListener('change', toggleAmvic); });
+      typeRadios.forEach(function (r) {
+        r.addEventListener('change', function () {
+          toggleAmvic();
+          toggleSalvageFields();
+        });
+      });
       citySelect.addEventListener('change', toggleCityOther);
       toggleAmvic();
+      toggleSalvageFields();
       syncCities();
 
       function clearErrors() {
@@ -313,6 +381,17 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         };
         if (amvicInput && amvicInput.value.trim()) {
           payload.amvic_number = amvicInput.value.trim();
+        }
+        if (payload.type === 'salvage_yard') {
+          var spec = (form.querySelector('[name="specializes_in"]') || {}).value;
+          if (spec && spec.trim()) payload.specializes_in = spec.trim();
+          var bio = (form.querySelector('[name="bio"]') || {}).value;
+          if (bio && bio.trim()) payload.bio = bio.trim();
+          var fy = (form.querySelector('[name="founded_year"]') || {}).value;
+          if (fy && fy.trim()) {
+            var n = parseInt(fy, 10);
+            if (Number.isInteger(n)) payload.founded_year = n;
+          }
         }
 
         try {

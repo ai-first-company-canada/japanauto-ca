@@ -5,7 +5,7 @@ import Wordmark from '../components/atoms/Wordmark.astro';
 interface Props {
   title: string;
   canonical: string;
-  activeTab: 'dashboard' | 'listings' | 'profile';
+  activeTab: 'dashboard' | 'listings' | 'donors' | 'profile';
 }
 const { title, canonical, activeTab } = Astro.props;
 const description = 'Dealer portal — japanauto.ca';
@@ -51,8 +51,15 @@ const cfAccountHash = (import.meta.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '') as 
       >Dashboard</a>
       <a
         href="/dealer/listings/"
+        data-tab-listings
         class:list={['dealer-tab', { active: activeTab === 'listings' }]}
       >Listings</a>
+      <a
+        href="/dealer/donors/"
+        data-tab-donors
+        class:list={['dealer-tab', { active: activeTab === 'donors' }]}
+        style="display:none"
+      >Donors</a>
       <a
         href="/dealer/profile/"
         class:list={['dealer-tab', { active: activeTab === 'profile' }]}
@@ -61,5 +68,42 @@ const cfAccountHash = (import.meta.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '') as 
     <main class="dealer-main">
       <slot />
     </main>
+
+    <script is:inline>
+      (async function () {
+        // Single fetch + sessionStorage cache. The layout renders a Listings
+        // tab by default; swap to Donors once we know the dealer.type. Doing
+        // this client-side avoids turning every dashboard page into SSR.
+        try {
+          var cached = null;
+          try { cached = sessionStorage.getItem('jc_dealer_type'); } catch (_) {}
+          if (cached === 'salvage_yard' || cached === 'dealer') {
+            applyType(cached);
+            return;
+          }
+          var res = await fetch('/api/dealers/me');
+          if (res.status === 401) return; // login redirect handled per-page
+          if (!res.ok) return;
+          var data = await res.json();
+          var type = (data.dealer || data || {}).type;
+          if (type === 'salvage_yard' || type === 'dealer') {
+            try { sessionStorage.setItem('jc_dealer_type', type); } catch (_) {}
+            applyType(type);
+          }
+        } catch (_) { /* nav stays in default state */ }
+
+        function applyType(type) {
+          var listingsTab = document.querySelector('[data-tab-listings]');
+          var donorsTab = document.querySelector('[data-tab-donors]');
+          if (type === 'salvage_yard') {
+            if (listingsTab) listingsTab.style.display = 'none';
+            if (donorsTab) donorsTab.style.display = '';
+          } else {
+            if (listingsTab) listingsTab.style.display = '';
+            if (donorsTab) donorsTab.style.display = 'none';
+          }
+        }
+      })();
+    </script>
   </body>
 </html>

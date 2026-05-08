@@ -1,0 +1,1000 @@
+---
+interface Props {
+  mode: 'create' | 'edit';
+}
+const { mode } = Astro.props;
+
+// Brand whitelist mirrors lib/schema.ts BRAND_SLUGS (kept in sync; do not
+// extend here without also extending the zod enum).
+const BRAND_OPTIONS: Array<[string, string]> = [
+  ['toyota', 'Toyota'],
+  ['honda', 'Honda'],
+  ['nissan', 'Nissan'],
+  ['mazda', 'Mazda'],
+  ['subaru', 'Subaru'],
+  ['lexus', 'Lexus'],
+  ['acura', 'Acura'],
+  ['infiniti', 'Infiniti'],
+  ['mitsubishi', 'Mitsubishi'],
+];
+
+// Tier-1 active CMA cities (Phase 3.1 cities table). The select also drives
+// the city_slug column on donor_cars.
+const CITY_OPTIONS: Array<[string, string, string]> = [
+  ['toronto', 'Toronto', 'ON'],
+  ['montreal', 'Montreal', 'QC'],
+  ['vancouver', 'Vancouver', 'BC'],
+  ['calgary', 'Calgary', 'AB'],
+  ['edmonton', 'Edmonton', 'AB'],
+  ['ottawa', 'Ottawa', 'ON'],
+];
+
+const TRANSMISSIONS: Array<[string, string]> = [
+  ['automatic', 'Automatic'],
+  ['manual', 'Manual'],
+  ['cvt', 'CVT'],
+  ['dct', 'DCT'],
+];
+
+// donor_cars has its own static year window (1980..2030 from migration 0005).
+// Older donor cars are valuable for rare-parts recovery — no rolling cap.
+const minYear = 2002;
+const maxYear = 2025;
+const yearOptions: number[] = [];
+for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
+
+// DONOR_CAR_TONES from lib/schema.ts. Keep in sync.
+const TONE_OPTIONS: Array<[string, string]> = [
+  ['silver', 'Silver'],
+  ['midnight', 'Midnight (deep blue/black)'],
+  ['white', 'White'],
+  ['pearl', 'Pearl'],
+  ['black', 'Black'],
+  ['red', 'Red'],
+  ['blue', 'Blue'],
+  ['grey', 'Grey'],
+  ['crimson', 'Crimson / Burgundy'],
+  ['graphite', 'Graphite (dark grey)'],
+  ['sand', 'Sand / Beige'],
+  ['forest', 'Forest green'],
+  ['bronze', 'Bronze'],
+];
+
+const CONDITIONS: Array<[string, string]> = [
+  ['fully_available', 'Fully available'],
+  ['partially_available', 'Partially available'],
+  ['almost_depleted', 'Almost depleted'],
+];
+---
+<form
+  id="donor-form"
+  data-donor-form
+  data-mode={mode}
+  novalidate
+>
+  <fieldset
+    class="auth-form-group"
+    style="border:0;padding:0;margin:0 0 24px"
+  >
+    <legend class="t-caption" style="margin-bottom:8px">VEHICLE</legend>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-year">Year</label>
+      <select class="auth-form-input" id="df-year" name="year" required>
+        <option value="">Select year</option>
+        {yearOptions.map((y) => <option value={y}>{y}</option>)}
+      </select>
+      <div class="auth-form-error" data-field-error="year"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-make">Make</label>
+      <select class="auth-form-input" id="df-make" name="make_slug" required>
+        <option value="">Select make</option>
+        {BRAND_OPTIONS.map(([slug, name]) => (
+          <option value={slug}>{name}</option>
+        ))}
+      </select>
+      <div class="auth-form-error" data-field-error="make_id"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-model">Model</label>
+      <select class="auth-form-input" id="df-model" name="model_id" required>
+        <option value="">Select make first</option>
+      </select>
+      <div class="auth-form-error" data-field-error="model_id"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-trim">Trim (optional)</label>
+      <input
+        class="auth-form-input"
+        id="df-trim"
+        name="trim"
+        type="text"
+        maxlength="40"
+        placeholder="e.g. LE, Sport, Limited"
+      />
+      <div class="auth-form-error" data-field-error="trim"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="df-gencode">Generation code</label>
+        <input
+          class="auth-form-input"
+          id="df-gencode"
+          name="generation_code"
+          type="text"
+          maxlength="20"
+          placeholder="e.g. E170"
+        />
+        <div class="auth-form-error" data-field-error="generation_code"></div>
+      </div>
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="df-genrange">Generation years</label>
+        <input
+          class="auth-form-input"
+          id="df-genrange"
+          name="generation_range"
+          type="text"
+          maxlength="20"
+          placeholder="e.g. 2014–2018"
+        />
+        <div class="auth-form-error" data-field-error="generation_range"></div>
+      </div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-vin">VIN (optional)</label>
+      <input
+        class="auth-form-input"
+        id="df-vin"
+        name="vin"
+        type="text"
+        maxlength="17"
+        autocapitalize="characters"
+        spellcheck="false"
+        placeholder="17 chars, no I/O/Q (leave blank if unknown)"
+        style="text-transform:uppercase"
+      />
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Donor cars often have damaged VIN plates — leave blank if you can't read it.
+      </p>
+      <div class="auth-form-error" data-field-error="vin"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">SPECS</legend>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-mileage">Mileage (km)</label>
+      <input
+        class="auth-form-input"
+        id="df-mileage"
+        name="mileage"
+        type="number"
+        required
+        min="0"
+        max="9999999"
+        inputmode="numeric"
+      />
+      <div class="auth-form-error" data-field-error="mileage"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-engine">Engine (optional)</label>
+      <input
+        class="auth-form-input"
+        id="df-engine"
+        name="engine"
+        type="text"
+        maxlength="80"
+        placeholder="e.g. 1.8L 2ZR-FE"
+      />
+      <div class="auth-form-error" data-field-error="engine"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-transmission">Transmission</label>
+      <select class="auth-form-input" id="df-transmission" name="transmission" required>
+        <option value="">Select transmission</option>
+        {TRANSMISSIONS.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <div class="auth-form-error" data-field-error="transmission"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">COLOR</legend>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="df-color-ext">Exterior</label>
+        <input
+          class="auth-form-input"
+          id="df-color-ext"
+          name="color_exterior"
+          type="text"
+          required
+          minlength="1"
+          maxlength="40"
+          placeholder="e.g. Silver"
+        />
+        <div class="auth-form-error" data-field-error="color_exterior"></div>
+      </div>
+      <div class="auth-form-group">
+        <label class="auth-form-label" for="df-color-ext-full">Full name (optional)</label>
+        <input
+          class="auth-form-input"
+          id="df-color-ext-full"
+          name="color_exterior_full"
+          type="text"
+          maxlength="60"
+          placeholder="e.g. Silver Metallic"
+        />
+        <div class="auth-form-error" data-field-error="color_exterior_full"></div>
+      </div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-tone">Tone (drives placeholder illustration)</label>
+      <select class="auth-form-input" id="df-tone" name="tone" required>
+        <option value="">Select tone</option>
+        {TONE_OPTIONS.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Used as the primary illustration color when no photos are uploaded.
+      </p>
+      <div class="auth-form-error" data-field-error="tone"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-color-int">Interior (optional)</label>
+      <input
+        class="auth-form-input"
+        id="df-color-int"
+        name="color_interior"
+        type="text"
+        maxlength="40"
+        placeholder="e.g. Beige"
+      />
+      <div class="auth-form-error" data-field-error="color_interior"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">LOCATION</legend>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-city">City</label>
+      <select class="auth-form-input" id="df-city" name="city_slug" required>
+        <option value="">Select city</option>
+        {CITY_OPTIONS.map(([slug, name, prov]) => (
+          <option value={slug} data-province={prov}>{name}, {prov}</option>
+        ))}
+      </select>
+      <div class="auth-form-error" data-field-error="city_slug"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">AVAILABILITY</legend>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-condition">Condition</label>
+      <select class="auth-form-input" id="df-condition" name="condition">
+        {CONDITIONS.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Mark depleted via the "Mark depleted" button instead of changing here.
+      </p>
+      <div class="auth-form-error" data-field-error="condition"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-notes">Available parts notes</label>
+      <textarea
+        class="auth-form-input"
+        id="df-notes"
+        name="available_parts_notes"
+        required
+        rows="6"
+        maxlength="2000"
+        placeholder="Engine intact (last started 1 month ago, no smoke). Transmission available. Body panels excellent — no rust, original silver paint. Interior LE-spec, no tears, all switches working. All 4 doors and trunk lid available. Lights and bumpers undamaged."
+        style="height:auto;padding:12px 14px;resize:vertical;min-height:140px"
+      ></textarea>
+      <div class="auth-form-error" data-field-error="available_parts_notes"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">CROSS-COMPATIBILITY</legend>
+    <p class="t-body-s ink-muted" style="font-size:12px;margin-bottom:12px">
+      Comma-separated. Defaults to the donor's own make on save.
+    </p>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-cmakes">Compatible makes</label>
+      <input
+        class="auth-form-input"
+        id="df-cmakes"
+        name="compatible_makes"
+        type="text"
+        placeholder="toyota, lexus"
+      />
+      <div class="auth-form-error" data-field-error="compatible_makes"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-cmodels">Compatible models</label>
+      <input
+        class="auth-form-input"
+        id="df-cmodels"
+        name="compatible_models"
+        type="text"
+        placeholder="corolla, corolla-im, matrix"
+      />
+      <div class="auth-form-error" data-field-error="compatible_models"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-cyears">Compatible years</label>
+      <input
+        class="auth-form-input"
+        id="df-cyears"
+        name="compatible_years"
+        type="text"
+        inputmode="numeric"
+        placeholder="2014, 2015, 2016, 2017, 2018"
+      />
+      <div class="auth-form-error" data-field-error="compatible_years"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-ctrims">Compatible trims (optional)</label>
+      <input
+        class="auth-form-input"
+        id="df-ctrims"
+        name="compatible_trims"
+        type="text"
+        placeholder="CE, LE, S, SE, XSE"
+      />
+      <div class="auth-form-error" data-field-error="compatible_trims"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">PRICING</legend>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="df-price">Whole-donor price (CAD, optional)</label>
+      <input
+        class="auth-form-input"
+        id="df-price"
+        name="price_dollars"
+        type="number"
+        min="0"
+        max="1000000"
+        step="1"
+        inputmode="numeric"
+        placeholder="Leave blank for &quot;call for price&quot;"
+      />
+      <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
+        Most yards leave this blank. Whole dollars CAD; stored as cents internally.
+      </p>
+      <div class="auth-form-error" data-field-error="price"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">PHOTOS</legend>
+    <p class="t-body-s ink-muted" style="font-size:12px;margin-bottom:12px">
+      Up to 20 photos, 10&nbsp;MB max each. The first photo becomes the main thumbnail.
+      {mode === 'create' && (
+        <span style="display:block;margin-top:4px">
+          Save the donor first, then upload photos.
+        </span>
+      )}
+    </p>
+
+    <div
+      data-photos-grid
+      style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:12px"
+    ></div>
+
+    <label
+      data-photo-label
+      class="btn btn-secondary"
+      style={mode === 'create'
+        ? 'cursor:not-allowed;opacity:0.5;width:100%;display:block;text-align:center'
+        : 'cursor:pointer;width:100%;display:block;text-align:center'}
+    >
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        data-photo-input
+        style="display:none"
+        disabled={mode === 'create'}
+      />
+      <span data-photo-label-text>+ Add photos</span>
+    </label>
+    <p
+      class="auth-form-error"
+      data-photo-error
+      style="margin-top:8px"
+    ></p>
+  </fieldset>
+
+  <fieldset class="auth-form-group" style="border:0;padding:0;margin:0 0 24px">
+    <legend class="t-caption" style="margin-bottom:8px">STATUS</legend>
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px">
+      <input type="radio" name="status" value="draft" checked />
+      <span>Draft — saved privately, not visible to buyers</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px">
+      <input type="radio" name="status" value="active" />
+      <span>Active — visible to buyers immediately</span>
+    </label>
+    <div class="auth-form-error" data-field-error="status"></div>
+  </fieldset>
+
+  <div
+    class="auth-form-error"
+    data-form-error
+    style="text-align:center;margin-bottom:16px"
+  ></div>
+
+  <button class="btn btn-primary auth-submit" type="submit" data-submit-btn>
+    {mode === 'edit' ? 'Save changes' : 'Create donor'}
+  </button>
+
+  {mode === 'edit' && (
+    <button
+      type="button"
+      class="btn btn-secondary"
+      data-mark-depleted
+      style="width:100%;margin-top:12px"
+    >Mark fully parted out (depleted)</button>
+  )}
+</form>
+
+<script is:inline>
+  (function () {
+    var form = document.getElementById('donor-form');
+    if (!form) return;
+
+    var mode = form.getAttribute('data-mode');
+    var submitBtn = form.querySelector('[data-submit-btn]');
+    var formErr = form.querySelector('[data-form-error]');
+    var makeSel = form.querySelector('[name="make_slug"]');
+    var modelSel = form.querySelector('[name="model_id"]');
+    var citySel = form.querySelector('[name="city_slug"]');
+
+    var MAKES_BY_SLUG = {};   // slug → id
+    var MODELS_CACHE = {};    // make_id → [{id, slug, name}]
+    var initialModelId = null;
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function clearErrors() {
+      form.querySelectorAll('[data-field-error]').forEach(function (el) {
+        el.textContent = '';
+      });
+      if (formErr) formErr.innerHTML = '';
+    }
+
+    function setFormError(msg) {
+      if (formErr) formErr.textContent = msg;
+    }
+
+    function applyIssues(issues) {
+      var unmapped = [];
+      Object.keys(issues || {}).forEach(function (key) {
+        var msgs = issues[key];
+        if (!msgs || !msgs.length) return;
+        var fieldEl = form.querySelector('[data-field-error="' + key + '"]');
+        if (fieldEl) {
+          fieldEl.textContent = msgs[0];
+        } else {
+          unmapped.push(key + ': ' + msgs[0]);
+        }
+      });
+      if (unmapped.length && formErr) {
+        formErr.innerHTML = unmapped.map(function (m) {
+          return '<div>' + escapeHtml(m) + '</div>';
+        }).join('');
+      }
+    }
+
+    async function loadMakes() {
+      try {
+        var res = await fetch('/api/makes');
+        if (!res.ok) return;
+        var data = await res.json();
+        (data.makes || []).forEach(function (m) {
+          MAKES_BY_SLUG[m.slug] = m.id;
+        });
+      } catch (e) {
+        console.error('makes load failed', e);
+      }
+    }
+
+    async function loadModels(makeId) {
+      if (!makeId) return [];
+      if (MODELS_CACHE[makeId]) return MODELS_CACHE[makeId];
+      try {
+        var res = await fetch('/api/models?make_id=' + encodeURIComponent(makeId));
+        if (!res.ok) return [];
+        var data = await res.json();
+        var models = data.models || [];
+        MODELS_CACHE[makeId] = models;
+        return models;
+      } catch (e) {
+        console.error('models load failed', e);
+        return [];
+      }
+    }
+
+    async function syncModelOptions(preselectModelId) {
+      var slug = makeSel.value;
+      var makeId = MAKES_BY_SLUG[slug];
+      modelSel.innerHTML = '';
+      var first = document.createElement('option');
+      first.value = '';
+      first.textContent = makeId ? 'Select model' : 'Select make first';
+      modelSel.appendChild(first);
+      if (!makeId) return;
+
+      var models = await loadModels(makeId);
+      models.forEach(function (m) {
+        var opt = document.createElement('option');
+        opt.value = String(m.id);
+        opt.textContent = m.name;
+        modelSel.appendChild(opt);
+      });
+      if (preselectModelId) {
+        modelSel.value = String(preselectModelId);
+      }
+    }
+
+    function parseCsvList(raw) {
+      if (!raw) return null;
+      var parts = String(raw).split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      return parts.length ? parts : null;
+    }
+
+    function parseCsvIntList(raw) {
+      var parts = parseCsvList(raw);
+      if (!parts) return null;
+      var ints = [];
+      for (var i = 0; i < parts.length; i++) {
+        var n = parseInt(parts[i], 10);
+        if (!Number.isInteger(n)) return null;
+        ints.push(n);
+      }
+      return ints.length ? ints : null;
+    }
+
+    function readPayload() {
+      var fd = new FormData(form);
+      var makeSlug = fd.get('make_slug');
+      var makeId = MAKES_BY_SLUG[makeSlug] || 0;
+      var priceDollarsRaw = fd.get('price_dollars');
+      var priceCents = null;
+      if (priceDollarsRaw && String(priceDollarsRaw).trim()) {
+        var dollars = parseFloat(priceDollarsRaw);
+        if (Number.isFinite(dollars) && dollars >= 0) {
+          priceCents = Math.round(dollars * 100);
+        }
+      }
+
+      var payload = {
+        year: parseInt(fd.get('year'), 10),
+        make_id: makeId,
+        model_id: parseInt(fd.get('model_id'), 10),
+        trim: (fd.get('trim') || '').trim() || null,
+        generation_code: (fd.get('generation_code') || '').trim() || null,
+        generation_range: (fd.get('generation_range') || '').trim() || null,
+        city_slug: fd.get('city_slug'),
+        color_exterior: (fd.get('color_exterior') || '').trim(),
+        color_exterior_full: (fd.get('color_exterior_full') || '').trim() || null,
+        tone: fd.get('tone') || null,
+        color_interior: (fd.get('color_interior') || '').trim() || null,
+        vin: (fd.get('vin') || '').trim().toUpperCase() || null,
+        mileage: fd.get('mileage') ? parseInt(fd.get('mileage'), 10) : null,
+        engine: (fd.get('engine') || '').trim() || null,
+        transmission: fd.get('transmission') || null,
+        condition: fd.get('condition') || 'fully_available',
+        available_parts_notes: (fd.get('available_parts_notes') || '').trim() || null,
+        compatible_makes: parseCsvList(fd.get('compatible_makes')) || (makeSlug ? [makeSlug] : null),
+        compatible_models: parseCsvList(fd.get('compatible_models')),
+        compatible_years: parseCsvIntList(fd.get('compatible_years')),
+        compatible_trims: parseCsvList(fd.get('compatible_trims')),
+        price: priceCents,
+        status: fd.get('status') || 'draft',
+      };
+
+      // Drop null optional enum fields so zod doesn't choke
+      ['transmission', 'tone', 'vin', 'trim', 'generation_code', 'generation_range',
+       'color_exterior_full', 'color_interior', 'engine', 'available_parts_notes',
+       'compatible_makes', 'compatible_models', 'compatible_years', 'compatible_trims',
+       'price', 'mileage'].forEach(function (k) {
+        if (payload[k] === null) delete payload[k];
+      });
+      return payload;
+    }
+
+    async function loadExisting(id) {
+      var res = await fetch('/api/donors/' + encodeURIComponent(id));
+      if (res.status === 401) {
+        window.location.href = '/dealer/login/?next=' +
+          encodeURIComponent(window.location.pathname + window.location.search);
+        return;
+      }
+      if (res.status === 404) {
+        setFormError('Donor not found.');
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+      }
+      if (!res.ok) {
+        setFormError('Failed to load donor (HTTP ' + res.status + ').');
+        return;
+      }
+      var data = await res.json();
+      var d = data.donor || data;
+
+      function setVal(name, val) {
+        var el = form.querySelector('[name="' + name + '"]');
+        if (el) el.value = val == null ? '' : String(val);
+      }
+      setVal('year', d.year);
+      setVal('trim', d.trim || '');
+      setVal('generation_code', d.generation_code || '');
+      setVal('generation_range', d.generation_range || '');
+      setVal('vin', d.vin || '');
+      setVal('mileage', d.mileage || '');
+      setVal('engine', d.engine || '');
+      setVal('transmission', d.transmission || '');
+      setVal('color_exterior', d.color_exterior || '');
+      setVal('color_exterior_full', d.color_exterior_full || '');
+      setVal('tone', d.tone || '');
+      setVal('color_interior', d.color_interior || '');
+      setVal('city_slug', d.city_slug || '');
+      setVal('condition', d.condition || 'fully_available');
+      setVal('available_parts_notes', d.available_parts_notes || '');
+      setVal('price_dollars', d.price ? Math.round(d.price / 100) : '');
+
+      // compatible_* columns are stored as JSON-stringified arrays — convert to CSV for the input.
+      function asCsv(v) {
+        if (Array.isArray(v)) return v.join(', ');
+        if (typeof v === 'string' && v) {
+          try {
+            var arr = JSON.parse(v);
+            if (Array.isArray(arr)) return arr.join(', ');
+          } catch (_) {}
+        }
+        return '';
+      }
+      setVal('compatible_makes', asCsv(d.compatible_makes));
+      setVal('compatible_models', asCsv(d.compatible_models));
+      setVal('compatible_years', asCsv(d.compatible_years));
+      setVal('compatible_trims', asCsv(d.compatible_trims));
+
+      // status radio
+      var statusRadios = form.querySelectorAll('input[name="status"]');
+      statusRadios.forEach(function (r) {
+        r.checked = r.value === d.status;
+      });
+
+      // Resolve make_slug from make_id (reverse lookup)
+      var makeSlug = '';
+      Object.keys(MAKES_BY_SLUG).forEach(function (slug) {
+        if (MAKES_BY_SLUG[slug] === d.make_id) makeSlug = slug;
+      });
+      if (makeSlug) makeSel.value = makeSlug;
+      initialModelId = d.model_id;
+      await syncModelOptions(initialModelId);
+
+      photos = (data.photos || []).slice().sort(function (a, b) {
+        return (a.display_order || 0) - (b.display_order || 0);
+      });
+      renderPhotos();
+    }
+
+    // ============================================================================
+    // Photo upload (Cloudflare Images Direct Creator Upload, entity_type=donor_car)
+    // ============================================================================
+    var CF_HASH = (document.querySelector('meta[name="cf-account-hash"]') || {}).content || '';
+    var photos = [];
+    var photosGrid = form.querySelector('[data-photos-grid]');
+    var photoInput = form.querySelector('[data-photo-input]');
+    var photoLabel = form.querySelector('[data-photo-label]');
+    var photoLabelText = form.querySelector('[data-photo-label-text]');
+    var photoErr = form.querySelector('[data-photo-error]');
+    var MAX_PHOTOS = 20;
+    var MAX_BYTES = 10 * 1024 * 1024;
+
+    function escapeAttr(s) {
+      return String(s)
+        .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function imageUrl(image_id, variant) {
+      if (!CF_HASH || !image_id) return '';
+      return 'https://imagedelivery.net/' + CF_HASH + '/' +
+        encodeURIComponent(image_id) + '/' + (variant || 'public');
+    }
+
+    function renderPhotos() {
+      if (!photosGrid) return;
+      if (!photos.length) {
+        photosGrid.innerHTML = '';
+        return;
+      }
+      photosGrid.innerHTML = photos.map(function (p, i) {
+        var url = imageUrl(p.image_id, 'public');
+        var alt = escapeAttr(p.alt_text || ('Photo ' + (i + 1)));
+        var primaryBadge = p.is_primary === 1
+          ? '<span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px">MAIN</span>'
+          : '';
+        return '<div data-photo-id="' + escapeAttr(p.id) + '" ' +
+          'style="position:relative;aspect-ratio:4/3;background:var(--color-bg-subtle);border-radius:8px;overflow:hidden">' +
+          (url
+            ? '<img src="' + escapeAttr(url) + '" alt="' + alt + '" ' +
+              'style="width:100%;height:100%;object-fit:cover" />'
+            : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-ink-muted);font-size:11px">no preview</div>'
+          ) +
+          primaryBadge +
+          '<button type="button" data-delete-photo="' + escapeAttr(p.id) + '" ' +
+          'aria-label="Delete photo" ' +
+          'style="position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.7);color:#fff;border:0;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0">×</button>' +
+          '</div>';
+      }).join('');
+      photosGrid.querySelectorAll('[data-delete-photo]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          deletePhoto(btn.getAttribute('data-delete-photo'));
+        });
+      });
+    }
+
+    function setPhotoLabelBusy(busy, message) {
+      if (!photoLabel || !photoLabelText) return;
+      if (busy) {
+        photoLabel.style.cursor = 'not-allowed';
+        photoLabel.style.opacity = '0.6';
+        if (photoInput) photoInput.disabled = true;
+        photoLabelText.textContent = message || 'Uploading…';
+      } else {
+        photoLabel.style.cursor = 'pointer';
+        photoLabel.style.opacity = '1';
+        if (photoInput) photoInput.disabled = false;
+        photoLabelText.textContent = '+ Add photos';
+      }
+    }
+
+    async function uploadOne(file, donorId, displayOrder, isPrimary) {
+      var upRes = await fetch('/api/media/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity_type: 'donor_car',
+          entity_id: donorId,
+          alt_text: file.name.replace(/\.[^.]+$/, '').slice(0, 200) || 'photo',
+          display_order: displayOrder,
+          is_primary: isPrimary,
+        }),
+      });
+      if (!upRes.ok) throw new Error('upload-url HTTP ' + upRes.status);
+      var upData = await upRes.json();
+
+      var fd = new FormData();
+      fd.append('file', file);
+      var cfRes = await fetch(upData.upload_url, { method: 'POST', body: fd });
+      if (!cfRes.ok) throw new Error('cloudflare upload HTTP ' + cfRes.status);
+
+      var finRes = await fetch('/api/media/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity_type: 'donor_car',
+          entity_id: donorId,
+          image_id: upData.image_id,
+          alt_text: file.name.replace(/\.[^.]+$/, '').slice(0, 200) || 'photo',
+          display_order: displayOrder,
+          is_primary: isPrimary,
+          bytes: file.size,
+        }),
+      });
+      if (!finRes.ok) throw new Error('finalize HTTP ' + finRes.status);
+      var finData = await finRes.json();
+      return finData.media;
+    }
+
+    async function deletePhoto(mediaId) {
+      if (!mediaId) return;
+      if (!confirm('Delete this photo? This cannot be undone.')) return;
+      try {
+        var res = await fetch('/api/media/' + encodeURIComponent(mediaId), {
+          method: 'DELETE',
+        });
+        if (!res.ok && res.status !== 204) {
+          if (photoErr) photoErr.textContent = 'Failed to delete photo (HTTP ' + res.status + ').';
+          return;
+        }
+        photos = photos.filter(function (p) { return p.id !== mediaId; });
+        if (photos.length && !photos.some(function (p) { return p.is_primary === 1; })) {
+          photos[0].is_primary = 1;
+        }
+        renderPhotos();
+        if (photoErr) photoErr.textContent = '';
+      } catch (e) {
+        if (photoErr) photoErr.textContent = 'Network error deleting photo.';
+      }
+    }
+
+    if (photoInput) {
+      photoInput.addEventListener('change', async function () {
+        if (photoErr) photoErr.textContent = '';
+        var donorId = form.getAttribute('data-donor-id');
+        if (!donorId) {
+          if (photoErr) photoErr.textContent = 'Save the donor first, then add photos.';
+          photoInput.value = '';
+          return;
+        }
+        var files = Array.prototype.slice.call(photoInput.files || []);
+        if (!files.length) return;
+
+        if (photos.length + files.length > MAX_PHOTOS) {
+          if (photoErr) {
+            photoErr.textContent = 'You can have at most ' + MAX_PHOTOS +
+              ' photos per donor (currently ' + photos.length + ').';
+          }
+          photoInput.value = '';
+          return;
+        }
+
+        setPhotoLabelBusy(true, 'Uploading 1/' + files.length + '…');
+        var failed = [];
+        for (var i = 0; i < files.length; i++) {
+          var file = files[i];
+          if (file.size > MAX_BYTES) {
+            failed.push(file.name + ' (over 10 MB)');
+            continue;
+          }
+          if (!/^image\//.test(file.type)) {
+            failed.push(file.name + ' (not an image)');
+            continue;
+          }
+          setPhotoLabelBusy(true, 'Uploading ' + (i + 1) + '/' + files.length + '…');
+          try {
+            var media = await uploadOne(
+              file, donorId, photos.length,
+              /* is_primary */ photos.length === 0,
+            );
+            photos.push(media);
+            renderPhotos();
+          } catch (e) {
+            failed.push(file.name + ' (' + (e && e.message ? e.message : 'failed') + ')');
+          }
+        }
+        setPhotoLabelBusy(false);
+        photoInput.value = '';
+        if (failed.length && photoErr) {
+          photoErr.textContent = 'Some uploads failed: ' + failed.join('; ');
+        }
+      });
+    }
+
+    makeSel.addEventListener('change', function () {
+      syncModelOptions(null);
+    });
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      clearErrors();
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = mode === 'edit' ? 'Saving…' : 'Creating…';
+      }
+
+      var payload = readPayload();
+      var donorId = form.getAttribute('data-donor-id');
+      var url = mode === 'edit'
+        ? '/api/donors/' + encodeURIComponent(donorId || '')
+        : '/api/donors';
+      var method = mode === 'edit' ? 'PATCH' : 'POST';
+
+      try {
+        var res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.status === 200 || res.status === 201) {
+          if (mode === 'create') {
+            var data = {};
+            try { data = await res.json(); } catch (_) {}
+            if (data && data.id) {
+              window.location.href = '/dealer/donors/edit/?id=' + encodeURIComponent(data.id);
+              return;
+            }
+          }
+          window.location.href = '/dealer/donors/';
+          return;
+        }
+
+        if (res.status === 401) {
+          window.location.href = '/dealer/login/?next=' +
+            encodeURIComponent(window.location.pathname + window.location.search);
+          return;
+        }
+
+        var err = {};
+        try { err = await res.json(); } catch (_) {}
+        if (res.status === 422 && err.issues) {
+          applyIssues(err.issues);
+          if (Object.keys(err.issues).length === 0) {
+            setFormError(err.message || 'Validation failed');
+          }
+        } else if (res.status === 409) {
+          setFormError(err.message || 'Conflict (slug collision or already depleted).');
+        } else if (res.status === 429) {
+          setFormError('Too many donors created recently. Try again later.');
+        } else if (res.status === 403) {
+          setFormError(err.message || 'Forbidden — only salvage yards can list donor cars.');
+        } else if (res.status >= 500) {
+          setFormError('Server error (' + res.status + '). Try again in a moment.');
+        } else {
+          setFormError(err.message || 'Save failed (HTTP ' + res.status + ').');
+        }
+      } catch (_) {
+        setFormError('Network error. Check your connection.');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = mode === 'edit' ? 'Save changes' : 'Create donor';
+        }
+      }
+    });
+
+    var depletedBtn = form.querySelector('[data-mark-depleted]');
+    if (depletedBtn) {
+      depletedBtn.addEventListener('click', async function () {
+        if (!confirm('Mark this donor as fully parted out? It will be moved to depleted state.')) return;
+        var donorId = form.getAttribute('data-donor-id');
+        if (!donorId) return;
+        depletedBtn.disabled = true;
+        try {
+          var res = await fetch(
+            '/api/donors/' + encodeURIComponent(donorId) + '/mark-depleted',
+            { method: 'POST' },
+          );
+          if (res.ok || res.status === 409) {
+            window.location.href = '/dealer/donors/';
+          } else {
+            alert('Failed to mark depleted.');
+            depletedBtn.disabled = false;
+          }
+        } catch (_) {
+          depletedBtn.disabled = false;
+        }
+      });
+    }
+
+    (async function init() {
+      await loadMakes();
+      if (mode === 'edit') {
+        await new Promise(function (r) { setTimeout(r, 0); });
+        var id = form.getAttribute('data-donor-id');
+        if (id) await loadExisting(id);
+      }
+    })();
+  })();
+</script>
