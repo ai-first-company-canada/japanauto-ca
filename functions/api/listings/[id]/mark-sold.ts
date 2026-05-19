@@ -17,8 +17,10 @@ import type { Env } from "../../../../types/env";
 import { json, forbidden, notFound, conflict, badRequest } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
 import { getListingById, markListingSold } from "../../_lib/db";
+import { pingIndexNow } from "../../_lib/indexnow";
 
-export const onRequestPost: PagesFunction<Env, "id"> = async ({ request, env, params }) => {
+export const onRequestPost: PagesFunction<Env, "id"> = async (ctx) => {
+  const { request, env, params } = ctx;
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
 
@@ -32,6 +34,9 @@ export const onRequestPost: PagesFunction<Env, "id"> = async ({ request, env, pa
 
   const updated = await markListingSold(env, id);
   if (!updated) return conflict("Listing already sold");
+
+  // Notify engines so the SoldOut Schema.org variant is recrawled promptly.
+  ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/used-cars/listing/${updated.slug}/`]));
 
   return json({ listing: updated });
 };

@@ -16,6 +16,7 @@ import {
 } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
 import { getListingById, getMediaForEntity } from "../../_lib/db";
+import { pingIndexNow } from "../../_lib/indexnow";
 
 export const onRequestGet: PagesFunction<Env, "id"> = async ({ params, env }) => {
   const id = params.id as string;
@@ -25,7 +26,8 @@ export const onRequestGet: PagesFunction<Env, "id"> = async ({ params, env }) =>
   return json({ listing, photos });
 };
 
-export const onRequestPatch: PagesFunction<Env, "id"> = async ({ request, env, params }) => {
+export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
+  const { request, env, params } = ctx;
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
   const id = params.id as string;
@@ -67,6 +69,13 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async ({ request, env, p
   }
 
   const updated = await getListingById(env, id);
+
+  // Notify IndexNow when the listing is publicly indexable. Captures status
+  // transitions into 'active' and updates to already-active listings.
+  if (updated?.status === "active") {
+    ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/used-cars/listing/${updated.slug}/`]));
+  }
+
   return json({ listing: updated });
 };
 
@@ -74,7 +83,8 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async ({ request, env, p
  * Soft delete: set status='expired'. Real DELETE would break Schema.org
  * SoldOut window (listing-lifecycle.md). Use sold endpoint to mark sold.
  */
-export const onRequestDelete: PagesFunction<Env, "id"> = async ({ request, env, params }) => {
+export const onRequestDelete: PagesFunction<Env, "id"> = async (ctx) => {
+  const { request, env, params } = ctx;
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
   const id = params.id as string;
@@ -86,6 +96,9 @@ export const onRequestDelete: PagesFunction<Env, "id"> = async ({ request, env, 
   await env.DB.prepare(
     `UPDATE listings SET status = 'expired' WHERE id = ?`
   ).bind(id).run();
+
+  // Ping IndexNow so engines re-crawl and pick up the expired state.
+  ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/used-cars/listing/${existing.slug}/`]));
 
   return noContent();
 };

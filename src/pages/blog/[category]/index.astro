@@ -1,0 +1,135 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Navbar from '../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
+import {
+  breadcrumbList, itemList,
+  authorBio, deriveBlogCategory, BLOG_CATEGORIES, formatIsoDate,
+} from '../../../lib/schema-graph';
+
+export async function getStaticPaths() {
+  return BLOG_CATEGORIES.map((c) => ({ params: { category: c.slug } }));
+}
+
+const { category } = Astro.params;
+const meta = BLOG_CATEGORIES.find((c) => c.slug === category)!;
+
+const allPosts = await getCollection('blog');
+const posts = allPosts
+  .filter((p) => deriveBlogCategory(p.data.slug, p.data.category) === category)
+  .sort((a, b) => {
+    const da = a.data.pub_date ?? '';
+    const db = b.data.pub_date ?? '';
+    if (da !== db) return db.localeCompare(da);
+    return a.data.title.localeCompare(b.data.title);
+  });
+
+const url = Astro.url.toString();
+
+const schemaLD = [
+  {
+    '@type': 'CollectionPage',
+    '@id': `${url}#page`,
+    name: `${meta.label} — japanauto.ca blog`,
+    description: meta.description,
+    url,
+    inLanguage: 'en-CA',
+    isPartOf: {
+      '@type': 'Blog',
+      '@id': 'https://japanauto.ca/blog/#blog',
+      name: 'japanauto.ca Blog',
+      url: 'https://japanauto.ca/blog/',
+    },
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+  breadcrumbList(
+    [
+      { label: 'Home', href: '/' },
+      { label: 'Blog', href: '/blog/' },
+      { label: meta.label },
+    ],
+    url,
+  ),
+  itemList(
+    posts.map((p) => ({
+      name: p.data.h1,
+      url: `https://japanauto.ca/blog/${p.data.slug}/`,
+    })),
+    meta.label,
+  ),
+].filter(Boolean);
+---
+<BaseLayout
+  title={`${meta.label} — japanauto.ca Blog`}
+  description={meta.description}
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: 'Blog', href: '/blog/' },
+    { label: meta.label },
+  ]} />
+
+  <section class="section" style="padding-top:8px">
+    <h1 class="t-display-l" style="font-size:32px;line-height:40px;margin-bottom:8px">
+      {meta.label}
+    </h1>
+    <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;max-width:680px">
+      {meta.description}
+    </p>
+  </section>
+
+  {posts.length === 0 ? (
+    <section class="section">
+      <div class="card" style="padding:24px">
+        <p class="t-body-m" style="font-size:14px;line-height:22px;margin-bottom:8px">
+          No articles in this category yet.
+        </p>
+        <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">
+          New {meta.label.toLowerCase()} are added regularly. In the meantime, <a href="/blog/">browse all blog categories →</a>
+        </p>
+      </div>
+    </section>
+  ) : (
+    <section class="section">
+      <header style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+        <h2 class="t-h-l" style="font-size:20px">Latest articles</h2>
+        <span class="t-caption" style="font-size:10px;color:var(--color-ink-muted)">{posts.length} article{posts.length === 1 ? '' : 's'}</span>
+      </header>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        {posts.map((p) => {
+          const author = authorBio(p.data.author);
+          const tldr = (p.data.tldr_draft ?? '').slice(0, 140).replace(/\s+\S*$/, '') + '…';
+          return (
+            <a
+              href={`/blog/${p.data.slug}/`}
+              class="card"
+              style="display:flex;flex-direction:column;gap:8px;padding:16px;text-decoration:none"
+            >
+              <span class="t-caption" style="font-size:10px;color:var(--color-ink-muted)">{meta.label}</span>
+              <h3 class="t-h-m" style="font-size:16px;line-height:22px;color:var(--color-ink-strong)">{p.data.h1}</h3>
+              <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">{tldr}</p>
+              <div class="t-body-s ink-subtle" style="font-size:11px;line-height:16px">
+                {author.name}{p.data.pub_date ? ` · ${formatIsoDate(p.data.pub_date)}` : ''}
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  )}
+
+  <section class="section">
+    <a href="/blog/" class="t-body-s" style="font-size:13px">← All blog categories</a>
+  </section>
+</BaseLayout>

@@ -19,6 +19,7 @@ import {
 } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
 import { getDonorCarById, getMediaForEntity } from "../../_lib/db";
+import { pingIndexNow } from "../../_lib/indexnow";
 
 export const onRequestGet: PagesFunction<Env, "id"> = async (
   { request, env, params },
@@ -38,9 +39,8 @@ export const onRequestGet: PagesFunction<Env, "id"> = async (
   return json({ donor, photos });
 };
 
-export const onRequestPatch: PagesFunction<Env, "id"> = async (
-  { request, env, params },
-) => {
+export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
+  const { request, env, params } = ctx;
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
   const id = params.id as string;
@@ -101,6 +101,11 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (
   }
 
   const updated = await getDonorCarById(env, id);
+
+  if (updated?.status === "active") {
+    ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/parts/listing/${updated.slug}/`]));
+  }
+
   return json({ donor: updated });
 };
 
@@ -108,9 +113,8 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (
  * Soft delete: status='expired'. Real DELETE would lose history of donor cars
  * that have already been picked apart (legal/liability paper trail).
  */
-export const onRequestDelete: PagesFunction<Env, "id"> = async (
-  { request, env, params },
-) => {
+export const onRequestDelete: PagesFunction<Env, "id"> = async (ctx) => {
+  const { request, env, params } = ctx;
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
   const id = params.id as string;
@@ -122,6 +126,8 @@ export const onRequestDelete: PagesFunction<Env, "id"> = async (
   await env.DB.prepare(
     `UPDATE donor_cars SET status = 'expired' WHERE id = ?`,
   ).bind(id).run();
+
+  ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/parts/listing/${existing.slug}/`]));
 
   return noContent();
 };

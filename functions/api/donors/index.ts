@@ -32,6 +32,7 @@ import {
   getDealerById, listDonorsForDealer,
 } from "../_lib/db";
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
+import { pingIndexNow } from "../_lib/indexnow";
 
 // ============================================================================
 // GET — list donors
@@ -76,7 +77,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 // ============================================================================
 // POST — create donor
 // ============================================================================
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async (ctx) => {
+  const { request, env } = ctx;
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
 
@@ -183,6 +185,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return jsonError(422, "validation_failed", e.message);
     }
     return internalError("Failed to create donor car");
+  }
+
+  // IndexNow ping — only fire when the donor goes live. Drafts aren't
+  // indexable yet so notifying engines would 404.
+  if (initialStatus === "active") {
+    ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/parts/listing/${slug}/`]));
   }
 
   return created({ id, slug, status: initialStatus });

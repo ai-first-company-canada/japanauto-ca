@@ -1,0 +1,69 @@
+# japanauto.ca — Canadian used Japanese cars marketplace
+# Updated 2026-05-19
+
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /dealer/
+Disallow: /api/
+Disallow: /auth/
+
+# AI crawlers — explicit Allow (Cloudflare AI Crawl Control must be OFF
+# at the zone level, otherwise these get blocked at the edge despite this file)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: AppleBot
+Allow: /
+
+User-agent: AppleBot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Search engines — explicit allow (overrides any future deny rule on *)
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Sitemaps
+Sitemap: https://japanauto.ca/sitemap.xml

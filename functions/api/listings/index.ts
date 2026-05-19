@@ -40,6 +40,7 @@ import {
   getDealerById,
 } from "../_lib/db";
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
+import { pingIndexNow } from "../_lib/indexnow";
 
 // ============================================================================
 // GET — dealer's own listings (?dealer_id=me) OR catalog query
@@ -194,7 +195,8 @@ function yearsAvailableForWindow(): number[] {
 // ============================================================================
 // POST — create listing
 // ============================================================================
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async (ctx) => {
+  const { request, env } = ctx;
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
 
@@ -276,6 +278,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return jsonError(422, "validation_failed", "Unknown make_id or model_id");
     }
     return internalError("Failed to create listing");
+  }
+
+  // IndexNow ping — only when the listing goes live immediately. Draft rows
+  // aren't indexable yet, so no point notifying engines about them.
+  if (initialStatus === "active") {
+    ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/used-cars/listing/${slug}/`]));
   }
 
   return created({ id, slug, status: initialStatus });

@@ -16,10 +16,10 @@ import type { Env } from "../../../../types/env";
 import { json, forbidden, notFound, conflict, badRequest } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
 import { getDonorCarById, markDonorDepleted } from "../../_lib/db";
+import { pingIndexNow } from "../../_lib/indexnow";
 
-export const onRequestPost: PagesFunction<Env, "id"> = async (
-  { request, env, params },
-) => {
+export const onRequestPost: PagesFunction<Env, "id"> = async (ctx) => {
+  const { request, env, params } = ctx;
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
 
@@ -33,6 +33,8 @@ export const onRequestPost: PagesFunction<Env, "id"> = async (
 
   const updated = await markDonorDepleted(env, id);
   if (!updated) return conflict("Donor car already depleted");
+
+  ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/parts/listing/${updated.slug}/`]));
 
   return json({ donor: updated });
 };

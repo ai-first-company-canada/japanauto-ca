@@ -170,6 +170,40 @@ export const CATEGORY_ORDER: string[] = [
   'news',
 ];
 
+export interface BlogCategory {
+  slug: string;
+  label: string;
+  description: string;
+}
+
+export const BLOG_CATEGORIES: BlogCategory[] = [
+  {
+    slug: 'buying-guides',
+    label: 'Buying guides',
+    description: 'How to evaluate, inspect, and price used Japanese cars in Canada — pre-purchase inspections, dealer verification, taxes and fees.',
+  },
+  {
+    slug: 'model-deep-dives',
+    label: 'Model deep-dives',
+    description: 'Used Japanese vehicle reviews focused on Canadian winter performance, reliability data, and known generation issues.',
+  },
+  {
+    slug: 'canada-regulations',
+    label: 'Canadian regulations',
+    description: 'Provincial dealer licensing (AMVIC, OMVIC, VSA), import processes (RIV), safety inspections, and consumer protection.',
+  },
+  {
+    slug: 'parts-101',
+    label: 'Parts 101',
+    description: 'Used Japanese parts buying — junkyard donor cars, OEM vs aftermarket, compatibility across generations.',
+  },
+  {
+    slug: 'news',
+    label: 'News & market trends',
+    description: 'Quarterly market updates — EV adoption, JDM imports, used-car pricing trends across Toronto, Calgary, Vancouver.',
+  },
+];
+
 export const GROUP_LABELS: Record<string, string> = {
   'vehicle-tech': 'Vehicle technology',
   'brand-specific-tech': 'Brand-specific technology',

@@ -43,6 +43,8 @@ export interface Env {
   CLOUDFLARE_ACCOUNT_ID: string;
   /** Public delivery host hash for `https://imagedelivery.net/<hash>/<image_id>/<variant>`. Public by design. */
   PUBLIC_CLOUDFLARE_ACCOUNT_HASH: string;
+  /** IndexNow API key. The same hex string is hosted at `/<key>.txt` for ownership verification — public by design. Empty disables IndexNow pings. */
+  INDEXNOW_KEY: string;
 
   // ==========================================================================
   // Secrets (wrangler secret put …)
