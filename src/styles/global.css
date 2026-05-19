@@ -930,10 +930,15 @@ select.auth-form-input {
 }
 
 /* ----------------------------------------------------------------------------
- * Listing detail (used-cars + parts donor) — Pages Function HTML.
- * At desktop, constrain content sections to a centered max-width column so the
- * single-column mobile layout doesn't stretch edge-to-edge on wide screens.
- * Full-bleed sticky headers and SOLD banners stay unconstrained.
+ * Content centering on wide viewports.
+ *
+ * At ≥1280px cap <main> at 1280px (1200 content + 40+40 side gutters) so the
+ * single-column mobile layout doesn't stretch edge-to-edge on wide displays.
+ * At ≥1440px allow a slightly wider 1440px cap. Bands (band-ink/band-subtle)
+ * lose edge-to-edge background colors as a side effect — acceptable trade-off
+ * vs. touching every section template.
+ *
+ * Pages Function HTML (no <main>) uses body > nav/section selectors.
  * -------------------------------------------------------------------------- */
 @media (min-width: 768px) {
   body > nav[aria-label="Breadcrumb"],
@@ -943,9 +948,20 @@ select.auth-form-input {
   }
 }
 @media (min-width: 1280px) {
+  /* Cap main at 1280 (1200 content + 40+40 section padding) so body content
+     aligns visually with the 1200-content navbar/footer at all wide widths. */
+  body main {
+    max-width: 1280px;
+    margin-inline: auto;
+  }
   body > nav[aria-label="Breadcrumb"],
   body > section {
     max-width: 1200px;
+  }
+  /* Desktop navbar keeps full-width chrome (border-bottom edge to edge)
+     but content respects the 1200px cap via dynamic side padding. */
+  .navbar-desktop {
+    padding-inline: max(40px, calc((100% - 1200px) / 2));
   }
 }
 
