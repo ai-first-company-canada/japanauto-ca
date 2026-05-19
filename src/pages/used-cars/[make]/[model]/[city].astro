@@ -166,12 +166,33 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
     Showing <span class="num">{visibleCount}</span> of <span class="num">{catalog.totalCount}</span> listings
   </p>
 
+  <div
+    id="catalog-preview-banner"
+    class="t-body-s"
+    style="margin:8px 16px 0;padding:10px 14px;border-radius:8px;background:var(--color-bg-subtle);border:1px solid var(--color-divider);font-size:13px;line-height:19px;color:var(--color-ink-muted)"
+  >
+    Sample preview — live listings open as Calgary dealers onboard.
+    <a href="/dealer/signup/" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
+  </div>
+
   <CatalogList
     featured={catalog.featured}
     boosted={catalog.boosted}
     organic={catalog.organic}
     citySlug={city!}
   />
+
+  <div
+    id="catalog-empty-state"
+    hidden
+    style="margin:16px;padding:32px 24px;border-radius:12px;background:var(--color-bg-subtle);border:1px solid var(--color-divider);text-align:center"
+  >
+    <h3 class="t-h-m" style="font-size:18px;margin:0 0 8px">No listings yet in this city</h3>
+    <p class="t-body-s ink-muted" style="font-size:14px;line-height:21px;margin:0 0 16px;max-width:420px;margin-left:auto;margin-right:auto">
+      We're stocking inventory now. Be the first dealer to list a {brand.name} {modelInfo.name} in {cityInfo.name}.
+    </p>
+    <a href="/dealer/signup/" class="btn btn-primary btn-sm">List your inventory →</a>
+  </div>
 
   <CatalogPagination initialShown={10} />
 
@@ -248,6 +269,19 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
           + '</a>';
       }
 
+      function showEmptyState() {
+        var grid = document.getElementById('catalog-grid');
+        var banner = document.getElementById('catalog-preview-banner');
+        var empty = document.getElementById('catalog-empty-state');
+        var counter = document.getElementById('catalog-counter');
+        var pagination = document.querySelector('[data-catalog-pagination]') || document.querySelector('.catalog-pagination');
+        if (grid && grid.parentElement) grid.parentElement.style.display = 'none';
+        if (banner) banner.style.display = 'none';
+        if (counter) counter.style.display = 'none';
+        if (pagination) pagination.style.display = 'none';
+        if (empty) empty.hidden = false;
+      }
+
       var path = window.location.pathname;
       var m = path.match(/\/used-cars\/([^/]+)\/([^/]+)\/([^/]+)\/?$/);
       if (m) {
@@ -256,12 +290,14 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
         fetch('/api/listings?' + params.toString(), { headers: { 'accept': 'application/json' } })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {
-            if (!data) return;
+            if (!data) { showEmptyState(); return; }
             var all = (data.boosted || []).concat(data.organic || []);
-            if (all.length === 0) return;
+            if (all.length === 0) { showEmptyState(); return; }
             var grid = document.getElementById('catalog-grid');
             if (!grid) return;
             grid.innerHTML = all.map(cardHTML).join('');
+            var banner = document.getElementById('catalog-preview-banner');
+            if (banner) banner.style.display = 'none';
             var counter = document.getElementById('catalog-counter');
             var total = (data.pagination && data.pagination.total) || all.length;
             if (counter) {
@@ -270,7 +306,7 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
             }
             if (typeof window.applyCatalogFilters === 'function') window.applyCatalogFilters();
           })
-          .catch(function () { /* keep stubs */ });
+          .catch(function () { showEmptyState(); });
       }
     })();
 

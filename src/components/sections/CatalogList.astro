@@ -42,7 +42,7 @@ const { featured, boosted, organic } = Astro.props;
         dealer={l.dealer}
         variant={l.variant}
         tone={l.tone}
-        href={`/used-cars/listing/${l.slug}/`}
+        href="#"
       />
     ))}
     {organic.map((l) => (
@@ -61,7 +61,6 @@ const { featured, boosted, organic } = Astro.props;
         reduced={l.reduced}
         variant={l.variant}
         tone={l.tone}
-        slug={l.slug}
       />
     ))}
   </div>

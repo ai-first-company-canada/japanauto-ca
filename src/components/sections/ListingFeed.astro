@@ -51,7 +51,7 @@ const totalStr = totalCount != null ? totalCount.toLocaleString('en-US') : null;
     </h2>
   </header>
   <div class="feed-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
-    {listings.map((l) => <ListingCard {...l} />)}
+    {listings.map(({ slug: _slug, ...l }) => <ListingCard {...l} />)}
   </div>
   {ctaText && ctaHref && (
     <a
