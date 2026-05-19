@@ -172,9 +172,10 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: env.PUBLIC_SITE_URL + '/' },
       { '@type': 'ListItem', position: 2, name: 'Parts', item: env.PUBLIC_SITE_URL + '/parts/' },
-      { '@type': 'ListItem', position: 3, name: donor.make_name, item: `${env.PUBLIC_SITE_URL}/parts/${donor.make_slug}/` },
-      { '@type': 'ListItem', position: 4, name: donor.model_name, item: `${env.PUBLIC_SITE_URL}/parts/${donor.make_slug}/${donor.model_slug}/` },
-      { '@type': 'ListItem', position: 5, name: `${donor.year}${trimSep}`, item: canonical },
+      { '@type': 'ListItem', position: 3, name: donor.city_name, item: `${env.PUBLIC_SITE_URL}/parts/${donor.city_slug}/` },
+      { '@type': 'ListItem', position: 4, name: donor.make_name, item: `${env.PUBLIC_SITE_URL}/parts/${donor.make_slug}/${donor.city_slug}/` },
+      { '@type': 'ListItem', position: 5, name: donor.model_name, item: `${env.PUBLIC_SITE_URL}/parts/${donor.make_slug}/${donor.model_slug}/${donor.city_slug}/` },
+      { '@type': 'ListItem', position: 6, name: `${donor.year}${trimSep}`, item: canonical },
     ],
   };
 
@@ -207,8 +208,9 @@ ${isDepleted ? renderDepletedBand() : ''}
 ${renderBreadcrumb([
   { label: 'Home', href: '/' },
   { label: 'Parts', href: '/parts/' },
-  { label: donor.make_name, href: `/parts/${donor.make_slug}/` },
-  { label: donor.model_name, href: `/parts/${donor.make_slug}/${donor.model_slug}/` },
+  { label: donor.city_name, href: `/parts/${donor.city_slug}/` },
+  { label: donor.make_name, href: `/parts/${donor.make_slug}/${donor.city_slug}/` },
+  { label: donor.model_name, href: `/parts/${donor.make_slug}/${donor.model_slug}/${donor.city_slug}/` },
   { label: `${donor.year}${trimSep ? ' ' + trim : ''} ${donor.color_exterior}`.trim(), href: null },
 ])}
 

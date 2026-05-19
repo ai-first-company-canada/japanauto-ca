@@ -57,8 +57,8 @@ const schemaLD = [
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',         item: 'https://japanauto.ca/' },
       { '@type': 'ListItem', position: 2, name: 'Parts',        item: 'https://japanauto.ca/parts/' },
-      { '@type': 'ListItem', position: 3, name: brand.name,     item: `https://japanauto.ca/parts/${make}/` },
-      { '@type': 'ListItem', position: 4, name: cityInfo.name,  item: canonical },
+      { '@type': 'ListItem', position: 3, name: cityInfo.name,  item: `https://japanauto.ca/parts/${city}/` },
+      { '@type': 'ListItem', position: 4, name: brand.name,     item: canonical },
     ],
   },
   {
@@ -107,8 +107,8 @@ const subtitleHtml =
   <Breadcrumb items={[
     { label: 'Home',         href: '/' },
     { label: 'Parts',        href: '/parts/' },
-    { label: brand.name,     href: `/parts/${make}/` },
-    { label: cityInfo.name },
+    { label: cityInfo.name,  href: `/parts/${city}/` },
+    { label: brand.name },
   ]} />
 
   <PageHeading

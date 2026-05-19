@@ -67,9 +67,9 @@ const schemaLD = [
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
-      { '@type': 'ListItem', position: 2, name: brand.name, item: `https://japanauto.ca/used-cars/${make}/` },
-      { '@type': 'ListItem', position: 3, name: modelInfo.name, item: `https://japanauto.ca/used-cars/${make}/${model}/` },
-      { '@type': 'ListItem', position: 4, name: cityInfo.name, item: canonical },
+      { '@type': 'ListItem', position: 2, name: cityInfo.name, item: canonical },
+      { '@type': 'ListItem', position: 3, name: brand.name, item: `https://japanauto.ca/used-cars/${make}/` },
+      { '@type': 'ListItem', position: 4, name: modelInfo.name, item: `https://japanauto.ca/used-cars/${make}/${model}/` },
     ],
   },
   {
@@ -146,9 +146,9 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
 
   <Breadcrumb items={[
     { label: 'Home', href: '/' },
+    { label: cityInfo.name },
     { label: brand.name, href: `/used-cars/${make}/` },
     { label: modelInfo.name, href: `/used-cars/${make}/${model}/` },
-    { label: cityInfo.name },
   ]} />
 
   <PageHeading
