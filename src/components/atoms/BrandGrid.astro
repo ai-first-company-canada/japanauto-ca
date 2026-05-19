@@ -12,7 +12,7 @@ interface Props {
 }
 const { brands, citySlug } = Astro.props;
 ---
-<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+<div class="brand-grid-home" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
   {brands.map((b) => (
     <BrandCard name={b.name} count={b.count} slug={b.slug} citySlug={citySlug} />
   ))}

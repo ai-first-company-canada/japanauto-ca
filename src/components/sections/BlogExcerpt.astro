@@ -22,7 +22,7 @@ const { heading = 'Read before you buy', articles } = Astro.props;
   <header style="margin-bottom:16px">
     <h2 class="t-h-l">{heading}</h2>
   </header>
-  <div style="display:grid;grid-template-columns:1fr;gap:16px">
+  <div class="blog-grid" style="display:grid;grid-template-columns:1fr;gap:16px">
     {articles.map((a) => (
       <a href={a.href ?? `/blog/${a.slug ?? ''}/`} class="card" style="overflow:hidden;display:flex;flex-direction:column">
         <div class="thumb thumb-16x9" style={`background:${a.tone};position:relative`}>

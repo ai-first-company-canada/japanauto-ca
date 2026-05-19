@@ -7,6 +7,7 @@ interface Props {
 }
 const { cityShort = 'Canada' } = Astro.props;
 ---
+{/* Mobile navbar (default; hidden ≥1024px via CSS) */}
 <header class="navbar">
   <a href="/" aria-label="japanauto, home" style="display:inline-flex;align-items:center">
     <Wordmark size={20} />
@@ -29,4 +30,78 @@ const { cityShort = 'Canada' } = Astro.props;
   >
     <Icon name="menu" size={22} />
   </button>
+</header>
+
+{/* Desktop navbar (≥1024px) */}
+<header class="navbar-desktop">
+  <div class="navbar-desktop__left">
+    <a href="/" aria-label="japanauto, home" style="display:inline-flex;align-items:center;height:100%">
+      <Wordmark size={22} />
+    </a>
+    <nav class="navbar-desktop__nav" aria-label="Primary">
+      <div class="nav-dropdown">
+        <a href="/used-cars/" class="navbar-desktop__link" aria-haspopup="true">
+          Used Cars
+          <Icon name="chevronDown" size={14} />
+        </a>
+        <div class="nav-dropdown__panel" role="menu">
+          <div class="nav-dropdown__group">
+            <div class="nav-dropdown__eyebrow">Browse</div>
+            <a href="/used-cars/" class="nav-dropdown__item">All listings <Icon name="chevronRight" size={14} /></a>
+            <a href="/brands/" class="nav-dropdown__item">By make <Icon name="chevronRight" size={14} /></a>
+            <a href="/dealers/" class="nav-dropdown__item">Dealers <Icon name="chevronRight" size={14} /></a>
+          </div>
+          <div class="nav-dropdown__group">
+            <div class="nav-dropdown__eyebrow">Cities</div>
+            <a href="/used-cars/toyota/toronto/" class="nav-dropdown__item">Toronto <Icon name="chevronRight" size={14} /></a>
+            <a href="/used-cars/toyota/montreal/" class="nav-dropdown__item">Montreal <Icon name="chevronRight" size={14} /></a>
+            <a href="/used-cars/toyota/vancouver/" class="nav-dropdown__item">Vancouver <Icon name="chevronRight" size={14} /></a>
+            <a href="/used-cars/toyota/calgary/" class="nav-dropdown__item">Calgary <Icon name="chevronRight" size={14} /></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-dropdown">
+        <a href="/parts/" class="navbar-desktop__link" aria-haspopup="true">
+          Parts
+          <Icon name="chevronDown" size={14} />
+        </a>
+        <div class="nav-dropdown__panel" role="menu">
+          <div class="nav-dropdown__group">
+            <div class="nav-dropdown__eyebrow">Browse</div>
+            <a href="/parts/" class="nav-dropdown__item">Find donor cars <Icon name="chevronRight" size={14} /></a>
+            <a href="/parts/toyota/" class="nav-dropdown__item">By make <Icon name="chevronRight" size={14} /></a>
+            <a href="/glossary/" class="nav-dropdown__item">Parts glossary <Icon name="chevronRight" size={14} /></a>
+          </div>
+          <div class="nav-dropdown__group">
+            <div class="nav-dropdown__eyebrow">Cities</div>
+            <a href="/parts/calgary/" class="nav-dropdown__item">Calgary <Icon name="chevronRight" size={14} /></a>
+            <a href="/parts/toronto/" class="nav-dropdown__item">Toronto <Icon name="chevronRight" size={14} /></a>
+            <a href="/parts/vancouver/" class="nav-dropdown__item">Vancouver <Icon name="chevronRight" size={14} /></a>
+            <a href="/parts/edmonton/" class="nav-dropdown__item">Edmonton <Icon name="chevronRight" size={14} /></a>
+          </div>
+        </div>
+      </div>
+
+      <a href="/brands/" class="navbar-desktop__link">Brands</a>
+      <a href="/blog/" class="navbar-desktop__link">Blog</a>
+    </nav>
+  </div>
+
+  <div class="navbar-desktop__right">
+    <button
+      class="city-pill"
+      type="button"
+      onclick="document.getElementById('city-picker').showModal()"
+      aria-label="Change city"
+    >
+      <Icon name="pin" size={14} />
+      <span data-geo="city.short">{cityShort}</span>
+      <Icon name="chevronDown" size={14} />
+    </button>
+    <a href="/dealer/signup/" class="nav-cta">
+      Post a listing
+      <Icon name="arrowRight" size={14} />
+    </a>
+  </div>
 </header>

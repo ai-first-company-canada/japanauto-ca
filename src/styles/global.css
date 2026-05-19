@@ -736,3 +736,271 @@ select.auth-form-input {
 #photo-lightbox:has(#lp-7:checked) label[for="lp-7"] {
   border-color: var(--color-accent);
 }
+
+/* ============================================================================
+ * PHASE 2 — Tablet (≥768px) & Desktop (≥1280px) responsive layers
+ * Mobile-first. Mobile styles above untouched. Everything below layers on top.
+ * ============================================================================ */
+
+/* Container utility — centered, max-width grows by breakpoint. */
+.container {
+  max-width: 100%;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+/* Generic responsive grid helpers (used where structure unchanged across BP). */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-9 { display: grid; grid-template-columns: repeat(9, 1fr); gap: 16px; }
+
+/* Layout split helpers (Page D etc.) */
+.layout-split { display: grid; grid-template-columns: 1fr; gap: 24px; }
+
+/* Sticky right rail (Page D donor + used-cars detail desktop) */
+.rail-sticky { position: sticky; top: 80px; align-self: start; }
+
+/* Desktop navbar — hidden by default (mobile uses .navbar). */
+.navbar-desktop { display: none; }
+
+/* Desktop footer grid — hidden by default (mobile uses <details> accordions). */
+.footer-desktop { display: none; }
+
+/* ----------------------------------------------------------------------------
+ * TABLET (≥768px)
+ * -------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  /* Type ramp — display sizes step up */
+  .t-display-xl { font-size: 52px; line-height: 60px; }
+  .t-display-l  { font-size: 40px; line-height: 48px; }
+  .t-display-m  { font-size: 32px; line-height: 40px; }
+  .t-h-l        { font-size: 26px; line-height: 34px; }
+  .t-body-l     { font-size: 18px; line-height: 28px; }
+
+  /* Section paddings widen */
+  .section       { padding: 56px 24px; }
+  .section-tight { padding: 32px 24px; }
+
+  /* Container max-width */
+  .container { max-width: 720px; padding-inline: 24px; }
+
+  /* Brand grid on home / brand pages — 3 → still 3 on tablet (per design) */
+  /* (leave as-is, looks fine) */
+
+  /* Listing feed — bump to 3-col on tablet */
+  .feed-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 16px !important; }
+
+  /* Parts brand grid (city page) — 3×3 on tablet (per design) */
+  .parts-brand-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; }
+
+  /* Auth pages — pad more */
+  .auth-main { padding: 48px 24px; }
+
+  /* Dealer portal main */
+  .dealer-main { padding: 32px 24px; }
+}
+
+/* ----------------------------------------------------------------------------
+ * DESKTOP (≥1024px) — navbar swap happens here per spec recommendation
+ * -------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  .navbar { display: none !important; }
+  .navbar-desktop { display: flex; }
+  .pill-bar.sticky { top: 64px; }
+  .sticky-contact-bar { display: none; }
+}
+
+/* ----------------------------------------------------------------------------
+ * DESKTOP (≥1280px) — full Cloud Design parts spec
+ * -------------------------------------------------------------------------- */
+@media (min-width: 1280px) {
+  /* Type ramp — top desktop sizes */
+  .t-display-xl { font-size: 64px; line-height: 72px; }
+  .t-display-l  { font-size: 48px; line-height: 56px; }
+  .t-display-m  { font-size: 36px; line-height: 44px; }
+
+  /* Section paddings */
+  .section       { padding: 72px 40px; }
+  .section-tight { padding: 40px 40px; }
+
+  /* Container */
+  .container { max-width: 1200px; padding-inline: 40px; }
+
+  /* Listing feed — 4-col on desktop */
+  .feed-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 20px !important; }
+
+  /* Brand grid on home — 9-in-a-row (matches parts hub design) */
+  .brand-grid-home { grid-template-columns: repeat(9, 1fr) !important; gap: 16px !important; }
+
+  /* Parts brand grid (city page) — 9-in-a-row */
+  .parts-brand-grid { grid-template-columns: repeat(9, 1fr) !important; gap: 16px !important; }
+
+  /* Popular models grid — 3 → 6 cols */
+  .popular-models-grid { grid-template-columns: repeat(6, 1fr) !important; gap: 16px !important; }
+
+  /* Blog list — 3-col on desktop */
+  .blog-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 24px !important; }
+
+  /* Footer swap: hide mobile, show desktop */
+  .footer-mobile { display: none !important; }
+  .footer-desktop { display: block; }
+
+  /* Listing-detail two-column layout (gallery + sticky rail) */
+  .listing-detail-layout { grid-template-columns: 1fr 360px; gap: 32px; }
+
+  /* Auth pages center wider */
+  .auth-main { padding: 64px 40px; max-width: 480px; }
+
+  /* Dealer portal main */
+  .dealer-main { padding: 40px 40px; max-width: 1200px; }
+}
+
+/* ----------------------------------------------------------------------------
+ * Desktop navbar component styles
+ * -------------------------------------------------------------------------- */
+.navbar-desktop {
+  height: 64px;
+  padding: 0 40px;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-bottom: 1px solid var(--color-divider);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.navbar-desktop__left { display: flex; align-items: center; gap: 32px; height: 100%; }
+.navbar-desktop__nav { display: flex; align-items: center; height: 100%; }
+.navbar-desktop__link {
+  display: inline-flex; align-items: center;
+  height: 100%; padding: 0 14px;
+  font-size: 14px; font-weight: 500;
+  color: var(--color-ink-default);
+  position: relative;
+  transition: color 120ms;
+}
+.navbar-desktop__link:hover { color: var(--color-ink-strong); }
+.navbar-desktop__link.is-active {
+  color: var(--color-ink-strong);
+  box-shadow: inset 0 -2px 0 0 var(--color-ink-strong);
+}
+.navbar-desktop__right { display: flex; align-items: center; gap: 12px; }
+.navbar-desktop .city-pill { height: 36px; }
+.nav-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 16px;
+  border-radius: 8px;
+  background: var(--color-accent); color: #fff;
+  font-size: 14px; font-weight: 600;
+  transition: background 120ms;
+}
+.nav-cta:hover { background: var(--color-accent-hover); }
+
+/* Dropdown panel (Used Cars / Parts) */
+.nav-dropdown { position: relative; height: 100%; }
+.nav-dropdown__panel {
+  display: none;
+  position: absolute; top: 64px; left: 0;
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid var(--color-divider);
+  border-top: 2px solid var(--color-ink-strong);
+  z-index: 6;
+}
+.nav-dropdown:hover .nav-dropdown__panel,
+.nav-dropdown:focus-within .nav-dropdown__panel { display: block; }
+.nav-dropdown__group { padding: 12px 0; }
+.nav-dropdown__group + .nav-dropdown__group { border-top: 1px solid var(--color-divider); }
+.nav-dropdown__eyebrow {
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--color-ink-subtle);
+  padding: 6px 16px;
+}
+.nav-dropdown__item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 14px; color: var(--color-ink-default);
+  transition: background 120ms;
+}
+.nav-dropdown__item:hover {
+  background: var(--color-bg-subtle);
+  color: var(--color-ink-strong);
+}
+
+/* ----------------------------------------------------------------------------
+ * Listing detail (used-cars + parts donor) — Pages Function HTML.
+ * At desktop, constrain content sections to a centered max-width column so the
+ * single-column mobile layout doesn't stretch edge-to-edge on wide screens.
+ * Full-bleed sticky headers and SOLD banners stay unconstrained.
+ * -------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  body > nav[aria-label="Breadcrumb"],
+  body > section {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+}
+@media (min-width: 1280px) {
+  body > nav[aria-label="Breadcrumb"],
+  body > section {
+    max-width: 1200px;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Desktop footer styles
+ * -------------------------------------------------------------------------- */
+.footer-desktop {
+  background: #fff;
+  border-top: 1px solid var(--color-divider);
+  padding: 64px 40px 32px;
+}
+.footer-desktop__inner {
+  max-width: 1200px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 48px;
+}
+.footer-desktop__brand p {
+  font-size: 14px; line-height: 22px;
+  color: var(--color-ink-muted);
+  margin: 16px 0 0;
+  max-width: 280px;
+}
+.footer-desktop__socials {
+  margin-top: 24px;
+  display: flex; gap: 8px;
+}
+.footer-desktop__socials a {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  color: var(--color-ink-strong);
+  transition: border-color 120ms;
+}
+.footer-desktop__socials a:hover { border-color: var(--color-ink-strong); }
+.footer-desktop__col h4 {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--color-ink-strong);
+  margin: 0 0 16px;
+}
+.footer-desktop__col ul { display: flex; flex-direction: column; gap: 10px; }
+.footer-desktop__col a {
+  font-size: 14px; color: var(--color-ink-muted);
+  transition: color 120ms;
+}
+.footer-desktop__col a:hover { color: var(--color-ink-strong); }
+.footer-desktop__bottom {
+  max-width: 1200px; margin: 48px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-divider);
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; flex-wrap: wrap;
+  font-size: 12px; color: var(--color-ink-muted);
+}
+.footer-desktop__bottom a { color: inherit; }
+.footer-desktop__bottom a:hover { color: var(--color-ink-strong); }

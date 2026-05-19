@@ -143,7 +143,7 @@ const subtitleHtml =
     <h2 class="t-h-l" style="font-size:22px;line-height:30px;font-weight:600;letter-spacing:-0.01em;color:var(--color-ink-strong);margin:0 0 16px">
       Pick your make
     </h2>
-    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+    <div class="parts-brand-grid" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
       {brandRows.map((b) => (
         <PartsBrandTile name={b.name} slug={b.slug} count={b.count} href={`/parts/${b.slug}/${city}/`} />
       ))}

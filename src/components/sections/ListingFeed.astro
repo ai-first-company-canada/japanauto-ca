@@ -50,7 +50,7 @@ const totalStr = totalCount != null ? totalCount.toLocaleString('en-US') : null;
       {headingCity && <span data-geo="city.short">{cityShort}</span>}
     </h2>
   </header>
-  <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+  <div class="feed-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
     {listings.map((l) => <ListingCard {...l} />)}
   </div>
   {ctaText && ctaHref && (

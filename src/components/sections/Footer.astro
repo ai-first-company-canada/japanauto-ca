@@ -51,7 +51,8 @@ const cols: FooterCol[] = [
   },
 ];
 ---
-<footer style="border-top:1px solid var(--color-divider);padding:64px 16px 32px;background:#fff">
+{/* Mobile footer (default; hidden ≥1280px via CSS) */}
+<footer class="footer-mobile" style="border-top:1px solid var(--color-divider);padding:64px 16px 32px;background:#fff">
   <Wordmark size={22} />
   <p class="t-body-s ink-muted" style="margin-top:12px;font-size:13px;max-width:280px;line-height:19px">
     Canada's marketplace for used Japanese cars and parts.
@@ -93,4 +94,40 @@ const cols: FooterCol[] = [
   >
     © 2026 japanauto.ca · Made in Canada · We are not affiliated with any vehicle manufacturer.
   </p>
+</footer>
+
+{/* Desktop footer (≥1280px) — 5-col grid */}
+<footer class="footer-desktop">
+  <div class="footer-desktop__inner">
+    <div class="footer-desktop__brand">
+      <Wordmark size={22} />
+      <p>Canada's marketplace for used Japanese cars and parts.</p>
+      <div class="footer-desktop__socials">
+        {socialIcons.map((s) => (
+          <a href={`/social/${s}/`} aria-label={s}>
+            <Icon name={s} size={18} />
+          </a>
+        ))}
+      </div>
+    </div>
+    {cols.map((col) => (
+      <div class="footer-desktop__col">
+        <h4>{col.title}</h4>
+        <ul>
+          {col.items.map((it) => (
+            <li><a href={it.href}>{it.label}</a></li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+  <div class="footer-desktop__bottom">
+    <span>© 2026 japanauto.ca · Made in Canada</span>
+    <span style="display:inline-flex;gap:16px">
+      <a href="/terms/">Terms</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/cookies/">Cookies</a>
+      <a href="/accessibility/">Accessibility</a>
+    </span>
+  </div>
 </footer>

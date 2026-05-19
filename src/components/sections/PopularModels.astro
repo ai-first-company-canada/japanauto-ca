@@ -32,7 +32,7 @@ const {
       {heading} <span data-geo="city.name">{cityName}</span>
     </h2>
   </header>
-  <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+  <div class="popular-models-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
     {models.map((m) => {
       const makeSlug = m.make.toLowerCase();
       const modelSlug = m.model.toLowerCase().replace(/\s+/g, '-');
