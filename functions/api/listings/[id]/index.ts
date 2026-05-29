@@ -50,8 +50,21 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
   const fields = Object.entries(parsed.data).filter(([, v]) => v !== undefined);
   if (fields.length === 0) return json({ listing: existing });
 
-  const setClause = fields.map(([k]) => `${k} = ?`).join(", ");
-  const values = fields.map(([, v]) => v ?? null);
+  const setCols = fields.map(([k]) => `${k} = ?`);
+  const values: unknown[] = fields.map(([, v]) => v ?? null);
+
+  // Keep sold_at consistent with status transitions. /mark-sold is the primary
+  // path, but a direct PATCH of `status` must not leave sold_at out of sync —
+  // the Schema.org SoldOut window and "sold N days ago" copy depend on it.
+  const nextStatus = parsed.data.status;
+  if (nextStatus === "sold" && existing.status !== "sold") {
+    setCols.push("sold_at = ?");
+    values.push(Math.floor(Date.now() / 1000));
+  } else if (nextStatus !== undefined && nextStatus !== "sold" && existing.sold_at !== null) {
+    setCols.push("sold_at = NULL");
+  }
+
+  const setClause = setCols.join(", ");
 
   try {
     await env.DB.prepare(

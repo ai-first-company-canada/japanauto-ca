@@ -14,7 +14,7 @@
 
 import type { Env } from "../../../types/env";
 import {
-  dealerSchema, listingSchema, citySchema, makeSchema, modelSchema,
+  dealerRowSchema, listingRowSchema, citySchema, makeSchema, modelSchema,
   mediaPublicSchema,
   type Dealer, type Listing, type City, type Make,
   type MediaPublic, type MediaFinalizeInput,
@@ -37,7 +37,7 @@ function parseDealerRow(row: Record<string, unknown>): Dealer {
   } else if (raw === undefined) {
     r.hours = null;
   }
-  return dealerSchema.parse(r);
+  return dealerRowSchema.parse(r);
 }
 
 export async function getDealerById(env: Env, id: string): Promise<Dealer | null> {
@@ -73,7 +73,7 @@ export async function getListingBySlug(env: Env, slug: string): Promise<Listing 
     `SELECT * FROM listings WHERE slug = ? LIMIT 1`
   ).bind(slug).first();
   if (!row) return null;
-  return listingSchema.parse(row);
+  return listingRowSchema.parse(row);
 }
 
 export async function getListingById(env: Env, id: string): Promise<Listing | null> {
@@ -81,7 +81,7 @@ export async function getListingById(env: Env, id: string): Promise<Listing | nu
     `SELECT * FROM listings WHERE id = ? LIMIT 1`
   ).bind(id).first();
   if (!row) return null;
-  return listingSchema.parse(row);
+  return listingRowSchema.parse(row);
 }
 
 /**
@@ -97,7 +97,7 @@ export async function markListingSold(env: Env, id: string): Promise<Listing | n
      RETURNING *`
   ).bind(now, now, id).first();
   if (!row) return null;
-  return listingSchema.parse(row);
+  return listingRowSchema.parse(row);
 }
 
 export interface CatalogRow extends Listing {
@@ -578,23 +578,29 @@ export async function resolveCityAlias(
 // ============================================================================
 
 export async function recordContactReveal(
-  env: Env, entityType: "listing" | "part" | "dealer",
+  env: Env, entityType: "listing" | "donor_car" | "dealer",
   entityId: string, ipHash: string, userAgentHash: string | null,
 ): Promise<void> {
-  const id = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
+
+  // Increment the counter on the owning entity FIRST. NOTE: the legacy `parts`
+  // table was dropped in migration 0005 (donor_cars replaced it); both listings
+  // and donor_cars carry a `contact_count` column. When the entity doesn't
+  // exist we skip the audit insert entirely, so a sprayed/bogus id can't flood
+  // contact_reveals with orphan rows.
+  const table = entityType === "donor_car" ? "donor_cars"
+    : entityType === "listing" ? "listings" : null;
+  if (table) {
+    const res = await env.DB.prepare(
+      `UPDATE ${table} SET contact_count = contact_count + 1 WHERE id = ?`,
+    ).bind(entityId).run();
+    if (!res.meta.changes) return;
+  }
+
   await env.DB.prepare(`
     INSERT INTO contact_reveals (id, entity_type, entity_id, ip_hash, user_agent_hash, revealed_at)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).bind(id, entityType, entityId, ipHash, userAgentHash, now).run();
-
-  // Increment counter on owning entity
-  const table = entityType === "dealer" ? null : entityType === "part" ? "parts" : "listings";
-  if (table) {
-    await env.DB.prepare(
-      `UPDATE ${table} SET contact_count = contact_count + 1 WHERE id = ?`
-    ).bind(entityId).run();
-  }
+  `).bind(crypto.randomUUID(), entityType, entityId, ipHash, userAgentHash, now).run();
 }
 
 // ============================================================================

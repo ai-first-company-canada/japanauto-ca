@@ -453,12 +453,46 @@ export const dealerSchema = z.object({
 });
 export type Dealer = z.infer<typeof dealerSchema>;
 
-/** Public-safe view (no password_hash, no stripe_id, etc.). */
-export const dealerPublicSchema = dealerSchema.omit({
+/**
+ * Read-side dealer schema. Like `dealerRowSchema` would: relaxes the input-only
+ * phone (E.164 NANP) and postal-code format rules so a legacy/edge stored value
+ * cannot 500 the dealer profile, every listing that joins this dealer, OR the
+ * login/refresh path (which reads the dealer row before issuing a token).
+ * Writes still validate via `dealerSchema`/`dealerCreateInputSchema`.
+ */
+export const dealerRowSchema = dealerSchema.extend({
+  phone: z.string().nullable().optional(),
+  postal_code: z.string().nullable().optional(),
+});
+export type DealerRow = z.infer<typeof dealerRowSchema>;
+
+/**
+ * Self view — what an authenticated dealer sees about THEIR OWN account
+ * (`/api/dealers/me`, signup/login responses). Includes corporate identifiers
+ * (business_number, gst_number) so the owner can view/edit them; excludes only
+ * the password hash and Stripe customer id.
+ */
+export const dealerSelfSchema = dealerRowSchema.omit({
+  password_hash: true,
+  stripe_customer_id: true,
+});
+export type DealerSelf = z.infer<typeof dealerSelfSchema>;
+
+/**
+ * Public-safe view — what OTHER visitors see about a dealer (`/api/dealers/:slug`,
+ * dealer block on a public listing). Drops the password hash, Stripe id, daily
+ * quota counters, AND the corporate tax identifiers (business_number,
+ * gst_number) which are never rendered on a page and must not leak via a
+ * cacheable JSON endpoint. Phone/email stay: they are intentionally shown
+ * directly on the listing/dealer page (anonymous-buyer direct-contact model).
+ */
+export const dealerPublicSchema = dealerRowSchema.omit({
   password_hash: true,
   stripe_customer_id: true,
   daily_listing_count: true,
   daily_listing_reset_at: true,
+  business_number: true,
+  gst_number: true,
 });
 export type DealerPublic = z.infer<typeof dealerPublicSchema>;
 
@@ -573,6 +607,25 @@ export const listingSchema = z.object({
   updated_at: timestampSchema,
 });
 export type Listing = z.infer<typeof listingSchema>;
+
+/**
+ * Read-side listing schema. Structurally identical to `listingSchema` but
+ * RELAXES the input-only business rules that must never gate a *read* of an
+ * already-stored row:
+ *   - `year`: drops the rolling 10-year window. A listing created last year can
+ *     age out of the window; re-validating on read would throw and 500 the
+ *     public detail page instead of just rendering an older car.
+ *   - `vin`: drops the ISO-3779 checksum + character rules. Grey-market JDM
+ *     imports (this marketplace's core inventory) frequently carry VINs that do
+ *     not satisfy ISO-3779, and must still be readable.
+ * Writes still go through `listingSchema`/`listingCreateInputSchema`, so these
+ * rules remain enforced at insert/update time. Use this for D1 reads only.
+ */
+export const listingRowSchema = listingSchema.extend({
+  year: z.number().int(),
+  vin: z.string(),
+});
+export type ListingRow = z.infer<typeof listingRowSchema>;
 
 /** Catalog list query — params validated from URL search. */
 export const catalogQuerySchema = z.object({

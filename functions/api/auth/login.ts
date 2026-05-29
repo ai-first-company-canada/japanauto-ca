@@ -21,6 +21,12 @@ import {
 import { getDealerByEmail, storeRefreshToken } from "../_lib/db";
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
 
+// A syntactically-valid PBKDF2 hash that no password matches. Verifying against
+// it on unknown emails makes the no-such-user path run the same ~100k-iteration
+// work as the real path, so response time can't be used to enumerate accounts.
+const DUMMY_PASSWORD_HASH =
+  "pbkdf2$100000$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
 
@@ -44,8 +50,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!emailRl.allowed) return tooManyRequests(emailRl.retryAfterSeconds);
 
   const dealer = await getDealerByEmail(env, email);
-  // Generic "Invalid credentials" — no user enumeration via timing or message.
-  if (!dealer) return unauthorized("Invalid credentials");
+  // Generic "Invalid credentials" — no enumeration via message OR timing: on an
+  // unknown email, still run a dummy PBKDF2 verify so the response time matches
+  // the known-email path (which always runs verifyPassword below).
+  if (!dealer) {
+    await verifyPassword(password, DUMMY_PASSWORD_HASH);
+    return unauthorized("Invalid credentials");
+  }
 
   const ok = await verifyPassword(password, dealer.password_hash);
   if (!ok) return unauthorized("Invalid credentials");

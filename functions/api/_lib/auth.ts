@@ -90,6 +90,14 @@ export async function verifyAccessToken(
   if (parts.length !== 3) return null;
   const [headerB64, payloadB64, sigB64] = parts as [string, string, string];
 
+  // Pin the algorithm: never let the token's own header choose how it's
+  // verified (defends against alg-confusion / alg:none if the verifier is ever
+  // refactored). We only ever issue HS256.
+  let header: { alg?: unknown; typ?: unknown };
+  try { header = JSON.parse(fromB64UrlText(headerB64)); }
+  catch { return null; }
+  if (header.alg !== "HS256" || header.typ !== "JWT") return null;
+
   const key = await importHmacKey(env.JWT_SECRET);
   const valid = await crypto.subtle.verify(
     "HMAC", key, fromB64Url(sigB64),

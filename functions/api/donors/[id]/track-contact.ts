@@ -1,15 +1,16 @@
 /**
- * POST /api/listings/:id/track-contact
+ * POST /api/donors/:id/track-contact
  *
- * Anonymous beacon fired when a buyer clicks "Show contact" on a listing.
- * Per ADR-0003: contacts are revealed directly in UI (no relay form);
- * this endpoint just records the reveal for anti-scraping audit and
- * increments listings.contact_count.
+ * Anonymous beacon fired when a buyer clicks "Call"/"Show contact" on a donor
+ * car (junkyard parts). Mirror of the listing track-contact endpoint: records
+ * the reveal for the anti-scraping audit (ADR-0003) and increments
+ * donor_cars.contact_count. Previously missing entirely, so donor contact
+ * tracking was dead (donor_cars.contact_count stayed 0).
  *
  * Body: empty.
  * Response 204 No Content (always — no information leakage).
  *
- * Rate limit: 30/hour per IP, 100/day per listing.
+ * Rate limit: 30/hour per IP, 100/day per donor.
  */
 
 import type { Env } from "../../../../types/env";
@@ -30,28 +31,27 @@ export const onRequestPost: PagesFunction<Env, "id"> = async ({ request, env, pa
   const id = params.id as string;
   const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
 
-  // Verify the listing exists and is live BEFORE touching the rate-limiter or
-  // the audit table. Without this, sprayed/bogus ids create unbounded
-  // per-listing KV rate-limit keys and (pre-fix) orphan contact_reveals rows.
-  // Still returns 204 either way — no count/existence leak.
+  // Verify the donor exists and is live BEFORE touching the rate-limiter or the
+  // audit table (same rationale as the listing beacon). Donors are visible in
+  // both 'active' and 'depleted' states. Still returns 204 either way.
   const exists = await env.DB.prepare(
-    `SELECT 1 FROM listings WHERE id = ? AND status = 'active' LIMIT 1`,
+    `SELECT 1 FROM donor_cars WHERE id = ? AND status IN ('active','depleted') LIMIT 1`,
   ).bind(id).first();
   if (!exists) return noContent();
 
   const ipRl = await rateLimit(env, ip, RATE_LIMITS.CONTACT_REVEAL_PER_IP);
   if (!ipRl.allowed) return tooManyRequests(ipRl.retryAfterSeconds);
 
-  const listingRl = await rateLimit(env, `listing:${id}`,
+  const donorRl = await rateLimit(env, `donor:${id}`,
     RATE_LIMITS.CONTACT_REVEAL_PER_LISTING);
-  if (!listingRl.allowed) return tooManyRequests(listingRl.retryAfterSeconds);
+  if (!donorRl.allowed) return tooManyRequests(donorRl.retryAfterSeconds);
 
   const ipHash = await hashIp(env, ip);
   const uaHash = await hashUa(request.headers.get("user-agent"));
 
   // Best-effort write — never fail the beacon (would expose the count).
   try {
-    await recordContactReveal(env, "listing", id, ipHash, uaHash);
+    await recordContactReveal(env, "donor_car", id, ipHash, uaHash);
   } catch { /* swallow */ }
 
   return noContent();

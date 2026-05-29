@@ -4,7 +4,7 @@
  */
 
 import type { Env } from "../../../types/env";
-import { dealerUpdateInputSchema, zodErrorToApiError, dealerPublicSchema } from "../../../lib/schema";
+import { dealerUpdateInputSchema, zodErrorToApiError, dealerSelfSchema } from "../../../lib/schema";
 import { json, jsonError, badRequest, internalError, notFound, conflict } from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
 import { getDealerById } from "../_lib/db";
@@ -15,7 +15,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
   const dealer = await getDealerById(env, auth.dealerId);
   if (!dealer) return notFound();
-  return json({ dealer: dealerPublicSchema.parse(dealer) });
+  return json({ dealer: dealerSelfSchema.parse(dealer) });
 };
 
 export const onRequestPatch: PagesFunction<Env> = async ({ request, env }) => {
@@ -35,7 +35,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env }) => {
   const fields = Object.entries(parsed.data).filter(([, v]) => v !== undefined);
   if (fields.length === 0) {
     const dealer = await getDealerById(env, auth.dealerId);
-    return json({ dealer: dealerPublicSchema.parse(dealer!) });
+    return json({ dealer: dealerSelfSchema.parse(dealer!) });
   }
 
   const setClause = fields.map(([k]) => `${k} = ?`).join(", ");
@@ -58,5 +58,5 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const updated = await getDealerById(env, auth.dealerId);
-  return json({ dealer: dealerPublicSchema.parse(updated!) });
+  return json({ dealer: dealerSelfSchema.parse(updated!) });
 };

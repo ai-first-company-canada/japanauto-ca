@@ -28,7 +28,7 @@
 
 import type { Env } from "../../../types/env";
 import {
-  mediaFinalizeInputSchema, zodErrorToApiError,
+  mediaFinalizeInputSchema, zodErrorToApiError, LIMITS,
 } from "../../../lib/schema";
 import {
   created, jsonError, badRequest, notFound, forbidden,
@@ -66,6 +66,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   } else {
     return jsonError(422, "validation_failed",
       `entity_type='${input.entity_type}' finalize not yet wired`);
+  }
+
+  // Enforce the per-entity photo cap (was defined in the schema but never
+  // checked — a dealer could attach unlimited media rows to their own entity).
+  const countRow = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM media WHERE entity_type = ? AND entity_id = ?`,
+  ).bind(input.entity_type, input.entity_id).first<{ n: number }>();
+  if ((countRow?.n ?? 0) >= LIMITS.PHOTOS_PER_LISTING_MAX) {
+    return jsonError(422, "validation_failed",
+      `Maximum ${LIMITS.PHOTOS_PER_LISTING_MAX} photos allowed per listing`);
   }
 
   const media = await createMedia(env, input);
