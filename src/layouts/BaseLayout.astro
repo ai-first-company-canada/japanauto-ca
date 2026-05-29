@@ -7,7 +7,6 @@ interface Props {
   canonical: string;
   ogImage?: string;
   schemaLD?: object | object[];
-  geoFallbackCity?: string;
 }
 
 const {
@@ -16,10 +15,10 @@ const {
   canonical,
   ogImage,
   schemaLD,
-  geoFallbackCity = 'toronto',
 } = Astro.props;
 
-const ogImageUrl = ogImage ?? '/og-default.png';
+// Absolute URL — Open Graph / Twitter reject relative image paths.
+const ogImageUrl = new URL(ogImage ?? '/og-default.png', 'https://japanauto.ca').href;
 
 const extraGraph = schemaLD ? (Array.isArray(schemaLD) ? schemaLD : [schemaLD]) : [];
 
@@ -31,7 +30,7 @@ const jsonLd = {
       '@id': 'https://japanauto.ca/#organization',
       name: 'japanauto.ca',
       url: 'https://japanauto.ca',
-      logo: 'https://japanauto.ca/logo.png',
+      logo: 'https://japanauto.ca/logo.svg',
       description: 'Canadian marketplace for used Japanese cars and parts donor cars',
       areaServed: { '@type': 'Country', name: 'Canada' },
     },
@@ -56,7 +55,7 @@ const jsonLd = {
 };
 ---
 <!DOCTYPE html>
-<html lang="en" data-geo-resolved="false" data-geo-city={geoFallbackCity}>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -64,6 +63,8 @@ const jsonLd = {
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="/favicon.ico" sizes="any" />
 
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -90,7 +91,7 @@ const jsonLd = {
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
     </noscript>
 
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
   </head>
   <body>
     <slot name="navbar" />
@@ -105,9 +106,9 @@ const jsonLd = {
     <script is:inline>
       window.setCityCookie = function (slug, province) {
         var yr = 60 * 60 * 24 * 365;
-        document.cookie = "jc_city=" + slug + "; max-age=" + yr + "; path=/; samesite=lax";
-        document.cookie = "jc_province=" + province + "; max-age=" + yr + "; path=/; samesite=lax";
-        window.location.reload();
+        document.cookie = "jc_city=" + slug + "; max-age=" + yr + "; path=/; samesite=lax; secure";
+        document.cookie = "jc_province=" + province + "; max-age=" + yr + "; path=/; samesite=lax; secure";
+        window.location.assign("/" + slug + "/");
       };
     </script>
   </body>

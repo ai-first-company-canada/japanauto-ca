@@ -12,7 +12,8 @@ const { items } = Astro.props;
 ---
 <nav
   aria-label="Breadcrumb"
-  style="display:flex;align-items:center;gap:8px;padding:12px 16px;overflow-x:auto;white-space:nowrap"
+  class="gutter"
+  style="display:flex;align-items:center;gap:8px;padding-block:12px;overflow-x:auto;white-space:nowrap"
 >
   {items.map((it, i) => (
     <>

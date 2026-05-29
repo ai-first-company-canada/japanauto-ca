@@ -67,7 +67,7 @@ Note that conventional hybrids do not qualify for the federal iZEV rebate. Only 
 
 ## Active Toyota listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Toyota listings](/used-cars/toyota/toronto/), [Montreal](/used-cars/toyota/montreal/), [Vancouver](/used-cars/toyota/vancouver/), [Calgary](/used-cars/toyota/calgary/), [Edmonton](/used-cars/toyota/edmonton/), [Ottawa](/used-cars/toyota/ottawa/). The deepest model inventories are typically RAV4, Corolla, Camry, and Highlander; specific Tacoma and Sienna inventory varies by week.
+Browse current inventory by city: [Toronto Toyota listings](/toronto/toyota/), [Montreal](/montreal/toyota/), [Vancouver](/vancouver/toyota/), [Calgary](/calgary/toyota/), [Edmonton](/edmonton/toyota/), [Ottawa](/ottawa/toyota/). The deepest model inventories are typically RAV4, Corolla, Camry, and Highlander; specific Tacoma and Sienna inventory varies by week.
 
 ## Toyota parts and service across Canada
 

@@ -47,7 +47,7 @@ const totalStr = totalCount != null ? totalCount.toLocaleString('en-US') : null;
   <header style="margin-bottom:16px">
     <h2 class="t-h-l">
       {heading}{headingCity ? ' ' : ''}
-      {headingCity && <span data-geo="city.short">{cityShort}</span>}
+      {headingCity && cityShort}
     </h2>
   </header>
   <div class="feed-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
@@ -58,7 +58,7 @@ const totalStr = totalCount != null ? totalCount.toLocaleString('en-US') : null;
       href={ctaHref}
       style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;color:var(--color-ink-strong);font-weight:600;font-size:14px"
     >
-      {totalStr ? <>View all <span data-geo="city.count" class="num">{totalStr}</span> listings in <span data-geo="city.name">{cityName}</span></> : ctaText}
+      {totalStr ? <>View all <span class="num">{totalStr}</span> listings in {cityName}</> : ctaText}
       <Icon name="arrowRight" size={16} />
     </a>
   )}

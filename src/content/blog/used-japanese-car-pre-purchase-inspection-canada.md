@@ -107,7 +107,7 @@ Yes, and it is more important on a private sale than on a dealer purchase. Sched
 
 A standard PPI takes 60 to 90 minutes at an independent shop. The mechanic puts the vehicle on a hoist, runs cold-start and warm-running engine diagnostics, scans OBD-II computer codes, examines the undercarriage for rust and damage, checks brake and suspension wear, verifies tire condition and age, and pulls a [CarFax Canada](/glossary/carfax/) report to compare against the seller's disclosure. A more thorough inspection that includes complete diagnostic scanning, paint-thickness gauge readings on body panels, and fluid sampling can take 2 to 3 hours. Plan accordingly when scheduling the test drive and inspection in the same day.
 
-If you are considering a specific used Japanese vehicle on japanauto.ca, the city-specific catalogue pages — [Toronto Toyota listings](/used-cars/toyota/toronto/), [Vancouver Subaru](/used-cars/subaru/vancouver/), [Calgary Honda](/used-cars/honda/calgary/) — show current inventory you can compare against PPI cost and process before commitment.
+If you are considering a specific used Japanese vehicle on japanauto.ca, the city-specific catalogue pages — [Toronto Toyota listings](/toronto/toyota/), [Vancouver Subaru](/vancouver/subaru/), [Calgary Honda](/calgary/honda/) — show current inventory you can compare against PPI cost and process before commitment.
 
 ## Sources
 

@@ -14,10 +14,10 @@ import { makeFaqs } from '../../../../data/parts-faqs';
 import { makeCopyFor } from '../../../../data/parts-make-copy';
 
 export function getStaticPaths() {
-  const out: Array<{ params: { make: string; city: string } }> = [];
-  for (const make of Object.keys(BRAND_CONTENT)) {
-    for (const c of TIER_1_CITIES) {
-      out.push({ params: { make, city: c.slug } });
+  const out: Array<{ params: { city: string; make: string } }> = [];
+  for (const c of TIER_1_CITIES) {
+    for (const make of Object.keys(BRAND_CONTENT)) {
+      out.push({ params: { city: c.slug, make } });
     }
   }
   return out;
@@ -39,7 +39,7 @@ const faqs = makeFaqs(brand.name);
 
 const title = `Used ${brand.name} parts in ${cityShort} — japanauto.ca`;
 const description = `Used ${brand.name} parts from salvage yards in ${cityInfo.name}. Donor cars at local junkyards — pick a model to find a donor, then call.`;
-const canonical = `https://japanauto.ca/parts/${make}/${city}/`;
+const canonical = `https://japanauto.ca/${city}/parts/${make}/`;
 
 const schemaLD = [
   {
@@ -56,8 +56,8 @@ const schemaLD = [
     '@id': `${canonical}#breadcrumb`,
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',         item: 'https://japanauto.ca/' },
-      { '@type': 'ListItem', position: 2, name: 'Parts',        item: 'https://japanauto.ca/parts/' },
-      { '@type': 'ListItem', position: 3, name: cityInfo.name,  item: `https://japanauto.ca/parts/${city}/` },
+      { '@type': 'ListItem', position: 2, name: cityInfo.name,  item: `https://japanauto.ca/${city}/` },
+      { '@type': 'ListItem', position: 3, name: 'Parts',        item: `https://japanauto.ca/${city}/parts/` },
       { '@type': 'ListItem', position: 4, name: brand.name,     item: canonical },
     ],
   },
@@ -68,7 +68,7 @@ const schemaLD = [
       '@type': 'ListItem',
       position: i + 1,
       name: `${brand.name} ${m.name}`,
-      url: `https://japanauto.ca/parts/${make}/${m.slug}/${city}/`,
+      url: `https://japanauto.ca/${city}/parts/${make}/${m.slug}/`,
     })),
   },
   {
@@ -96,7 +96,7 @@ const subtitleHtml =
     ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> ${cityInfo.name} junkyards · Updated today`
     : `Donor cars listing as ${cityInfo.name} junkyards onboard · Updated today`;
 ---
-<BaseLayout {title} {description} {canonical} {schemaLD} geoFallbackCity={city!}>
+<BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" cityShort={cityShort} />
   <MenuDrawer slot="menu-drawer" cityShort={cityShort} cityName={cityInfo.name} />
   <CityPickerDialog slot="city-picker" />
@@ -106,8 +106,8 @@ const subtitleHtml =
 
   <Breadcrumb items={[
     { label: 'Home',         href: '/' },
-    { label: 'Parts',        href: '/parts/' },
-    { label: cityInfo.name,  href: `/parts/${city}/` },
+    { label: cityInfo.name,  href: `/${city}/` },
+    { label: 'Parts',        href: `/${city}/parts/` },
     { label: brand.name },
   ]} />
 
@@ -126,7 +126,7 @@ const subtitleHtml =
           name={m.name}
           slug={m.slug}
           count={m.count}
-          href={`/parts/${make}/${m.slug}/${city}/`}
+          href={`/${city}/parts/${make}/${m.slug}/`}
         />
       ))}
     </div>

@@ -5,7 +5,7 @@ interface Props {
 }
 const { title, paragraphs } = Astro.props;
 ---
-<section class="band-subtle" style="padding:40px 16px">
+<section class="band-subtle gutter" style="padding-block:40px">
   <h3 class="t-h-l" style="font-size:22px;margin-bottom:16px;letter-spacing:-0.01em">{title}</h3>
   {paragraphs.map((p) => (
     <p

@@ -67,7 +67,7 @@ The historical caveat is rust on pre-2014 Mazda body panels, particularly on Maz
 
 ## Active Mazda listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Mazda listings](/used-cars/mazda/toronto/), [Montreal](/used-cars/mazda/montreal/), [Vancouver](/used-cars/mazda/vancouver/), [Calgary](/used-cars/mazda/calgary/), [Edmonton](/used-cars/mazda/edmonton/), [Ottawa](/used-cars/mazda/ottawa/). The deepest inventories are CX-5, Mazda3, and CX-30.
+Browse current inventory by city: [Toronto Mazda listings](/toronto/mazda/), [Montreal](/montreal/mazda/), [Vancouver](/vancouver/mazda/), [Calgary](/calgary/mazda/), [Edmonton](/edmonton/mazda/), [Ottawa](/ottawa/mazda/). The deepest inventories are CX-5, Mazda3, and CX-30.
 
 ## Mazda parts and service in Canada
 

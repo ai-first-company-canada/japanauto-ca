@@ -67,7 +67,7 @@ The PHEV variants — NX 450h+ and the previous RX 450h+ — qualify for the fed
 
 ## Active Lexus listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Lexus listings](/used-cars/lexus/toronto/), [Montreal](/used-cars/lexus/montreal/), [Vancouver](/used-cars/lexus/vancouver/), [Calgary](/used-cars/lexus/calgary/), [Edmonton](/used-cars/lexus/edmonton/), [Ottawa](/used-cars/lexus/ottawa/). The deepest inventories are RX, IS, ES, and NX.
+Browse current inventory by city: [Toronto Lexus listings](/toronto/lexus/), [Montreal](/montreal/lexus/), [Vancouver](/vancouver/lexus/), [Calgary](/calgary/lexus/), [Edmonton](/edmonton/lexus/), [Ottawa](/ottawa/lexus/). The deepest inventories are RX, IS, ES, and NX.
 
 ## Lexus parts and certified service
 

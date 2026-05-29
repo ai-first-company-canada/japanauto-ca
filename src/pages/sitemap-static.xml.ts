@@ -46,12 +46,18 @@ export async function GET({ site }: APIContext) {
   urls.push({ loc: `${base}/editorial-team/`, changefreq: 'monthly', priority: 0.4 });
   urls.push({ loc: `${base}/editorial-policy/`, changefreq: 'monthly', priority: 0.4 });
 
-  // ---- /used-cars/[make]/, /used-cars/[make]/[city]/, /used-cars/[make]/[model]/[city]/
+  // ---- /[city]/ city hubs
+  for (const city of TIER_1_CITIES) {
+    urls.push({ loc: `${base}/${city.slug}/`, changefreq: 'daily', priority: 0.8 });
+  }
+
+  // ---- /used-cars/[make]/ (national brand), /used-cars/[make]/[model]/ (national model),
+  //      /[city]/[make]/ (brand+city), /[city]/[make]/[model]/ (model+city)
   for (const make of MAKES) {
     urls.push({ loc: `${base}/used-cars/${make}/`, changefreq: 'daily', priority: 0.6 });
     for (const city of TIER_1_CITIES) {
       urls.push({
-        loc: `${base}/used-cars/${make}/${city.slug}/`,
+        loc: `${base}/${city.slug}/${make}/`,
         changefreq: 'daily', priority: 0.7,
       });
     }
@@ -63,22 +69,24 @@ export async function GET({ site }: APIContext) {
       });
       for (const city of TIER_1_CITIES) {
         urls.push({
-          loc: `${base}/used-cars/${make}/${model.slug}/${city.slug}/`,
+          loc: `${base}/${city.slug}/${make}/${model.slug}/`,
           changefreq: 'daily', priority: 0.7,
         });
       }
     }
   }
 
-  // ---- /parts/[city]/, /parts/[make]/, /parts/[make]/[city]/, /parts/[make]/[model]/, /parts/[make]/[model]/[city]/
+  // ---- /[city]/parts/ (city parts hub), /parts/[make]/ (national brand parts),
+  //      /[city]/parts/[make]/ (brand+city), /parts/[make]/[model]/ (national model),
+  //      /[city]/parts/[make]/[model]/ (model+city)
   for (const city of TIER_1_CITIES) {
-    urls.push({ loc: `${base}/parts/${city.slug}/`, changefreq: 'daily', priority: 0.6 });
+    urls.push({ loc: `${base}/${city.slug}/parts/`, changefreq: 'daily', priority: 0.6 });
   }
   for (const make of MAKES) {
     urls.push({ loc: `${base}/parts/${make}/`, changefreq: 'daily', priority: 0.6 });
     for (const city of TIER_1_CITIES) {
       urls.push({
-        loc: `${base}/parts/${make}/${city.slug}/`,
+        loc: `${base}/${city.slug}/parts/${make}/`,
         changefreq: 'daily', priority: 0.7,
       });
     }
@@ -90,7 +98,7 @@ export async function GET({ site }: APIContext) {
       });
       for (const city of TIER_1_CITIES) {
         urls.push({
-          loc: `${base}/parts/${make}/${model.slug}/${city.slug}/`,
+          loc: `${base}/${city.slug}/parts/${make}/${model.slug}/`,
           changefreq: 'daily', priority: 0.7,
         });
       }

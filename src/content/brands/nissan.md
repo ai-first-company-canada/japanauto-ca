@@ -67,7 +67,7 @@ The 2.5L QR25 four-cylinder engine, the 3.5L VQ35 V6, and the 4.0L VQ40 in the F
 
 ## Active Nissan listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Nissan listings](/used-cars/nissan/toronto/), [Montreal](/used-cars/nissan/montreal/), [Vancouver](/used-cars/nissan/vancouver/), [Calgary](/used-cars/nissan/calgary/), [Edmonton](/used-cars/nissan/edmonton/), [Ottawa](/used-cars/nissan/ottawa/). The deepest inventories are Rogue, Altima, Sentra, and Pathfinder.
+Browse current inventory by city: [Toronto Nissan listings](/toronto/nissan/), [Montreal](/montreal/nissan/), [Vancouver](/vancouver/nissan/), [Calgary](/calgary/nissan/), [Edmonton](/edmonton/nissan/), [Ottawa](/ottawa/nissan/). The deepest inventories are Rogue, Altima, Sentra, and Pathfinder.
 
 ## Nissan parts and service in Canada
 

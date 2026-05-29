@@ -147,6 +147,11 @@ img, svg { display: block; max-width: 100%; }
 .section-tight { padding: 24px 16px; }
 .section + .section { padding-top: 0; }
 
+/* Horizontal gutter only — ramps 16 → 24 → 40 in lockstep with .section.
+   Use on sections that need custom vertical padding but uniform horizontal
+   alignment with .section / navbar / footer. */
+.gutter { padding-inline: 16px; }
+
 /* ----------------------------------------------------------------------------
  * Bands
  * -------------------------------------------------------------------------- */
@@ -781,6 +786,7 @@ select.auth-form-input {
   /* Section paddings widen */
   .section       { padding: 56px 24px; }
   .section-tight { padding: 32px 24px; }
+  .gutter        { padding-inline: 24px; }
 
   /* Container max-width */
   .container { max-width: 720px; padding-inline: 24px; }
@@ -823,6 +829,7 @@ select.auth-form-input {
   /* Section paddings */
   .section       { padding: 72px 40px; }
   .section-tight { padding: 40px 40px; }
+  .gutter        { padding-inline: 40px; }
 
   /* Container */
   .container { max-width: 1200px; padding-inline: 40px; }
@@ -957,6 +964,16 @@ select.auth-form-input {
   body > nav[aria-label="Breadcrumb"],
   body > section {
     max-width: 1200px;
+  }
+  /* Tinted bands (band-subtle / band-ink) inside <main> get their paint area
+     clipped to the 1200px content column so the background visually aligns
+     with the headings of non-band sections instead of overhanging by 40px on
+     each side. The inner .gutter padding (40px) is what gives band text its
+     inset breathing room relative to the band edge. */
+  main > section.band-subtle,
+  main > section.band-ink {
+    max-width: 1200px;
+    margin-inline: auto;
   }
   /* Desktop navbar keeps full-width chrome (border-bottom edge to edge)
      but content respects the 1200px cap via dynamic side padding. */

@@ -65,7 +65,7 @@ The known caveat is the [CVT](/glossary/cvt/) transmission. Honda CVTs in mid-20
 
 ## Active Honda listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Honda listings](/used-cars/honda/toronto/), [Montreal](/used-cars/honda/montreal/), [Vancouver](/used-cars/honda/vancouver/), [Calgary](/used-cars/honda/calgary/), [Edmonton](/used-cars/honda/edmonton/), [Ottawa](/used-cars/honda/ottawa/). The deepest inventories across all six markets are Civic, CR-V, Accord, and Pilot.
+Browse current inventory by city: [Toronto Honda listings](/toronto/honda/), [Montreal](/montreal/honda/), [Vancouver](/vancouver/honda/), [Calgary](/calgary/honda/), [Edmonton](/edmonton/honda/), [Ottawa](/ottawa/honda/). The deepest inventories across all six markets are Civic, CR-V, Accord, and Pilot.
 
 ## Honda parts and service availability
 

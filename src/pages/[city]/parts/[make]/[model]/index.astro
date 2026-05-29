@@ -17,11 +17,11 @@ import { modelFaqs } from '../../../../../data/parts-faqs';
 import { modelCopyFor } from '../../../../../data/parts-model-copy';
 
 export function getStaticPaths() {
-  const out: Array<{ params: { make: string; model: string; city: string } }> = [];
-  for (const make of Object.keys(MODELS_BY_BRAND)) {
-    for (const m of MODELS_BY_BRAND[make]!) {
-      for (const c of TIER_1_CITIES) {
-        out.push({ params: { make, model: m.slug, city: c.slug } });
+  const out: Array<{ params: { city: string; make: string; model: string } }> = [];
+  for (const c of TIER_1_CITIES) {
+    for (const make of Object.keys(MODELS_BY_BRAND)) {
+      for (const m of MODELS_BY_BRAND[make]!) {
+        out.push({ params: { city: c.slug, make, model: m.slug } });
       }
     }
   }
@@ -54,12 +54,12 @@ const otherCities = TIER_1_CITIES
     province: c.province,
     slug: c.slug,
     count: 0,
-    href: `/parts/${make}/${model}/${c.slug}/`,
+    href: `/${c.slug}/parts/${make}/${model}/`,
   }));
 
 const title = `Used ${brand.name} ${modelInfo.name} parts in ${cityShort} — japanauto.ca`;
 const description = `Used ${brand.name} ${modelInfo.name} parts from salvage yards in ${cityInfo.name}. Donor cars grouped by generation — call the junkyard to find your part.`;
-const canonical = `https://japanauto.ca/parts/${make}/${model}/${city}/`;
+const canonical = `https://japanauto.ca/${city}/parts/${make}/${model}/`;
 
 const schemaLD = [
   {
@@ -76,9 +76,9 @@ const schemaLD = [
     '@id': `${canonical}#breadcrumb`,
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',         item: 'https://japanauto.ca/' },
-      { '@type': 'ListItem', position: 2, name: 'Parts',        item: 'https://japanauto.ca/parts/' },
-      { '@type': 'ListItem', position: 3, name: cityInfo.name,  item: `https://japanauto.ca/parts/${city}/` },
-      { '@type': 'ListItem', position: 4, name: brand.name,     item: `https://japanauto.ca/parts/${make}/${city}/` },
+      { '@type': 'ListItem', position: 2, name: cityInfo.name,  item: `https://japanauto.ca/${city}/` },
+      { '@type': 'ListItem', position: 3, name: 'Parts',        item: `https://japanauto.ca/${city}/parts/` },
+      { '@type': 'ListItem', position: 4, name: brand.name,     item: `https://japanauto.ca/${city}/parts/${make}/` },
       { '@type': 'ListItem', position: 5, name: modelInfo.name, item: canonical },
     ],
   },
@@ -113,7 +113,7 @@ const subtitleHtml =
     ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> ${cityInfo.name} junkyards · Updated today`
     : `Donor cars listing as ${cityInfo.name} junkyards onboard · Updated today`;
 ---
-<BaseLayout {title} {description} {canonical} {schemaLD} geoFallbackCity={city!}>
+<BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" cityShort={cityShort} />
   <MenuDrawer slot="menu-drawer" cityShort={cityShort} cityName={cityInfo.name} />
   <CityPickerDialog slot="city-picker" />
@@ -123,9 +123,9 @@ const subtitleHtml =
 
   <Breadcrumb items={[
     { label: 'Home',           href: '/' },
-    { label: 'Parts',          href: '/parts/' },
-    { label: cityInfo.name,    href: `/parts/${city}/` },
-    { label: brand.name,       href: `/parts/${make}/${city}/` },
+    { label: cityInfo.name,    href: `/${city}/` },
+    { label: 'Parts',          href: `/${city}/parts/` },
+    { label: brand.name,       href: `/${city}/parts/${make}/` },
     { label: modelInfo.name },
   ]} />
 
@@ -168,7 +168,7 @@ const subtitleHtml =
       </h2>
       <div style="display:flex;gap:8px;padding:0 16px 4px;overflow-x:auto;scrollbar-width:none">
         {otherModels.map((m) => (
-          <CrossLinkModelCard name={m.name} count={m.count} href={`/parts/${make}/${m.slug}/${city}/`} />
+          <CrossLinkModelCard name={m.name} count={m.count} href={`/${city}/parts/${make}/${m.slug}/`} />
         ))}
       </div>
     </section>

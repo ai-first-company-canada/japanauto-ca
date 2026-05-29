@@ -23,7 +23,7 @@ const { make, model, cities, makeName, modelName } = Astro.props;
   <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
     {cities.map((c) => (
       <a
-        href={`/used-cars/${make}/${model}/${c.slug}/`}
+        href={`/${c.slug}/${make}/${model}/`}
         class="card"
         style="padding:14px 16px;text-align:left;display:flex;flex-direction:column;gap:2px;text-decoration:none"
       >

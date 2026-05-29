@@ -114,7 +114,7 @@ For a clean daily-driver JDM, target grade 4 or higher on Japanese auction gradi
 
 For Japanese-spec versions of globally-sold vehicles (JDM Civic, JDM Corolla, JDM Pathfinder), yes — these work as daily drivers with proper service support. For specialty JDM-only models (Skyline GT-R, Chaser, Acty kei truck, S660 sports kei), daily-driver use is feasible but adds complexity: right-hand-drive ergonomics, parts sourcing through Japanese specialty importers, an independent shop relationship for service, and insurance considerations. Vancouver's JDM ecosystem supports daily-driver ownership better than most Canadian cities, but the trade-offs are real. Project-car or weekend-driver use is typically the more common ownership pattern.
 
-If you are evaluating specific Vancouver inventory, the [used cars by city listings](/used-cars/vancouver/) on japanauto.ca include both Canadian-spec and JDM imports, with VIN-keyed details that distinguish the two. Filter for "JDM imports" specifically to see the Vancouver-area inventory of vehicles that came through the RIV Program 15-year rule.
+If you are evaluating specific Vancouver inventory, the [used cars by city listings](/vancouver/) on japanauto.ca include both Canadian-spec and JDM imports, with VIN-keyed details that distinguish the two. Filter for "JDM imports" specifically to see the Vancouver-area inventory of vehicles that came through the RIV Program 15-year rule.
 
 ## Sources
 

@@ -175,7 +175,7 @@ ${cardsHtml}
 `;
 
   const html = renderShell({
-    title, description, canonical, schemaLD, geoCity: dealer.city,
+    title, description, canonical, schemaLD,
   }, body);
 
   return new Response(html, {

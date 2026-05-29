@@ -69,7 +69,7 @@ export function makeFaqs(brandName: string): FaqItem[] {
     },
     {
       q: `Where can I find ${brandName} parts in my city?`,
-      a: `Pick your city from the parts hub or use the city-bound page (e.g. /parts/${brandName.toLowerCase()}/calgary/). The page lists active donor cars at junkyards in that metro and the phone numbers to call. Most yards ship across Canada for smaller parts, so you’re not strictly limited to your city.`,
+      a: `Pick your city from the parts hub or use the city-bound page (e.g. /calgary/parts/${brandName.toLowerCase()}/). The page lists active donor cars at junkyards in that metro and the phone numbers to call. Most yards ship across Canada for smaller parts, so you’re not strictly limited to your city.`,
     },
   ];
 }

@@ -5,13 +5,11 @@ interface Props {
   slug: string;
   citySlug?: string;
 }
-const { name, count, slug, citySlug = 'toronto' } = Astro.props;
-const href = `/used-cars/${slug}/${citySlug}/`;
-const geoHref = `/used-cars/${slug}/{city}/`;
+const { name, count, slug, citySlug } = Astro.props;
+const href = citySlug ? `/${citySlug}/${slug}/` : `/used-cars/${slug}/`;
 ---
 <a
   href={href}
-  data-geo-href={geoHref}
   class="card"
   style="display:flex;flex-direction:column;justify-content:center;padding:16px;min-height:80px;gap:4px"
 >

@@ -16,8 +16,8 @@ import { getModelsForCity } from '../../../data/models-stubs';
 export function getStaticPaths() {
   const brands = Object.keys(BRAND_CONTENT);
   const cities = TIER_1_CITIES.map((c) => c.slug);
-  return brands.flatMap((make) =>
-    cities.map((city) => ({ params: { make, city } })),
+  return cities.flatMap((city) =>
+    brands.map((make) => ({ params: { city, make } })),
   );
 }
 
@@ -31,15 +31,15 @@ const dealerCount = Math.max(3, Math.round(brand.dealerCount * cityFactor));
 
 const title = `Used ${brand.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
 const description = `Find used ${brand.name} cars in ${cityInfo.name}. ${totalCount} ${brand.name} listings from ${dealerCount} local dealers. AMVIC-verified, VIN-checked.`;
-const canonical = `https://japanauto.ca/used-cars/${make}/${city}/`;
+const canonical = `https://japanauto.ca/${city}/${make}/`;
 
 const schemaLD = [
   {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
-      { '@type': 'ListItem', position: 2, name: cityInfo.name, item: canonical },
-      { '@type': 'ListItem', position: 3, name: brand.name, item: `https://japanauto.ca/used-cars/${make}/` },
+      { '@type': 'ListItem', position: 2, name: cityInfo.name, item: `https://japanauto.ca/${city}/` },
+      { '@type': 'ListItem', position: 3, name: brand.name, item: canonical },
     ],
   },
   {
@@ -49,7 +49,7 @@ const schemaLD = [
       '@type': 'ListItem',
       position: i + 1,
       name: `${brand.name} ${m.name}`,
-      url: `https://japanauto.ca/used-cars/${make}/${m.slug}/${city}/`,
+      url: `https://japanauto.ca/${city}/${make}/${m.slug}/`,
     })),
   },
   {
@@ -71,7 +71,6 @@ const subtitleHtml = `<span class="num">${totalCount}</span> used ${brand.name} 
   {description}
   {canonical}
   {schemaLD}
-  geoFallbackCity={city!}
 >
   <Navbar slot="navbar" cityShort={`${cityInfo.name}, ${cityInfo.province}`} />
   <MenuDrawer slot="menu-drawer" cityShort={`${cityInfo.name}, ${cityInfo.province}`} cityName={cityInfo.name} />
@@ -82,8 +81,8 @@ const subtitleHtml = `<span class="num">${totalCount}</span> used ${brand.name} 
 
   <Breadcrumb items={[
     { label: 'Home', href: '/' },
-    { label: cityInfo.name },
-    { label: brand.name, href: `/used-cars/${make}/` },
+    { label: cityInfo.name, href: `/${city}/` },
+    { label: brand.name },
   ]} />
 
   <PageHeading

@@ -69,7 +69,7 @@ The known modern caveat is engine oil consumption on certain 2011-2015 FB25 exam
 
 ## Active Subaru listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Subaru listings](/used-cars/subaru/toronto/), [Montreal](/used-cars/subaru/montreal/), [Vancouver](/used-cars/subaru/vancouver/), [Calgary](/used-cars/subaru/calgary/), [Edmonton](/used-cars/subaru/edmonton/), [Ottawa](/used-cars/subaru/ottawa/). The deepest inventories are Outback, Forester, and Crosstrek across all six markets.
+Browse current inventory by city: [Toronto Subaru listings](/toronto/subaru/), [Montreal](/montreal/subaru/), [Vancouver](/vancouver/subaru/), [Calgary](/calgary/subaru/), [Edmonton](/edmonton/subaru/), [Ottawa](/ottawa/subaru/). The deepest inventories are Outback, Forester, and Crosstrek across all six markets.
 
 ## Subaru parts and service in Canada
 

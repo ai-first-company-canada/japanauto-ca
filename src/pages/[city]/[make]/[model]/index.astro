@@ -18,11 +18,11 @@ import { MODELS_BY_BRAND, getModelsForCity } from '../../../../data/models-stubs
 import { getCatalogForModelCity } from '../../../../data/catalog-stubs';
 
 export function getStaticPaths() {
-  const paths: Array<{ params: { make: string; model: string; city: string } }> = [];
-  for (const make of Object.keys(MODELS_BY_BRAND)) {
-    for (const model of MODELS_BY_BRAND[make]!) {
-      for (const city of TIER_1_CITIES) {
-        paths.push({ params: { make, model: model.slug, city: city.slug } });
+  const paths: Array<{ params: { city: string; make: string; model: string } }> = [];
+  for (const city of TIER_1_CITIES) {
+    for (const make of Object.keys(MODELS_BY_BRAND)) {
+      for (const model of MODELS_BY_BRAND[make]!) {
+        paths.push({ params: { city: city.slug, make, model: model.slug } });
       }
     }
   }
@@ -59,7 +59,7 @@ const modelFaqs = [
 
 const title = `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
 const description = `${catalog.totalCount} used ${brand.name} ${modelInfo.name} listings in ${cityInfo.name}. AMVIC-verified dealers, VIN-checked vehicles, prices in CA$.`;
-const canonical = `https://japanauto.ca/used-cars/${make}/${model}/${city}/`;
+const canonical = `https://japanauto.ca/${city}/${make}/${model}/`;
 
 const allListings = [...catalog.boosted, ...catalog.organic];
 const schemaLD = [
@@ -67,9 +67,9 @@ const schemaLD = [
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
-      { '@type': 'ListItem', position: 2, name: cityInfo.name, item: canonical },
-      { '@type': 'ListItem', position: 3, name: brand.name, item: `https://japanauto.ca/used-cars/${make}/` },
-      { '@type': 'ListItem', position: 4, name: modelInfo.name, item: `https://japanauto.ca/used-cars/${make}/${model}/` },
+      { '@type': 'ListItem', position: 2, name: cityInfo.name, item: `https://japanauto.ca/${city}/` },
+      { '@type': 'ListItem', position: 3, name: brand.name, item: `https://japanauto.ca/${city}/${make}/` },
+      { '@type': 'ListItem', position: 4, name: modelInfo.name, item: canonical },
     ],
   },
   {
@@ -133,7 +133,6 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
   {description}
   {canonical}
   {schemaLD}
-  geoFallbackCity={city!}
 >
   <Navbar slot="navbar" cityShort={cityShort} />
   <MenuDrawer slot="menu-drawer" cityShort={cityShort} cityName={cityInfo.name} />
@@ -146,9 +145,9 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
 
   <Breadcrumb items={[
     { label: 'Home', href: '/' },
-    { label: cityInfo.name },
-    { label: brand.name, href: `/used-cars/${make}/` },
-    { label: modelInfo.name, href: `/used-cars/${make}/${model}/` },
+    { label: cityInfo.name, href: `/${city}/` },
+    { label: brand.name, href: `/${city}/${make}/` },
+    { label: modelInfo.name },
   ]} />
 
   <PageHeading
@@ -171,7 +170,7 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
     class="t-body-s"
     style="margin:8px 16px 0;padding:10px 14px;border-radius:8px;background:var(--color-bg-subtle);border:1px solid var(--color-divider);font-size:13px;line-height:19px;color:var(--color-ink-muted)"
   >
-    Sample preview — live listings open as Calgary dealers onboard.
+    Sample preview — live listings open as {cityInfo.name} dealers onboard.
     <a href="/dealer/signup/" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
   </div>
 
@@ -181,18 +180,6 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
     organic={catalog.organic}
     citySlug={city!}
   />
-
-  <div
-    id="catalog-empty-state"
-    hidden
-    style="margin:16px;padding:32px 24px;border-radius:12px;background:var(--color-bg-subtle);border:1px solid var(--color-divider);text-align:center"
-  >
-    <h3 class="t-h-m" style="font-size:18px;margin:0 0 8px">No listings yet in this city</h3>
-    <p class="t-body-s ink-muted" style="font-size:14px;line-height:21px;margin:0 0 16px;max-width:420px;margin-left:auto;margin-right:auto">
-      We're stocking inventory now. Be the first dealer to list a {brand.name} {modelInfo.name} in {cityInfo.name}.
-    </p>
-    <a href="/dealer/signup/" class="btn btn-primary btn-sm">List your inventory →</a>
-  </div>
 
   <CatalogPagination initialShown={10} />
 
@@ -211,105 +198,6 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
   />
 
   <script is:inline>
-    /* Phase 2c2b: replace catalog-grid stubs with real D1 listings if any
-       exist for this (make, model, city). Falls back to stubs when the API
-       returns 404 (no model match yet) or empty boosted+organic. */
-    (function () {
-      function escapeHTML(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      }
-      function fmt(n) { return Number(n).toLocaleString('en-US'); }
-      function relTime(ts) {
-        var ageSec = Math.floor(Date.now() / 1000) - ts;
-        if (ageSec < 86400) return 'Listed today';
-        var d = Math.floor(ageSec / 86400);
-        if (d === 1) return 'Listed 1 day ago';
-        if (d < 7) return 'Listed ' + d + ' days ago';
-        if (d < 14) return 'Listed 1 week ago';
-        if (d < 30) return 'Listed ' + Math.floor(d / 7) + ' weeks ago';
-        return 'Listed ' + Math.floor(d / 30) + ' months ago';
-      }
-      function pretty(slug) {
-        return String(slug).split('-').map(function (w) {
-          return w.charAt(0).toUpperCase() + w.slice(1);
-        }).join(' ');
-      }
-      function cardHTML(l) {
-        var price = Math.round(l.price / 100);
-        var trim = l.trim ? ' ' + escapeHTML(l.trim) : '';
-        var img = l.primary_image_url
-          ? '<img src="' + escapeHTML(l.primary_image_url) + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" />'
-          : '';
-        var tier = l.is_boosted ? 'boosted' : 'organic';
-        return ''
-          + '<a href="/used-cars/listing/' + escapeHTML(l.slug) + '/" class="card" '
-          + 'data-year="' + l.year + '" data-price="' + price + '" data-mileage="' + l.mileage + '" '
-          + 'data-tier="' + tier + '" '
-          + 'style="overflow:hidden;display:flex;flex-direction:column">'
-          + '<div class="thumb" style="background:var(--color-bg-muted)">' + img + '</div>'
-          + '<div style="padding:14px;display:flex;flex-direction:column;gap:6px">'
-          + (l.is_boosted
-              ? '<span class="badge" style="align-self:flex-start;margin-bottom:2px"><span class="dot"></span>Boosted</span>'
-              : '')
-          + '<h3 class="t-h-s" style="font-size:14px;line-height:20px;font-weight:600">'
-          +   l.year + ' ' + escapeHTML(pretty(l.make_slug)) + ' ' + escapeHTML(pretty(l.model_slug)) + trim
-          + '</h3>'
-          + '<p class="t-body-s ink-muted" style="font-size:12px;line-height:16px">'
-          +   fmt(l.mileage) + ' km · ' + escapeHTML(l.transmission || 'Auto') + ' · ' + escapeHTML(l.drivetrain || 'AWD')
-          + '</p>'
-          + '<div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">'
-          +   '<span class="num" style="font-size:18px;font-weight:600;color:#0A0A0A;letter-spacing:-0.01em">CA$' + fmt(price) + '</span>'
-          + '</div>'
-          + '<p class="t-body-s ink-muted" style="font-size:11px;line-height:14px;margin-top:4px;color:var(--color-ink-subtle)">'
-          +   relTime(l.created_at) + ' · ' + escapeHTML(l.dealer_name)
-          + '</p>'
-          + '</div>'
-          + '</a>';
-      }
-
-      function showEmptyState() {
-        var grid = document.getElementById('catalog-grid');
-        var banner = document.getElementById('catalog-preview-banner');
-        var empty = document.getElementById('catalog-empty-state');
-        var counter = document.getElementById('catalog-counter');
-        var pagination = document.querySelector('[data-catalog-pagination]') || document.querySelector('.catalog-pagination');
-        if (grid && grid.parentElement) grid.parentElement.style.display = 'none';
-        if (banner) banner.style.display = 'none';
-        if (counter) counter.style.display = 'none';
-        if (pagination) pagination.style.display = 'none';
-        if (empty) empty.hidden = false;
-      }
-
-      var path = window.location.pathname;
-      var m = path.match(/\/used-cars\/([^/]+)\/([^/]+)\/([^/]+)\/?$/);
-      if (m) {
-        var make = m[1], model = m[2], city = m[3];
-        var params = new URLSearchParams({ make: make, model: model, city: city, per_page: '20' });
-        fetch('/api/listings?' + params.toString(), { headers: { 'accept': 'application/json' } })
-          .then(function (r) { return r.ok ? r.json() : null; })
-          .then(function (data) {
-            if (!data) { showEmptyState(); return; }
-            var all = (data.boosted || []).concat(data.organic || []);
-            if (all.length === 0) { showEmptyState(); return; }
-            var grid = document.getElementById('catalog-grid');
-            if (!grid) return;
-            grid.innerHTML = all.map(cardHTML).join('');
-            var banner = document.getElementById('catalog-preview-banner');
-            if (banner) banner.style.display = 'none';
-            var counter = document.getElementById('catalog-counter');
-            var total = (data.pagination && data.pagination.total) || all.length;
-            if (counter) {
-              counter.innerHTML = 'Showing <span class="num">' + all.length
-                + '</span> of <span class="num">' + total + '</span> listings';
-            }
-            if (typeof window.applyCatalogFilters === 'function') window.applyCatalogFilters();
-          })
-          .catch(function () { showEmptyState(); });
-      }
-    })();
-
     (function () {
       window.applyCatalogFilters = function () {
         var params = new URLSearchParams(window.location.search);

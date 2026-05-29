@@ -69,7 +69,7 @@ For typical Canadian luxury buyers in Toronto and Vancouver, the choice often co
 
 ## Active Acura listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Acura listings](/used-cars/acura/toronto/), [Montreal](/used-cars/acura/montreal/), [Vancouver](/used-cars/acura/vancouver/), [Calgary](/used-cars/acura/calgary/), [Edmonton](/used-cars/acura/edmonton/), [Ottawa](/used-cars/acura/ottawa/). The deepest inventories are MDX, RDX, and TLX.
+Browse current inventory by city: [Toronto Acura listings](/toronto/acura/), [Montreal](/montreal/acura/), [Vancouver](/vancouver/acura/), [Calgary](/calgary/acura/), [Edmonton](/edmonton/acura/), [Ottawa](/ottawa/acura/). The deepest inventories are MDX, RDX, and TLX.
 
 ## Acura parts and Honda-shared service
 

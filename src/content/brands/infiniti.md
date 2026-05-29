@@ -67,7 +67,7 @@ For a buyer who plans to keep the vehicle for five to seven years past purchase 
 
 ## Active Infiniti listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Infiniti listings](/used-cars/infiniti/toronto/), [Montreal](/used-cars/infiniti/montreal/), [Vancouver](/used-cars/infiniti/vancouver/), [Calgary](/used-cars/infiniti/calgary/), [Edmonton](/used-cars/infiniti/edmonton/), [Ottawa](/used-cars/infiniti/ottawa/). The deepest inventories are QX60, QX50, and Q50.
+Browse current inventory by city: [Toronto Infiniti listings](/toronto/infiniti/), [Montreal](/montreal/infiniti/), [Vancouver](/vancouver/infiniti/), [Calgary](/calgary/infiniti/), [Edmonton](/edmonton/infiniti/), [Ottawa](/ottawa/infiniti/). The deepest inventories are QX60, QX50, and Q50.
 
 ## Infiniti parts and Nissan-shared service
 

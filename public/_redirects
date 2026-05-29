@@ -1,0 +1,43 @@
+# 2026-05-19 URL pivot — used-cars/{make}/{city}/ → /{city}/{make}/
+# Cloudflare Pages parses splats and named params; first match wins.
+# Static patterns evaluated top-down before dynamic.
+
+# Brand + model + city (3 segments after /used-cars/)
+/used-cars/:make/:model/toronto/   /toronto/:make/:model/   301
+/used-cars/:make/:model/montreal/  /montreal/:make/:model/  301
+/used-cars/:make/:model/vancouver/ /vancouver/:make/:model/ 301
+/used-cars/:make/:model/calgary/   /calgary/:make/:model/   301
+/used-cars/:make/:model/edmonton/  /edmonton/:make/:model/  301
+/used-cars/:make/:model/ottawa/    /ottawa/:make/:model/    301
+
+# Brand + city (2 segments after /used-cars/)
+/used-cars/:make/toronto/   /toronto/:make/   301
+/used-cars/:make/montreal/  /montreal/:make/  301
+/used-cars/:make/vancouver/ /vancouver/:make/ 301
+/used-cars/:make/calgary/   /calgary/:make/   301
+/used-cars/:make/edmonton/  /edmonton/:make/  301
+/used-cars/:make/ottawa/    /ottawa/:make/    301
+
+# Parts: city hub /parts/{city}/ → /{city}/parts/
+/parts/toronto/   /toronto/parts/   301
+/parts/montreal/  /montreal/parts/  301
+/parts/vancouver/ /vancouver/parts/ 301
+/parts/calgary/   /calgary/parts/   301
+/parts/edmonton/  /edmonton/parts/  301
+/parts/ottawa/    /ottawa/parts/    301
+
+# Parts: brand+city /parts/{make}/{city}/ → /{city}/parts/{make}/
+/parts/:make/toronto/   /toronto/parts/:make/   301
+/parts/:make/montreal/  /montreal/parts/:make/  301
+/parts/:make/vancouver/ /vancouver/parts/:make/ 301
+/parts/:make/calgary/   /calgary/parts/:make/   301
+/parts/:make/edmonton/  /edmonton/parts/:make/  301
+/parts/:make/ottawa/    /ottawa/parts/:make/    301
+
+# Parts: model+city /parts/{make}/{model}/{city}/ → /{city}/parts/{make}/{model}/
+/parts/:make/:model/toronto/   /toronto/parts/:make/:model/   301
+/parts/:make/:model/montreal/  /montreal/parts/:make/:model/  301
+/parts/:make/:model/vancouver/ /vancouver/parts/:make/:model/ 301
+/parts/:make/:model/calgary/   /calgary/parts/:make/:model/   301
+/parts/:make/:model/edmonton/  /edmonton/parts/:make/:model/  301
+/parts/:make/:model/ottawa/    /ottawa/parts/:make/:model/    301

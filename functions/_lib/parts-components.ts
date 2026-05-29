@@ -513,7 +513,7 @@ export function renderCityCountGrid(
     </section>`;
   }
   const cards = rows.map(r => `
-    <a href="/parts/${esc(makeSlug)}/${esc(modelSlug)}/${esc(r.city_slug)}/" class="card" style="padding:12px 14px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:2px;border:1px solid var(--color-divider);border-radius:12px;background:#fff">
+    <a href="/${esc(r.city_slug)}/parts/${esc(makeSlug)}/${esc(modelSlug)}/" class="card" style="padding:12px 14px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:2px;border:1px solid var(--color-divider);border-radius:12px;background:#fff">
       <span style="font-size:14px;font-weight:600;color:var(--color-ink-strong)">${esc(r.city_name)}</span>
       <span style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted)"><span class="num">${r.count}</span> donor${r.count === 1 ? '' : 's'}</span>
     </a>`).join('');

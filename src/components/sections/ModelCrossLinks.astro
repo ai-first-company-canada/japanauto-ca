@@ -24,7 +24,7 @@ const others = crossLinks.filter((m) => m.slug !== currentModelSlug);
   <div style="display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:4px 16px 8px">
     {others.map((m) => (
       <a
-        href={`/used-cars/${brandSlug}/${m.slug}/${citySlug}/`}
+        href={`/${citySlug}/${brandSlug}/${m.slug}/`}
         class="card"
         style="flex:0 0 auto;min-width:120px;padding:14px;display:flex;flex-direction:column;justify-content:center;min-height:76px;gap:4px"
       >
@@ -36,7 +36,7 @@ const others = crossLinks.filter((m) => m.slug !== currentModelSlug);
     ))}
   </div>
   <a
-    href={`/used-cars/${brandSlug}/${citySlug}/`}
+    href={`/${citySlug}/${brandSlug}/`}
     style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 4px;color:var(--color-ink-strong);font-weight:600;font-size:14px"
   >
     All {brandName} models in {cityName}

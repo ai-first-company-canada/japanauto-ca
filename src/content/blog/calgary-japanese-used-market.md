@@ -109,7 +109,7 @@ The Subaru Outback with [Symmetrical AWD](/glossary/symmetrical-awd/) is the can
 
 Calgary has the larger overall Japanese-vehicle dealer network and deeper AWD-crossover used inventory pool. Edmonton has stronger truck and SUV inventory than its population share would suggest because of oilfield demand from Northern Alberta, and Edmonton pricing on Frontier PRO-4X, Tacoma, and similar work-vehicle Japanese trucks is sometimes more competitive. For most crossover buyers, Calgary is the deeper market. For pickup truck buyers and JDM specialty importers, Edmonton can offer better availability and pricing.
 
-If you are evaluating Calgary inventory specifically, the city-level catalogues on japanauto.ca for [Calgary Toyota](/used-cars/toyota/calgary/), [Calgary Honda](/used-cars/honda/calgary/), [Calgary Subaru](/used-cars/subaru/calgary/), and [Calgary Mazda](/used-cars/mazda/calgary/) show current inventory with AMVIC-verified sellers. Filter by trim and AWD availability for direct comparison against your specific shortlist.
+If you are evaluating Calgary inventory specifically, the city-level catalogues on japanauto.ca for [Calgary Toyota](/calgary/toyota/), [Calgary Honda](/calgary/honda/), [Calgary Subaru](/calgary/subaru/), and [Calgary Mazda](/calgary/mazda/) show current inventory with AMVIC-verified sellers. Filter by trim and AWD availability for direct comparison against your specific shortlist.
 
 ## Sources
 

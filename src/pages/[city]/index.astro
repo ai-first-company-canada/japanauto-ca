@@ -1,0 +1,175 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+import PageHeading from '../../components/sections/PageHeading.astro';
+import BrandGrid from '../../components/atoms/BrandGrid.astro';
+import ListingFeed, { type FeedListing } from '../../components/sections/ListingFeed.astro';
+import PopularModels, { type PopularModel } from '../../components/sections/PopularModels.astro';
+import TrustStrip from '../../components/sections/TrustStrip.astro';
+import PartsEntryPoint from '../../components/sections/PartsEntryPoint.astro';
+import FaqSection, { type FaqItem } from '../../components/sections/FaqSection.astro';
+import CrossLinksBand from '../../components/sections/CrossLinksBand.astro';
+import Icon from '../../components/atoms/Icon.astro';
+import { TIER_1_CITIES, BRAND_CONTENT } from '../../data/brand-content';
+
+export function getStaticPaths() {
+  return TIER_1_CITIES.map((c) => ({ params: { city: c.slug } }));
+}
+
+const { city } = Astro.params;
+const cityInfo = TIER_1_CITIES.find((c) => c.slug === city)!;
+const cityFactor = cityInfo.count / 1284;
+
+const BRAND_SLUGS = ['toyota','honda','nissan','mazda','subaru','lexus','acura','infiniti','mitsubishi'] as const;
+
+const brands = BRAND_SLUGS.map((slug) => {
+  const b = BRAND_CONTENT[slug]!;
+  return {
+    slug,
+    name: b.name,
+    count: Math.max(3, Math.round(b.totalCount * cityFactor)),
+  };
+});
+
+const totalCount = brands.reduce((sum, b) => sum + b.count, 0);
+const dealerCount = Math.max(6, Math.round(40 * cityFactor));
+
+const DEALER_NAMES = [
+  'Maple Auto Group','North Star Motors','Cypress Imports','Eastside Pre-Owned',
+  'Summit Japanese Auto','Westview Cars','Granite Motors','Riverbend Auto',
+];
+
+const LISTINGS_SEED: Array<Omit<FeedListing,'dealer'>> = [
+  { year: 2021, make: 'Toyota', model: 'Camry',   trim: 'LE',      km: 58400,  drive: 'AWD', transmission: 'CVT',  price: 24900, listed: 'Listed today',       variant: 'sedan', tone: 'pearl',    badge: 'New today', slug: `2021-toyota-camry-le-${city}-ab1234` },
+  { year: 2019, make: 'Honda',  model: 'CR-V',    trim: 'EX',      km: 71200,  drive: 'AWD', transmission: 'CVT',  price: 26450, listed: 'Listed 2 days ago',  variant: 'suv',   tone: 'midnight', badge: 'New today', slug: `2019-honda-crv-ex-${city}-cd5678` },
+  { year: 2020, make: 'Mazda',  model: 'CX-5',    trim: 'GS',      km: 64800,  drive: 'AWD', transmission: 'Auto', price: 23900, listed: 'Listed 3 days ago',  variant: 'suv',   tone: 'crimson',  slug: `2020-mazda-cx5-gs-${city}-ef9012` },
+  { year: 2018, make: 'Subaru', model: 'Outback', trim: '2.5i',    km: 92500,  drive: 'AWD', transmission: 'CVT',  price: 19800, listed: 'Listed 4 days ago',  variant: 'wagon', tone: 'forest',   reduced: 1500, slug: `2018-subaru-outback-25i-${city}-gh3456` },
+  { year: 2022, make: 'Lexus',  model: 'NX 350',  trim: 'F-Sport', km: 38900,  drive: 'AWD', transmission: 'Auto', price: 48900, listed: 'Listed 5 days ago',  variant: 'suv',   tone: 'graphite', slug: `2022-lexus-nx350-fsport-${city}-ij7890` },
+  { year: 2017, make: 'Honda',  model: 'Civic',   trim: 'LX',      km: 108200, drive: 'FWD', transmission: 'CVT',  price: 14900, listed: 'Listed 6 days ago',  variant: 'sedan', tone: 'silver',   slug: `2017-honda-civic-lx-${city}-kl2345` },
+  { year: 2020, make: 'Toyota', model: 'RAV4',    trim: 'XLE',     km: 67400,  drive: 'AWD', transmission: 'Auto', price: 32400, listed: 'Listed 1 week ago', variant: 'suv',   tone: 'sand',     slug: `2020-toyota-rav4-xle-${city}-mn6789` },
+  { year: 2019, make: 'Nissan', model: 'Rogue',   trim: 'SV',      km: 81200,  drive: 'AWD', transmission: 'CVT',  price: 21300, listed: 'Listed 1 week ago', variant: 'suv',   tone: 'pearl',    slug: `2019-nissan-rogue-sv-${city}-op0123` },
+];
+
+const LISTINGS: FeedListing[] = LISTINGS_SEED.map((l, i) => ({
+  ...l,
+  dealer: DEALER_NAMES[i % DEALER_NAMES.length]!,
+}));
+
+const POPULAR_MODELS: PopularModel[] = [
+  { make: 'Toyota', model: 'Camry',   body: 'Sedan', years: '2018–2024', from: 17900, variant: 'sedan', tone: 'pearl' },
+  { make: 'Honda',  model: 'Civic',   body: 'Sedan', years: '2017–2024', from: 14400, variant: 'sedan', tone: 'silver' },
+  { make: 'Toyota', model: 'RAV4',    body: 'SUV',   years: '2018–2024', from: 21900, variant: 'suv',   tone: 'graphite' },
+  { make: 'Honda',  model: 'CR-V',    body: 'SUV',   years: '2018–2024', from: 19800, variant: 'suv',   tone: 'midnight' },
+  { make: 'Mazda',  model: 'Mazda3',  body: 'Hatch', years: '2017–2024', from: 13900, variant: 'hatch', tone: 'crimson' },
+  { make: 'Subaru', model: 'Outback', body: 'Wagon', years: '2017–2024', from: 16400, variant: 'wagon', tone: 'forest' },
+];
+
+const FAQ_ITEMS: FaqItem[] = [
+  {
+    q: `How many used Japanese cars are listed in ${cityInfo.name}?`,
+    a: `Around ${totalCount.toLocaleString('en-US')} listings across ${dealerCount} local dealers in the ${cityInfo.name} CMA, updated daily. Toyota, Honda and Mazda typically lead by volume.`,
+  },
+  {
+    q: `Which Japanese brand is most popular in ${cityInfo.name}?`,
+    a: `Toyota and Honda routinely lead used-car sales across all major Canadian metros. In ${cityInfo.name} specifically the Civic, Corolla and RAV4 are the highest-volume models year over year.`,
+  },
+  {
+    q: 'Why are Japanese cars popular in Canada?',
+    a: 'Japanese-built cars consistently rank among the top for long-term reliability and resale value in Canadian conditions. Brands like Toyota, Honda and Subaru are over-represented in vehicles that pass 250,000 km without major repairs.',
+  },
+  {
+    q: 'How do I check a VIN before buying?',
+    a: 'Run the 17-digit VIN through CarFax Canada or a similar history service. Check that the VIN on the windshield, doorjamb and registration all match. A VIN history can reveal accident reports, previous registrations across provinces, and any salvage or rebuilt title brands.',
+  },
+];
+
+const title = `Used Japanese cars and parts in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
+const description = `Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti and Mitsubishi cars from local ${cityInfo.name} dealers. ${totalCount} listings from ${dealerCount} AMVIC-verified dealers.`;
+const canonical = `https://japanauto.ca/${city}/`;
+
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: cityInfo.name, item: canonical },
+    ],
+  },
+  {
+    '@type': 'Place',
+    name: cityInfo.name,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: cityInfo.name,
+      addressRegion: cityInfo.province,
+      addressCountry: 'CA',
+    },
+  },
+];
+
+const subtitleHtml = `<span class="num">${totalCount.toLocaleString('en-US')}</span> Japanese cars from <span class="num">${dealerCount}</span> dealers in ${cityInfo.name} · Updated today`;
+---
+<BaseLayout
+  {title}
+  {description}
+  {canonical}
+  {schemaLD}
+>
+  <Navbar slot="navbar" cityShort={`${cityInfo.name}, ${cityInfo.province}`} />
+  <MenuDrawer slot="menu-drawer" cityShort={`${cityInfo.name}, ${cityInfo.province}`} cityName={cityInfo.name} />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <h1 class="sr-only">{`Used Japanese cars and parts in ${cityInfo.name}, ${cityInfo.province}`}</h1>
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: cityInfo.name },
+  ]} />
+
+  <PageHeading
+    title={`Used Japanese cars in ${cityInfo.name}`}
+    subtitle={subtitleHtml}
+  />
+
+  <section class="section" style="padding-top:8px">
+    <BrandGrid brands={brands} citySlug={city!} />
+    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <a
+        class="t-body-s"
+        href="/brands/"
+        style="display:inline-flex;align-items:center;gap:6px;color:var(--color-ink-default);font-size:14px"
+      >
+        View all brand pages
+        <Icon name="arrowRight" size={14} />
+      </a>
+    </div>
+  </section>
+
+  <ListingFeed
+    heading={`Latest Japanese cars in ${cityInfo.name}`}
+    listings={LISTINGS}
+    ctaText="View all listings"
+    ctaHref="/used-cars/"
+    totalCount={totalCount}
+  />
+
+  <PopularModels models={POPULAR_MODELS} citySlug={city!} cityName={cityInfo.name} />
+
+  <TrustStrip />
+
+  <PartsEntryPoint citySlug={city} />
+
+  <FaqSection items={FAQ_ITEMS} heading={`Common questions about buying in ${cityInfo.name}`} />
+
+  <CrossLinksBand
+    brandSlug="toyota"
+    brandName="Japanese cars"
+    currentCitySlug={city!}
+    citiesList={TIER_1_CITIES}
+  />
+</BaseLayout>

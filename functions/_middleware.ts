@@ -21,15 +21,6 @@
 import type { Env } from "../types/env";
 import { resolveCity, type CityResolution } from "./api/_lib/geolocation";
 import { verifyAccessToken } from "./api/_lib/auth";
-import { TIER_1_CITY_SLUGS } from "../lib/schema";
-
-/**
- * Routes that geo-redirect to the city-bound variant for resolved Tier-1 CMA
- * users. Bots and unresolved geo continue to the national hub. Add new
- * national-hub paths here as the catalog grows.
- */
-const GEO_REDIRECT_HUBS = new Set<string>(["/parts/", "/parts"]);
-const TIER_1_SLUG_SET: ReadonlySet<string> = new Set(TIER_1_CITY_SLUGS);
 
 /**
  * Pages Functions data bag — used to pass geolocation + bot detection
@@ -109,6 +100,25 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const url = new URL(request.url);
   const md = data as MiddlewareData;
 
+  // 0. Preview-host bot guard — keep Cloudflare Pages preview URLs
+  //    (*.pages.dev) out of search engine + AI crawler indexes. The canonical
+  //    site is japanauto.ca; canonical link + this guard together prevent
+  //    duplicate-content penalties at .ca cutover.
+  const isPreviewHost = /\.pages\.dev$/i.test(url.hostname);
+  if (isPreviewHost && url.pathname === "/robots.txt") {
+    return new Response(
+      "# Preview host — not for indexing. Production: https://japanauto.ca/\nUser-agent: *\nDisallow: /\n",
+      {
+        status: 200,
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+          "cache-control": "public, max-age=300",
+          "x-robots-tag": "noindex, nofollow",
+        },
+      },
+    );
+  }
+
   // 1. Resolve city (only for non-API HTML — saves D1 hits on /api/* and assets).
   const isApi = url.pathname.startsWith("/api/");
   const isAsset = /\.(css|js|svg|png|jpg|jpeg|webp|avif|ico|woff2?|map|xml|txt)$/i.test(url.pathname);
@@ -119,22 +129,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 2. Bot tag (cheap UA sniff)
   const ua = request.headers.get("user-agent") ?? "";
   md.isBot = BOT_UA_RE.test(ua);
-
-  // 2a. Geo-redirect national hubs (e.g. /parts/) to the city-bound variant
-  //     for resolved Tier-1 CMA users. Bots and unresolved geo see the
-  //     national hub. Tier-2/3 cities (planned, not active SSG) also fall
-  //     through. Path comparison is exact — /parts/[city]/ already contains
-  //     the city slug and is excluded from GEO_REDIRECT_HUBS, so this cannot
-  //     loop.
-  if (
-    !md.isBot &&
-    md.geo?.resolved &&
-    md.geo.slug &&
-    GEO_REDIRECT_HUBS.has(url.pathname) &&
-    TIER_1_SLUG_SET.has(md.geo.slug)
-  ) {
-    return Response.redirect(`${url.origin}/parts/${md.geo.slug}/`, 302);
-  }
 
   // 2b. Auth guard for /dealer/* paths (except auth pages themselves).
   //     Redirects to /dealer/login?next=<path> when access token is missing
@@ -199,76 +193,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
-  // 6. Edge HTML rewriting — inject geo into SSG HTML without FOUC (ADR-0004).
-  //    Drops the unmatched data-state branch and replaces data-geo placeholders
-  //    with values from the resolved city. HTMLRewriter is a Workers global.
-  const contentType = response.headers.get("content-type") ?? "";
-  if (
-    !isApi &&
-    !isAsset &&
-    md.geo &&
-    contentType.includes("text/html")
-  ) {
-    const geo = md.geo;
-
-    class DropElementHandler {
-      element(el: Element): void { el.remove(); }
-    }
-
-    class SetTextHandler {
-      private readonly value: string;
-      constructor(value: string) { this.value = value; }
-      element(el: Element): void { el.setInnerContent(this.value); }
-    }
-
-    class GeoHrefHandler {
-      private readonly slug: string;
-      private readonly province: string;
-      constructor(slug: string, province: string) {
-        this.slug = slug;
-        this.province = province;
-      }
-      element(el: Element): void {
-        const template = el.getAttribute("data-geo-href") ?? "";
-        if (!template) return;
-        el.setAttribute(
-          "href",
-          template.replace("{city}", this.slug).replace("{province}", this.province),
-        );
-      }
-    }
-
-    const dropSelector = geo.resolved
-      ? '[data-state="unresolved"]'
-      : '[data-state="resolved"]';
-
-    const geoSlug = geo.slug ?? "toronto";
-    const geoProvince = geo.province ?? "ON";
-
-    const rewriter = new HTMLRewriter()
-      .on("html", {
-        element(el): void {
-          el.setAttribute("data-geo-resolved", geo.resolved ? "true" : "false");
-          el.setAttribute("data-geo-city", geo.slug ?? "");
-        },
-      })
-      .on(dropSelector, new DropElementHandler())
-      .on('[data-geo="city.name"]',     new SetTextHandler(geo.name ?? ""))
-      .on('[data-geo="city.short"]',    new SetTextHandler(geo.short ?? ""))
-      .on('[data-geo="city.province"]', new SetTextHandler(geo.province ?? ""))
-      .on('[data-geo="city.count"]',    new SetTextHandler(geo.count.toLocaleString("en-US")))
-      .on('[data-geo="city.dealers"]',  new SetTextHandler(String(geo.dealers)))
-      .on('[data-geo="city.slug"]',     new SetTextHandler(geo.slug ?? ""))
-      .on('a[data-geo-href]',           new GeoHrefHandler(geoSlug, geoProvince))
-      .on('button[data-geo-href]',      new GeoHrefHandler(geoSlug, geoProvince));
-
-    return rewriter.transform(new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    }));
-  }
-
+  // 6. Edge HTML rewriting removed (2026-05-19): each page now bakes in its
+  //    own city via Astro props (URL-as-city architecture). The data-state
+  //    branching is gone from src/pages/index.astro, and data-geo / data-geo-href
+  //    markers (where they remain) fall back to static SSG values.
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

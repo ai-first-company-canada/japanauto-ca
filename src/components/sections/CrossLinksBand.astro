@@ -15,7 +15,7 @@ interface Props {
 const { brandSlug, brandName, currentCitySlug, citiesList } = Astro.props;
 const otherCities = citiesList.filter((c) => c.slug !== currentCitySlug);
 ---
-<section class="band-subtle" style="padding:32px 16px">
+<section class="band-subtle gutter" style="padding-block:32px">
   <a
     href={`/used-cars/${brandSlug}/`}
     style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;color:var(--color-ink-strong);font-weight:600;font-size:14px"
@@ -35,7 +35,7 @@ const otherCities = citiesList.filter((c) => c.slug !== currentCitySlug);
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;margin-bottom:8px">
       {otherCities.map((c) => (
         <a
-          href={`/used-cars/${brandSlug}/${c.slug}/`}
+          href={`/${c.slug}/${brandSlug}/`}
           class="card"
           style="display:flex;flex-direction:column;justify-content:space-between;padding:14px;min-height:76px;cursor:pointer"
         >

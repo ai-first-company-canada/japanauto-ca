@@ -29,19 +29,17 @@ const {
 <section class="section">
   <header style="margin-bottom:16px">
     <h2 class="t-h-l">
-      {heading} <span data-geo="city.name">{cityName}</span>
+      {heading} {cityName}
     </h2>
   </header>
   <div class="popular-models-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
     {models.map((m) => {
       const makeSlug = m.make.toLowerCase();
       const modelSlug = m.model.toLowerCase().replace(/\s+/g, '-');
-      const fallback = `/used-cars/${makeSlug}/${modelSlug}/${citySlug}/`;
-      const geoTemplate = m.href ? undefined : `/used-cars/${makeSlug}/${modelSlug}/{city}/`;
+      const fallback = `/${citySlug}/${makeSlug}/${modelSlug}/`;
       return (
       <a
         href={m.href ?? fallback}
-        data-geo-href={geoTemplate}
         class="card"
         style="overflow:hidden;display:flex;flex-direction:column;padding:14px;gap:8px;position:relative"
       >

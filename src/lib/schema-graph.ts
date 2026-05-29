@@ -32,16 +32,21 @@ export function faqPage(
   questions: string[],
   answers: Array<string | null> = [],
 ): object | null {
-  if (!questions.length) return null;
+  // Only emit Q&A pairs that have a REAL answer. Google's FAQPage policy forbids
+  // placeholder/invisible answers and requires the markup to match visible
+  // content — emitting "Coming soon" for unanswered questions risks a
+  // structured-data manual action. If nothing has a real answer, omit the node.
+  const pairs = questions
+    .map((q, i) => ({ q, a: answers[i] }))
+    .filter((p): p is { q: string; a: string } =>
+      typeof p.a === 'string' && p.a.trim().length > 0);
+  if (!pairs.length) return null;
   return {
     '@type': 'FAQPage',
-    mainEntity: questions.map((q, i) => ({
+    mainEntity: pairs.map(({ q, a }) => ({
       '@type': 'Question',
       name: q,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: answers[i] ?? 'Coming soon — see related guides.',
-      },
+      acceptedAnswer: { '@type': 'Answer', text: a },
     })),
   };
 }

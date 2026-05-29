@@ -21,7 +21,7 @@ const { cities, label = 'Japanese cars in other Canadian cities' } = Astro.props
   <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px">
     {cities.map((c) => (
       <a
-        href={`/used-cars/${c.slug}/`}
+        href={`/${c.slug}/`}
         class="card"
         style="display:flex;align-items:center;justify-content:space-between;padding:20px;min-height:72px"
       >

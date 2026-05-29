@@ -42,7 +42,9 @@ const schemaLD = [
     '@id': `${url}#brand`,
     name: makeName,
     description: brandDescription,
-    sameAs: d.serp_competitors?.find((u) => /\.(ca|com)\/?$/.test(u) || /^https?:\/\/[^/]+\.(ca|com)\//i.test(u)) ? [d.serp_competitors[0]] : undefined,
+    // No `sameAs`: it must point to URLs that also represent THIS entity
+    // (manufacturer's official site / Wikipedia), never SERP competitors.
+    // Omitted until canonical manufacturer URLs are in the brand data.
   },
   {
     '@type': 'WebPage',
@@ -96,7 +98,6 @@ const schemaLD = [
         {models.map((m) => (
           <a
             href={`/used-cars/${d.make}/${m.slug}/`}
-            data-geo-href={`/used-cars/${d.make}/${m.slug}/{city}/`}
             class="card"
             style="display:flex;flex-direction:column;justify-content:center;padding:16px;min-height:80px;gap:4px"
           >

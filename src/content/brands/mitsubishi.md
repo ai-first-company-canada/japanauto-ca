@@ -69,7 +69,7 @@ The federal iZEV rebate on new Outlander PHEV purchases — up to $5,000 for veh
 
 ## Active Mitsubishi listings on japanauto.ca
 
-Browse current inventory by city: [Toronto Mitsubishi listings](/used-cars/mitsubishi/toronto/), [Montreal](/used-cars/mitsubishi/montreal/), [Vancouver](/used-cars/mitsubishi/vancouver/), [Calgary](/used-cars/mitsubishi/calgary/), [Edmonton](/used-cars/mitsubishi/edmonton/), [Ottawa](/used-cars/mitsubishi/ottawa/). The deepest inventories are Outlander, Outlander PHEV, and RVR.
+Browse current inventory by city: [Toronto Mitsubishi listings](/toronto/mitsubishi/), [Montreal](/montreal/mitsubishi/), [Vancouver](/vancouver/mitsubishi/), [Calgary](/calgary/mitsubishi/), [Edmonton](/edmonton/mitsubishi/), [Ottawa](/ottawa/mitsubishi/). The deepest inventories are Outlander, Outlander PHEV, and RVR.
 
 ## Mitsubishi parts and service in Canada
 

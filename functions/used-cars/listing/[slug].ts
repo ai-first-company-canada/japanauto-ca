@@ -365,7 +365,6 @@ ${!sold && phoneFmt.tel ? `<div role="region" aria-label="Contact dealer" style=
     canonical,
     ogImage: primaryImage,
     schemaLD,
-    geoCity: listing.city,
   }, body);
 
   return new Response(html, {

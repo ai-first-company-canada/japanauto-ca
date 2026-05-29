@@ -17,7 +17,7 @@ const { brandSlug, brandName, cities } = Astro.props;
   <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
     {cities.map((c) => (
       <a
-        href={`/used-cars/${brandSlug}/${c.slug}/`}
+        href={`/${c.slug}/${brandSlug}/`}
         class="card"
         style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left"
       >

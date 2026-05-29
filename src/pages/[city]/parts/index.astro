@@ -33,19 +33,19 @@ const totalDonors = 0;
 const featuredYards = featuredYardsForCity(city!);
 
 const popularSearches = [
-  { label: `Toyota Corolla 2014–2018 parts in ${cityInfo.name}`, href: `/parts/toyota/corolla/${city}/` },
-  { label: `Honda Civic 2016–2021 parts in ${cityInfo.name}`,    href: `/parts/honda/civic/${city}/` },
-  { label: `Toyota Camry 2018–2024 parts in ${cityInfo.name}`,   href: `/parts/toyota/camry/${city}/` },
-  { label: `Toyota RAV4 2019–2024 parts in ${cityInfo.name}`,    href: `/parts/toyota/rav4/${city}/` },
-  { label: `Honda CR-V 2017–2022 parts in ${cityInfo.name}`,     href: `/parts/honda/cr-v/${city}/` },
-  { label: `Subaru Outback 2015–2019 parts in ${cityInfo.name}`, href: `/parts/subaru/outback/${city}/` },
-  { label: `Mazda3 2014–2018 parts in ${cityInfo.name}`,         href: `/parts/mazda/mazda3/${city}/` },
-  { label: `Nissan Rogue 2014–2020 parts in ${cityInfo.name}`,   href: `/parts/nissan/rogue/${city}/` },
+  { label: `Toyota Corolla 2014–2018 parts in ${cityInfo.name}`, href: `/${city}/parts/toyota/corolla/` },
+  { label: `Honda Civic 2016–2021 parts in ${cityInfo.name}`,    href: `/${city}/parts/honda/civic/` },
+  { label: `Toyota Camry 2018–2024 parts in ${cityInfo.name}`,   href: `/${city}/parts/toyota/camry/` },
+  { label: `Toyota RAV4 2019–2024 parts in ${cityInfo.name}`,    href: `/${city}/parts/toyota/rav4/` },
+  { label: `Honda CR-V 2017–2022 parts in ${cityInfo.name}`,     href: `/${city}/parts/honda/cr-v/` },
+  { label: `Subaru Outback 2015–2019 parts in ${cityInfo.name}`, href: `/${city}/parts/subaru/outback/` },
+  { label: `Mazda3 2014–2018 parts in ${cityInfo.name}`,         href: `/${city}/parts/mazda/mazda3/` },
+  { label: `Nissan Rogue 2014–2020 parts in ${cityInfo.name}`,   href: `/${city}/parts/nissan/rogue/` },
 ];
 
 const title = `Used Japanese car parts in ${cityShort} — japanauto.ca`;
 const description = `Used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi parts from salvage yards in ${cityInfo.name}. Donor cars at local junkyards — call to find your part.`;
-const canonical = `https://japanauto.ca/parts/${city}/`;
+const canonical = `https://japanauto.ca/${city}/parts/`;
 
 const schemaLD = [
   {
@@ -62,8 +62,8 @@ const schemaLD = [
     '@id': `${canonical}#breadcrumb`,
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',         item: 'https://japanauto.ca/' },
-      { '@type': 'ListItem', position: 2, name: 'Parts',        item: 'https://japanauto.ca/parts/' },
-      { '@type': 'ListItem', position: 3, name: cityInfo.name,  item: canonical },
+      { '@type': 'ListItem', position: 2, name: cityInfo.name,  item: `https://japanauto.ca/${city}/` },
+      { '@type': 'ListItem', position: 3, name: 'Parts',        item: canonical },
     ],
   },
   {
@@ -73,7 +73,7 @@ const schemaLD = [
       '@type': 'ListItem',
       position: i + 1,
       name: b.name,
-      url: `https://japanauto.ca/parts/${b.slug}/${city}/`,
+      url: `https://japanauto.ca/${city}/parts/${b.slug}/`,
     })),
   },
   {
@@ -111,7 +111,7 @@ const subtitleHtml =
     ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${featuredYards.length}+</span> junkyards · 9 makes covered`
     : `9 makes covered · listings opening as ${cityInfo.name} junkyards onboard`;
 ---
-<BaseLayout {title} {description} {canonical} {schemaLD} geoFallbackCity={city!}>
+<BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" cityShort={cityShort} />
   <MenuDrawer slot="menu-drawer" cityShort={cityShort} cityName={cityInfo.name} />
   <CityPickerDialog slot="city-picker" />
@@ -121,8 +121,8 @@ const subtitleHtml =
 
   <Breadcrumb items={[
     { label: 'Home', href: '/' },
-    { label: 'Parts', href: '/parts/' },
-    { label: cityInfo.name },
+    { label: cityInfo.name, href: `/${city}/` },
+    { label: 'Parts' },
   ]} />
 
   <PageHeading
@@ -145,7 +145,7 @@ const subtitleHtml =
     </h2>
     <div class="parts-brand-grid" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
       {brandRows.map((b) => (
-        <PartsBrandTile name={b.name} slug={b.slug} count={b.count} href={`/parts/${b.slug}/${city}/`} />
+        <PartsBrandTile name={b.name} slug={b.slug} count={b.count} href={`/${city}/parts/${b.slug}/`} />
       ))}
     </div>
   </section>

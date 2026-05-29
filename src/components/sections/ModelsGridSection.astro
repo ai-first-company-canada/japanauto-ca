@@ -11,11 +11,11 @@ interface Props {
 }
 const { models, brandSlug, citySlug } = Astro.props;
 ---
-<section style="padding:0 16px 32px">
+<section class="gutter" style="padding-block:0 32px">
   <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
     {models.map((m) => (
       <a
-        href={`/used-cars/${brandSlug}/${m.slug}/${citySlug}/`}
+        href={`/${citySlug}/${brandSlug}/${m.slug}/`}
         class="card"
         style="display:flex;flex-direction:column;justify-content:center;padding:14px;min-height:80px;gap:4px"
       >

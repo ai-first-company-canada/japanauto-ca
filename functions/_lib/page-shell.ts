@@ -20,8 +20,6 @@ export interface ShellOptions {
   canonical: string;
   ogImage?: string | null;
   schemaLD?: unknown[];
-  /** Slug for the resolved Tier-1 city (for `data-geo-city`). */
-  geoCity?: string;
 }
 
 const SHELL_HEAD = `
@@ -70,7 +68,7 @@ export function renderShell(opts: ShellOptions, body: string): string {
   };
 
   return `<!DOCTYPE html>
-<html lang="en" data-geo-resolved="false" data-geo-city="${esc(opts.geoCity ?? 'toronto')}">
+<html lang="en">
 <head>
 ${SHELL_HEAD}
 <title>${esc(opts.title)}</title>
