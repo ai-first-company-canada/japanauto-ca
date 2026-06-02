@@ -8,7 +8,7 @@ import Footer from '../../../components/sections/Footer.astro';
 import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
 import FaqAccordion from '../../../components/atoms/FaqAccordion.astro';
 import {
-  breadcrumbList, faqPage, GROUP_LABELS, formatIsoDate, stripUrl,
+  breadcrumbList, faqPage, GROUP_LABELS, formatIsoDate, stripUrl, clampMeta,
 } from '../../../lib/schema-graph';
 
 export async function getStaticPaths() {
@@ -71,7 +71,7 @@ const schemaLD = [
 ---
 <BaseLayout
   title={`${d.term} — japanauto.ca glossary`}
-  description={d.canonical_definition}
+  description={clampMeta(d.canonical_definition)}
   canonical={url}
   schemaLD={schemaLD}
 >

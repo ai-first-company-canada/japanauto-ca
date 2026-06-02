@@ -31,8 +31,26 @@ const jsonLd = {
       name: 'japanauto.ca',
       url: 'https://japanauto.ca',
       logo: 'https://japanauto.ca/logo.svg',
-      description: 'Canadian marketplace for used Japanese cars and parts donor cars',
+      description:
+        'Independent Canadian marketplace for used Japanese cars and salvage-yard donor parts, aggregating AMVIC- and OMVIC-verified dealer listings across Toronto, Montreal, Vancouver, Calgary, Edmonton, and Ottawa.',
+      slogan: "Canada's marketplace for used Japanese cars and parts.",
       areaServed: { '@type': 'Country', name: 'Canada' },
+      // Topical entities for entity recognition + GEO citability. Keep accurate —
+      // these are subjects the marketplace genuinely covers across its content.
+      knowsAbout: [
+        'Used Japanese cars', 'Toyota', 'Honda', 'Nissan', 'Mazda', 'Subaru',
+        'Lexus', 'Acura', 'Infiniti', 'Mitsubishi', 'AMVIC dealer licensing',
+        'OMVIC dealer licensing', 'VIN verification', 'Vehicle history reports',
+        'JDM imports', 'Salvage and rebuilt titles', 'Used auto parts', 'Donor cars',
+      ],
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: 'support@japanauto.ca',
+        telephone: '+1-833-527-2622',
+        areaServed: 'CA',
+        availableLanguage: ['en'],
+      },
     },
     {
       '@type': 'WebSite',
@@ -41,21 +59,17 @@ const jsonLd = {
       name: 'japanauto.ca',
       publisher: { '@id': 'https://japanauto.ca/#organization' },
       inLanguage: 'en-CA',
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: {
-          '@type': 'EntryPoint',
-          urlTemplate: 'https://japanauto.ca/search?q={search_term_string}',
-        },
-        'query-input': 'required name=search_term_string',
-      },
+      // NOTE: a SearchAction (sitelinks searchbox) was intentionally removed —
+      // there is no live /search endpoint yet, and declaring an unfulfilled
+      // action is the same anti-pattern faqPage() guards against. Re-add it here
+      // when /search ships.
     },
     ...extraGraph,
   ],
 };
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-CA">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -63,6 +77,10 @@ const jsonLd = {
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <!-- Single-locale (en-CA) geo-targeted site: self-referential hreflang +
+         x-default. Add fr-ca alternates here if/when French content ships. -->
+    <link rel="alternate" hreflang="en-ca" href={canonical} />
+    <link rel="alternate" hreflang="x-default" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="alternate icon" href="/favicon.ico" sizes="any" />
 

@@ -12,6 +12,13 @@ const url = Astro.url.toString();
 // references (Phase 4.1 templates link author.url to /editorial-team/#slug).
 const schemaLD = [
   {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Editorial team', item: url },
+    ],
+  },
+  {
     '@type': 'AboutPage',
     '@id': `${url}#page`,
     name: 'Editorial team — japanauto.ca',

@@ -10,6 +10,7 @@ import CityDirectoryGrid from '../../../components/sections/CityDirectoryGrid.as
 import AboutBrandSection from '../../../components/sections/AboutBrandSection.astro';
 import FaqSection from '../../../components/sections/FaqSection.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../../data/brand-content';
+import { faqPage } from '../../../lib/schema-graph';
 
 export function getStaticPaths() {
   return Object.keys(BRAND_CONTENT).map((make) => ({ params: { make } }));
@@ -37,6 +38,7 @@ const title = `Used ${brand.name} cars across Canada — japanauto.ca`;
 const description = `Used ${brand.name} cars in ${TIER_1_CITIES.length} major Canadian cities. ${totalDealers} ${brand.name} dealers nationwide. AMVIC-verified, VIN-checked.`;
 const canonical = `https://japanauto.ca/used-cars/${make}/`;
 
+const faqLd = faqPage(brand.faqs.map((f) => f.q), brand.faqs.map((f) => f.a));
 const schemaLD = [
   {
     '@type': 'BreadcrumbList',
@@ -45,6 +47,7 @@ const schemaLD = [
       { '@type': 'ListItem', position: 2, name: brand.name, item: canonical },
     ],
   },
+  ...(faqLd ? [faqLd] : []),
   {
     '@type': 'ItemList',
     name: `${brand.name} availability across Canada`,

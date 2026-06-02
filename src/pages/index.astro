@@ -16,6 +16,7 @@ import GlossaryHighlights, { type GlossaryTerm } from '../components/sections/Gl
 import FaqSection, { type FaqItem } from '../components/sections/FaqSection.astro';
 import SellCta from '../components/sections/SellCta.astro';
 import { TIER_1_CITIES } from '../data/brand-content';
+import { faqPage, itemList } from '../lib/schema-graph';
 
 // National brand totals = Toronto baseline × (sum of city counts / 1284).
 // CITY_FACTOR_SUM is the cumulative scaling factor across the 6 Tier-1 CMAs.
@@ -141,10 +142,40 @@ const GLOSSARY_TERMS: GlossaryTerm[] = [
   { term: 'VIN',   def: '17-digit vehicle identification number.' },
 ];
 
+const SITE = 'https://japanauto.ca';
+
+// Page-level structured data, merged into the BaseLayout @graph (Organization +
+// WebSite). FAQPage mirrors the visible FaqSection 1:1; two ItemLists expose the
+// model and city collections to search crawlers and answer engines. Helpers
+// return null when empty, so each is spread in only when present (type-safe).
+const homeFaq = faqPage(
+  FAQ_ITEMS.map((f) => f.q),
+  FAQ_ITEMS.map((f) => f.a),
+);
+const modelsList = itemList(
+  POPULAR_MODELS.map((m) => ({
+    name: `${m.make} ${m.model}`,
+    url: `${SITE}${m.href ?? `/used-cars/${m.make.toLowerCase()}/${m.model.toLowerCase().replace(/\s+/g, '-')}/`}`,
+  })),
+  'Popular used Japanese models in Canada',
+);
+const citiesList = itemList(
+  OTHER_CITIES.map((c) => ({
+    name: `Used Japanese cars in ${c.name}`,
+    url: `${SITE}/${c.slug}/`,
+  })),
+  'Browse used Japanese cars by Canadian city',
+);
+const schemaLD = [
+  ...(homeFaq ? [homeFaq] : []),
+  ...(modelsList ? [modelsList] : []),
+  ...(citiesList ? [citiesList] : []),
+];
+
 const title = 'Used Japanese cars and parts in Canada — japanauto.ca';
 const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi cars from local Canadian dealers. AMVIC-verified, VIN-checked listings.';
 ---
-<BaseLayout {title} {description} canonical="https://japanauto.ca/">
+<BaseLayout {title} {description} canonical="https://japanauto.ca/" {schemaLD}>
   <Navbar slot="navbar" />
   <MenuDrawer slot="menu-drawer" />
   <CityPickerDialog slot="city-picker" />
@@ -153,9 +184,15 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
   <h1 class="sr-only">Used Japanese cars and parts across Canada — japanauto.ca</h1>
 
   <section style="padding-block:24px 8px" class="gutter">
-    <p class="t-body-s ink-muted" style="font-size:13px">
+    <p class="t-body-l ink-strong" style="max-width:62ch;line-height:1.5">
+      <strong>japanauto.ca</strong> is an independent Canadian marketplace for used Japanese cars and
+      salvage-yard donor parts, aggregating AMVIC- and OMVIC-verified dealer listings across Toronto,
+      Montreal, Vancouver, Calgary, Edmonton and Ottawa.
+    </p>
+    <p class="t-body-s ink-muted" style="font-size:13px;margin-top:10px">
       <span class="num">{NATIONAL_TOTAL.toLocaleString('en-US')}</span> used Japanese cars
-      from <span class="num">{NATIONAL_DEALERS}</span> dealers across {TIER_1_CITIES.length} Canadian cities · Updated today
+      from <span class="num">{NATIONAL_DEALERS}</span> dealers across {TIER_1_CITIES.length} Canadian cities · Updated today ·
+      <a href="/editorial-policy/" style="color:var(--color-ink-default);text-decoration:underline">every regulatory claim is fact-checked by a licensed advisor</a>
     </p>
   </section>
 

@@ -241,6 +241,18 @@ export function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/**
+ * Clamp long copy to a meta-description-safe length (~155 chars) at a word
+ * boundary so SERP snippets don't truncate mid-word. The full text still lives
+ * in the visible body and DefinedTerm/Article schema, where length is fine.
+ */
+export function clampMeta(text: string, max = 155): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:–—-]+$/, '') + '…';
+}
+
 export function formatIsoDate(iso?: string): string {
   if (!iso) return '';
   const d = new Date(iso);

@@ -12,6 +12,7 @@ import FaqSection from '../../../components/sections/FaqSection.astro';
 import CrossLinksBand from '../../../components/sections/CrossLinksBand.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../../data/brand-content';
 import { getModelsForCity } from '../../../data/models-stubs';
+import { faqPage } from '../../../lib/schema-graph';
 
 export function getStaticPaths() {
   const brands = Object.keys(BRAND_CONTENT);
@@ -33,6 +34,7 @@ const title = `Used ${brand.name} in ${cityInfo.name}, ${cityInfo.province} — 
 const description = `Find used ${brand.name} cars in ${cityInfo.name}. ${totalCount} ${brand.name} listings from ${dealerCount} local dealers. AMVIC-verified, VIN-checked.`;
 const canonical = `https://japanauto.ca/${city}/${make}/`;
 
+const faqLd = faqPage(brand.faqs.map((f) => f.q), brand.faqs.map((f) => f.a));
 const schemaLD = [
   {
     '@type': 'BreadcrumbList',
@@ -42,6 +44,7 @@ const schemaLD = [
       { '@type': 'ListItem', position: 3, name: brand.name, item: canonical },
     ],
   },
+  ...(faqLd ? [faqLd] : []),
   {
     '@type': 'ItemList',
     name: `${brand.name} models available in ${cityInfo.name}`,

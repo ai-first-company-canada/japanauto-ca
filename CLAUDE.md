@@ -8,7 +8,7 @@ Working dir: `/Users/andreuziubanov/sites/japanauto`. Prod: https://japanauto.pa
 - **Astro 6.2.2** SSG, **TS 5.6.3**, **Tailwind 4.1.18** via `@tailwindcss/vite`
 - **Cloudflare Pages** (static dist/) + **Pages Functions** (functions/ — `_middleware.ts`, `/api/*`, `/parts/listing/[slug]`, sitemaps)
 - **D1** (binding `DB`, database `japanauto-prod`), **KV**, **R2** — see `wrangler.toml`
-- Deploy: `npm run build && npx wrangler pages deploy dist --project-name japanauto`
+- Deploy: `npm run deploy` — runs the pre-deploy gate (`predeploy`: typecheck → build → `npm run audit:seo`) then `wrangler pages deploy dist`. The SEO/GEO audit (`scripts/seo-audit.py`) scans built `dist/` and **blocks deploy** on any indexable page missing title/description/self-canonical, with h1≠1, or missing Open Graph / JSON-LD. noindex (`/dealer/*`) and 404 are excluded by design.
 - Dev: `npm run dev` (port 4321). For Cowork preview use the `japanauto-dev` config in brandlifts launch.json (port 4322) — wraps `cd /Users/andreuziubanov/sites/japanauto && npm run dev`.
 
 ## URL architecture (city-first, as of 2026-05-19)
