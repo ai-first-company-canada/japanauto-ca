@@ -261,20 +261,43 @@ function mdToPlain(md: string): string {
     .trim();
 }
 
+// Inline-markdown -> safe HTML for the FAQ accordion: escapes everything, then
+// re-introduces internal links and bold so answer cross-links survive (plain
+// text would drop them). Only [text](url) and **bold** are honoured — answers
+// are prose, not block markdown.
+function mdToInlineHtml(md: string): string {
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const linkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let out = '';
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = linkRe.exec(md)) !== null) {
+    out += esc(md.slice(last, m.index));
+    out += `<a href="${esc(m[2])}">${esc(m[1])}</a>`;
+    last = m.index + m[0].length;
+  }
+  out += esc(md.slice(last));
+  return out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\s+/g, ' ').trim();
+}
+
+export interface FaqPair {
+  q: string;
+  plain: string;
+  html: string;
+}
+
 /**
- * Pull FAQ answers out of a markdown body's "### Question" headings, matched
- * against a curated question list (frontmatter). Published content carries the
- * real, fact-checked answers as body prose under a "## Common questions"
- * section; this lifts them into FAQPage schema so the markup mirrors the
- * visible answer exactly (Google's FAQPage policy). Returns answers aligned to
- * `questions`, with null where no body heading matches (faqPage() then drops
- * the unanswered pair). Body-less skeleton entries yield all-null → no FAQPage.
+ * Pull FAQ Q&A out of a markdown body's "### Question" headings, matched against
+ * a curated question list (frontmatter). Published content carries the real,
+ * fact-checked answers as body prose under "## Common questions"; this lifts the
+ * matching answer for each question into two forms: `plain` (for FAQPage schema,
+ * which must mirror visible text) and `html` (internal links + bold preserved,
+ * for the on-page accordion). Returns only matched pairs in `questions` order; a
+ * body-less skeleton entry yields [] → no FAQPage and no accordion.
  */
-export function faqAnswersFromBody(
-  body: string | undefined,
-  questions: string[],
-): Array<string | null> {
-  if (!body) return questions.map(() => null);
+export function faqFromBody(body: string | undefined, questions: string[]): FaqPair[] {
+  if (!body) return [];
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const heads = [...body.matchAll(/^###\s+(.+?)\s*$/gm)];
   const byHeading = new Map<string, string>();
@@ -284,9 +307,14 @@ export function faqAnswersFromBody(
     let slice = body.slice(start, end);
     const nextSection = slice.search(/^##\s/m); // don't bleed into the next H2 section
     if (nextSection !== -1) slice = slice.slice(0, nextSection);
-    byHeading.set(norm(heads[i][1]), mdToPlain(slice));
+    byHeading.set(norm(heads[i][1]), slice);
   }
-  return questions.map((q) => byHeading.get(norm(q)) || null);
+  const pairs: FaqPair[] = [];
+  for (const q of questions) {
+    const raw = byHeading.get(norm(q));
+    if (raw && raw.trim()) pairs.push({ q, plain: mdToPlain(raw), html: mdToInlineHtml(raw) });
+  }
+  return pairs;
 }
 
 export function formatIsoDate(iso?: string): string {

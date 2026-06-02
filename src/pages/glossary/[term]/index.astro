@@ -8,7 +8,7 @@ import Footer from '../../../components/sections/Footer.astro';
 import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
 import FaqAccordion from '../../../components/atoms/FaqAccordion.astro';
 import {
-  breadcrumbList, faqPage, faqAnswersFromBody, GROUP_LABELS, formatIsoDate, stripUrl, clampMeta,
+  breadcrumbList, faqPage, faqFromBody, GROUP_LABELS, formatIsoDate, stripUrl, clampMeta,
 } from '../../../lib/schema-graph';
 
 export async function getStaticPaths() {
@@ -44,7 +44,8 @@ const relatedCards = (d.related_terms ?? [])
 
 const groupLabel = GROUP_LABELS[d.group] ?? d.group;
 
-const faqLd = faqPage(d.related_questions, faqAnswersFromBody(entry.body, d.related_questions));
+const faqPairs = faqFromBody(entry.body, d.related_questions);
+const faqLd = faqPage(faqPairs.map((p) => p.q), faqPairs.map((p) => p.plain));
 const schemaLD = [
   {
     '@type': 'DefinedTerm',
@@ -123,12 +124,12 @@ const schemaLD = [
       <Content />
     </div>
 
-    {d.body_status !== 'published' && d.related_questions?.length > 0 && (
+    {faqPairs.length > 0 && (
       <section style="margin-top:32px">
         <h2 class="t-h-l" style="font-size:20px;margin-bottom:12px">Common questions</h2>
         <div style="border-top:1px solid var(--color-divider)">
-          {d.related_questions.map((q, i) => (
-            <FaqAccordion q={q} a="See the section above or browse related terms below for full context. Detailed answer coming Phase 4.2." open={i < 2} />
+          {faqPairs.map((p, i) => (
+            <FaqAccordion q={p.q} aHtml={p.html} open={i < 2} />
           ))}
         </div>
       </section>

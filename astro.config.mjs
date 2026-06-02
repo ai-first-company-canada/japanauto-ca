@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import remarkStripFaq from './src/lib/remark-strip-faq.mjs';
 
 // Cloudflare Images delivery hash — inlined at build time. Set in Cloudflare
 // Pages → Build & Deploy → Environment Variables (production scope).
@@ -15,6 +16,11 @@ export default defineConfig({
   site: 'https://japanauto.ca',
   build: {
     inlineStylesheets: 'always',
+  },
+  // Q&A under "## Common questions" is rendered as an accordion + FAQPage from
+  // the raw body; strip the prose copy so it doesn't render twice.
+  markdown: {
+    remarkPlugins: [remarkStripFaq],
   },
   vite: {
     plugins: [tailwindcss()],

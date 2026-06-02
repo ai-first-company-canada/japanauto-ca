@@ -9,7 +9,7 @@ import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
 import FaqAccordion from '../../../components/atoms/FaqAccordion.astro';
 import { MODELS_BY_BRAND } from '../../../data/models-stubs.ts';
 import {
-  breadcrumbList, faqPage, faqAnswersFromBody, itemList, capitalize,
+  breadcrumbList, faqPage, faqFromBody, itemList, capitalize,
 } from '../../../lib/schema-graph';
 
 export async function getStaticPaths() {
@@ -36,7 +36,8 @@ const modelItemList = itemList(
   `Most popular used ${makeName} models in Canada`,
 );
 
-const faqLd = faqPage(d.faq_questions, faqAnswersFromBody(entry.body, d.faq_questions));
+const faqPairs = faqFromBody(entry.body, d.faq_questions);
+const faqLd = faqPage(faqPairs.map((p) => p.q), faqPairs.map((p) => p.plain));
 const schemaLD = [
   {
     '@type': 'Brand',
@@ -131,12 +132,12 @@ const schemaLD = [
     </section>
   )}
 
-  {d.body_status !== 'published' && d.faq_questions?.length > 0 && (
+  {faqPairs.length > 0 && (
     <section class="section">
       <h2 class="t-h-l" style="font-size:20px;margin-bottom:12px">Common questions about {makeName}</h2>
       <div style="border-top:1px solid var(--color-divider)">
-        {d.faq_questions.map((q, i) => (
-          <FaqAccordion q={q} a="Detailed answer coming Phase 4.2 — see related models or browse listings above for current data." open={i < 2} />
+        {faqPairs.map((p, i) => (
+          <FaqAccordion q={p.q} aHtml={p.html} open={i < 2} />
         ))}
       </div>
     </section>
