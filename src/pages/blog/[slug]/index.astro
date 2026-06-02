@@ -9,7 +9,7 @@ import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
 import FaqAccordion from '../../../components/atoms/FaqAccordion.astro';
 import Author from '../../../components/atoms/Author.astro';
 import {
-  breadcrumbList, faqPage,
+  breadcrumbList, faqPage, faqAnswersFromBody,
   authorBio, deriveBlogCategory, CATEGORY_LABELS, readingTime, stripUrl,
 } from '../../../lib/schema-graph';
 
@@ -29,6 +29,7 @@ const categoryLabel = CATEGORY_LABELS[categoryKey] ?? categoryKey;
 const minRead = readingTime(d.estimated_word_count);
 const tldrShort = (d.tldr_draft ?? '').slice(0, 160).replace(/\s+\S*$/, '') + '…';
 
+const faqLd = faqPage(d.faq_questions, faqAnswersFromBody(entry.body, d.faq_questions));
 const schemaLD = [
   {
     '@type': 'BlogPosting',
@@ -65,7 +66,7 @@ const schemaLD = [
     ],
     url,
   ),
-  ...(faqPage(d.faq_questions) ? [faqPage(d.faq_questions)!] : []),
+  ...(faqLd ? [faqLd] : []),
 ];
 ---
 <BaseLayout
@@ -128,7 +129,7 @@ const schemaLD = [
       <Content />
     </div>
 
-    {d.faq_questions?.length > 0 && (
+    {d.body_status !== 'published' && d.faq_questions?.length > 0 && (
       <section style="margin-top:32px">
         <h2 class="t-h-l" style="font-size:20px;margin-bottom:12px">Common questions</h2>
         <div style="border-top:1px solid var(--color-divider)">

@@ -253,6 +253,42 @@ export function clampMeta(text: string, max = 155): string {
   return (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:–—-]+$/, '') + '…';
 }
 
+function mdToPlain(md: string): string {
+  return md
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // [text](url) -> text
+    .replace(/[*_`]/g, '')                    // emphasis / inline code
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Pull FAQ answers out of a markdown body's "### Question" headings, matched
+ * against a curated question list (frontmatter). Published content carries the
+ * real, fact-checked answers as body prose under a "## Common questions"
+ * section; this lifts them into FAQPage schema so the markup mirrors the
+ * visible answer exactly (Google's FAQPage policy). Returns answers aligned to
+ * `questions`, with null where no body heading matches (faqPage() then drops
+ * the unanswered pair). Body-less skeleton entries yield all-null → no FAQPage.
+ */
+export function faqAnswersFromBody(
+  body: string | undefined,
+  questions: string[],
+): Array<string | null> {
+  if (!body) return questions.map(() => null);
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const heads = [...body.matchAll(/^###\s+(.+?)\s*$/gm)];
+  const byHeading = new Map<string, string>();
+  for (let i = 0; i < heads.length; i++) {
+    const start = (heads[i].index ?? 0) + heads[i][0].length;
+    const end = i + 1 < heads.length ? (heads[i + 1].index ?? body.length) : body.length;
+    let slice = body.slice(start, end);
+    const nextSection = slice.search(/^##\s/m); // don't bleed into the next H2 section
+    if (nextSection !== -1) slice = slice.slice(0, nextSection);
+    byHeading.set(norm(heads[i][1]), mdToPlain(slice));
+  }
+  return questions.map((q) => byHeading.get(norm(q)) || null);
+}
+
 export function formatIsoDate(iso?: string): string {
   if (!iso) return '';
   const d = new Date(iso);
