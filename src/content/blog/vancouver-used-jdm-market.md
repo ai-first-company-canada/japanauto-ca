@@ -1,6 +1,6 @@
 ---
 slug: vancouver-used-jdm-market
-title: "The Vancouver Used JDM Market in 2026: How to Buy, What to Watch For"
+title: "Vancouver Used JDM Market 2026: How to Buy and What to Watch"
 h1: "The Vancouver Used JDM Market in 2026: A Buyer's Guide"
 primary_keyword: "vancouver jdm import"
 secondary_keywords:

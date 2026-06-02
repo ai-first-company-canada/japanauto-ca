@@ -8,7 +8,7 @@ secondary_keywords:
   - "Nissan reliability Canada"
   - "Nissan AWD Canada"
 title_tag: "Used Nissan Cars in Canada | japanauto.ca"
-meta_description: "Shop used Nissan Rogue, Altima, Sentra and Pathfinder across Canada on japanauto.ca. Compare AWD models, reliability data, and listings from verified Canadian sellers."
+meta_description: "Shop used Nissan Rogue, Altima, Sentra and Pathfinder across Canada on japanauto.ca — AWD models, reliability data and verified Canadian sellers."
 suggested_h1: "Used Nissan Cars in Canada"
 h1: "Used Nissan Cars in Canada"
 suggested_h2_blocks:

@@ -8,7 +8,7 @@ secondary_keywords:
   - "Toyota Corolla used Canada"
   - "Toyota RAV4 used Canada"
 title_tag: "Used Toyota Cars in Canada | japanauto.ca"
-meta_description: "Browse used Toyota cars across Canada on japanauto.ca. Compare RAV4, Corolla, Camry and Highlander listings, reliability data, and hybrid models from verified sellers."
+meta_description: "Browse used Toyota across Canada on japanauto.ca — RAV4, Corolla, Camry and Highlander listings with reliability data and hybrids from verified sellers."
 suggested_h1: "Used Toyota Cars in Canada"
 h1: "Used Toyota Cars in Canada"
 suggested_h2_blocks:

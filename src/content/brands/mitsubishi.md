@@ -8,7 +8,7 @@ secondary_keywords:
   - "Mitsubishi 10 year warranty Canada"
   - "Mitsubishi AWD Canada"
 title_tag: "Used Mitsubishi Cars in Canada | japanauto.ca"
-meta_description: "Find used Mitsubishi Outlander, RVR, Eclipse Cross and PHEV models on japanauto.ca. AWD-capable Japanese vehicles with long warranties from verified Canadian sellers."
+meta_description: "Find used Mitsubishi Outlander, RVR, Eclipse Cross and PHEV on japanauto.ca — AWD Japanese vehicles with long warranties from verified sellers."
 suggested_h1: "Used Mitsubishi Cars in Canada"
 h1: "Used Mitsubishi Cars in Canada"
 suggested_h2_blocks:

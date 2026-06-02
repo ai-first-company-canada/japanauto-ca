@@ -8,7 +8,7 @@ secondary_keywords:
   - "best used Honda models Canada"
   - "Honda Accord used Canada"
 title_tag: "Used Honda Cars in Canada | japanauto.ca"
-meta_description: "Find used Honda Civic, CR-V, Accord and Pilot listings across Canada on japanauto.ca. Verified Canadian sellers, reliability insights, and parts for every Honda model."
+meta_description: "Find used Honda Civic, CR-V, Accord and Pilot across Canada on japanauto.ca — verified sellers, reliability insights and parts for every Honda."
 suggested_h1: "Used Honda Cars in Canada"
 h1: "Used Honda Cars in Canada"
 suggested_h2_blocks:

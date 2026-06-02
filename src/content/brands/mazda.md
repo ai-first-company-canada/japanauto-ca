@@ -8,7 +8,7 @@ secondary_keywords:
   - "Mazda reliability Canada"
   - "Mazda CX-50 Canada"
 title_tag: "Used Mazda Cars in Canada | japanauto.ca"
-meta_description: "Browse used Mazda CX-5, Mazda3, CX-50 and MX-5 listings across Canada on japanauto.ca. Compare i-Activ AWD models, reliability and prices from verified Canadian sellers."
+meta_description: "Browse used Mazda CX-5, Mazda3, CX-50 and MX-5 across Canada on japanauto.ca — i-Activ AWD models, reliability and prices from verified sellers."
 suggested_h1: "Used Mazda Cars in Canada"
 h1: "Used Mazda Cars in Canada"
 suggested_h2_blocks:
