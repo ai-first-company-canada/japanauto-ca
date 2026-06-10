@@ -55,7 +55,18 @@ export interface AccessTokenPayload {
   token_epoch: number;    // dealers.token_epoch snapshot; revoked when it drifts (audit #11)
 }
 
+// HS256's digest is 256 bits; require at least that much key material so a
+// misconfigured deploy can never sign/verify with a weak key.
+const MIN_JWT_SECRET_LEN = 32;
+
 async function importHmacKey(secret: string): Promise<CryptoKey> {
+  // Fail closed (audit #12): WebCrypto happily imports a zero-length key from
+  // enc.encode(""), and HMAC sign/verify succeed with it — so a missing/empty/
+  // typo'd JWT_SECRET would mint and accept tokens signed with a publicly
+  // guessable empty key (full auth bypass), with no startup error. Refuse it.
+  if (typeof secret !== "string" || secret.length < MIN_JWT_SECRET_LEN) {
+    throw new Error(`JWT_SECRET is missing or shorter than ${MIN_JWT_SECRET_LEN} characters`);
+  }
   return crypto.subtle.importKey(
     "raw", enc.encode(secret),
     { name: "HMAC", hash: "SHA-256" },
@@ -101,7 +112,14 @@ export async function verifyAccessToken(
   catch { return null; }
   if (header.alg !== "HS256" || header.typ !== "JWT") return null;
 
-  const key = await importHmacKey(env.JWT_SECRET);
+  // Fail closed: a misconfigured JWT_SECRET denies every token (401) rather
+  // than crashing each request (500) or — far worse — verifying against an
+  // empty key. signAccessToken intentionally does NOT catch: minting must fail
+  // loudly so a broken deploy can't issue tokens silently.
+  let key: CryptoKey;
+  try { key = await importHmacKey(env.JWT_SECRET); }
+  catch (e) { console.error("verifyAccessToken: JWT_SECRET misconfigured", e); return null; }
+
   const valid = await crypto.subtle.verify(
     "HMAC", key, fromB64Url(sigB64),
     enc.encode(`${headerB64}.${payloadB64}`),
