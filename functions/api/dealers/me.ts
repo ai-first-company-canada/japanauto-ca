@@ -18,6 +18,23 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   return json({ dealer: dealerSelfSchema.parse(dealer) });
 };
 
+/**
+ * Columns a dealer may change about THEMSELVES. dealerUpdateInputSchema derives
+ * from dealerBaseFields, which also contains `type`, `slug`, and `email` —
+ * role/identity columns that must NOT be self-mutable: `type` partitions which
+ * inventory APIs the account can use, `email` is the unique login identifier
+ * (changing it while keeping verified=1 decouples the verified identity from
+ * the real login), `slug` is the public URL. They go through an admin/support
+ * flow (email additionally needs re-verification). Without this allowlist the
+ * handler builds a fully dynamic UPDATE from every parsed key (audit #13).
+ */
+const MUTABLE_COLUMNS = new Set([
+  "name", "phone", "website", "description",
+  "address_line1", "address_line2", "city", "province", "postal_code",
+  "lat", "lng", "business_number", "gst_number", "amvic_number",
+  "hours", "specializes_in", "bio", "founded_year",
+]);
+
 export const onRequestPatch: PagesFunction<Env> = async ({ request, env }) => {
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
@@ -32,7 +49,8 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env }) => {
     return jsonError(422, err.error, err.message, err.issues);
   }
 
-  const fields = Object.entries(parsed.data).filter(([, v]) => v !== undefined);
+  const fields = Object.entries(parsed.data)
+    .filter(([k, v]) => v !== undefined && MUTABLE_COLUMNS.has(k));
   if (fields.length === 0) {
     const dealer = await getDealerById(env, auth.dealerId);
     return json({ dealer: dealerSelfSchema.parse(dealer!) });

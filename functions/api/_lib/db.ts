@@ -345,6 +345,51 @@ function rowToMediaPublic(row: MediaRow): MediaPublic {
   return mediaPublicSchema.parse(data);
 }
 
+// ============================================================================
+// PENDING MEDIA UPLOADS (audit #14 — bind CF image_id to its minter)
+// ============================================================================
+
+interface PendingUpload {
+  image_id: string;
+  dealer_id: string;
+  entity_type: string;
+  entity_id: string;
+}
+
+/**
+ * Record, at mint time, that `dealer_id` is allowed to finalize `image_id`
+ * against (`entity_type`, `entity_id`). Called by /api/media/upload-url after
+ * a successful CF direct_upload mint.
+ */
+export async function recordPendingUpload(
+  env: Env, p: PendingUpload,
+): Promise<void> {
+  const now = Math.floor(Date.now() / 1000);
+  await env.DB.prepare(
+    `INSERT INTO pending_media_uploads (image_id, dealer_id, entity_type, entity_id, created_at)
+     VALUES (?, ?, ?, ?, ?)`,
+  ).bind(p.image_id, p.dealer_id, p.entity_type, p.entity_id, now).run();
+}
+
+/**
+ * Atomically consume the pending claim for (`image_id`, `dealer_id`,
+ * `entity_type`, `entity_id`). Returns true iff a matching row existed and was
+ * deleted — i.e. this dealer really minted this image_id for this entity. The
+ * DELETE ... RETURNING is a single statement (SQLite serializes writers), so a
+ * claim cannot be double-spent by concurrent finalize calls.
+ */
+export async function consumePendingUpload(
+  env: Env, p: PendingUpload,
+): Promise<boolean> {
+  const row = await env.DB.prepare(
+    `DELETE FROM pending_media_uploads
+       WHERE image_id = ? AND dealer_id = ? AND entity_type = ? AND entity_id = ?
+       RETURNING image_id`,
+  ).bind(p.image_id, p.dealer_id, p.entity_type, p.entity_id)
+    .first<{ image_id: string }>();
+  return row !== null;
+}
+
 /**
  * Insert a media row after a successful Cloudflare Images Direct Upload.
  * If `is_primary=1`, demote any existing primary for the same entity first

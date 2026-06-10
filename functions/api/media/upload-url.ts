@@ -33,7 +33,7 @@ import {
 } from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
-import { getListingById, getDonorCarById } from "../_lib/db";
+import { getListingById, getDonorCarById, recordPendingUpload } from "../_lib/db";
 
 interface CfDirectUploadResponse {
   success: boolean;
@@ -90,15 +90,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     );
   }
 
-  // Cloudflare expects multipart/form-data even when no fields are sent. The
-  // optional `requireSignedURLs` and `metadata` fields aren't needed yet —
-  // photos are public and ownership is enforced at /finalize time.
+  // Cloudflare expects multipart/form-data even when no fields are sent. We
+  // tag the upload with the minting dealer + target entity (metadata) so
+  // orphaned uploads can be attributed for cleanup/billing, and cap the mint
+  // window with `expiry` (audit #15). `requireSignedURLs` is intentionally left
+  // off: public delivery via imagedelivery.net/<hash>/<id>/<variant> is the
+  // current product model — flipping it to signed URLs is a deliberate product
+  // change (every <img> would need a signing token), tracked separately.
+  const fd = new FormData();
+  fd.append("metadata", JSON.stringify({
+    dealerId: auth.dealerId, entity_type, entity_id,
+  }));
+  fd.append("expiry", new Date(Date.now() + 30 * 60 * 1000).toISOString());
+
   const cfRes = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${apiToken}` },
-      body: new FormData(),
+      body: fd,
     },
   );
 
@@ -111,6 +121,22 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const cfData = await cfRes.json() as CfDirectUploadResponse;
   if (!cfData.success || !cfData.result) {
     console.error("CF Images direct_upload error", cfData.errors);
+    return internalError("Image upload setup failed");
+  }
+
+  // Bind this image_id to the minting dealer + entity so finalize can verify
+  // the caller actually minted it (audit #14). If this write fails the dealer
+  // could never finalize the upload, so surface it rather than returning a
+  // URL that leads to a dead end.
+  try {
+    await recordPendingUpload(env, {
+      image_id: cfData.result.id,
+      dealer_id: auth.dealerId,
+      entity_type,
+      entity_id,
+    });
+  } catch (e) {
+    console.error("recordPendingUpload failed", e);
     return internalError("Image upload setup failed");
   }
 

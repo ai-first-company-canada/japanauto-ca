@@ -21,9 +21,11 @@
  * Errors:
  *   401 / 403 / 404 / 422 — same semantics as /upload-url
  *
- * Note: we trust the client-supplied `image_id` because direct uploads are
- * authenticated by the one-time URL (15-30 min TTL, single use). The browser
- * cannot mint URLs for arbitrary image_ids without going through /upload-url.
+ * The client-supplied `image_id` is NOT trusted on its own: image_ids are a
+ * public segment of the delivery URL, so we verify against a pending-upload
+ * claim recorded at mint time (consumePendingUpload) that THIS dealer minted
+ * THIS image_id for THIS entity. The claim is consumed atomically, so it is
+ * also single-use. (Audit #14.)
  */
 
 import type { Env } from "../../../types/env";
@@ -34,7 +36,9 @@ import {
   created, jsonError, badRequest, notFound, forbidden,
 } from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
-import { getListingById, getDonorCarById, createMedia } from "../_lib/db";
+import {
+  getListingById, getDonorCarById, createMedia, consumePendingUpload,
+} from "../_lib/db";
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const auth = await requireDealer(request, env);
@@ -76,6 +80,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if ((countRow?.n ?? 0) >= LIMITS.PHOTOS_PER_LISTING_MAX) {
     return jsonError(422, "validation_failed",
       `Maximum ${LIMITS.PHOTOS_PER_LISTING_MAX} photos allowed per listing`);
+  }
+
+  // Verify (and atomically consume) the mint-time claim: this dealer minted
+  // this image_id for this entity. Done after the non-destructive cap check so
+  // a cap rejection doesn't burn a valid claim. (Audit #14.)
+  const claimed = await consumePendingUpload(env, {
+    image_id: input.image_id,
+    dealer_id: auth.dealerId,
+    entity_type: input.entity_type,
+    entity_id: input.entity_id,
+  });
+  if (!claimed) {
+    return forbidden("Unknown or already-finalized image_id for this dealer and entity");
   }
 
   const media = await createMedia(env, input);
