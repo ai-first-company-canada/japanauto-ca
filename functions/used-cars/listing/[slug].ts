@@ -15,7 +15,7 @@ import {
   getListingBySlug, getMediaForEntity, getDealerById,
 } from "../../api/_lib/db";
 import {
-  renderShell, esc, fmt, cfImageUrl, formatPhone, relativeTime,
+  renderShell, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
 } from "../../_lib/page-shell";
 
 const TIER_1_CITIES: Record<string, { name: string; province: string }> = {
@@ -157,7 +157,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
           name: dealer.name,
           ...(dealer.phone ? { telephone: dealer.phone } : {}),
           email: dealer.email,
-          ...(dealer.website ? { url: dealer.website } : {}),
+          ...(dealer.website && safeUrl(dealer.website) !== '#' ? { url: safeUrl(dealer.website) } : {}),
           address: {
             '@type': 'PostalAddress',
             ...(dealer.address_line1 ? { streetAddress: dealer.address_line1 } : {}),
@@ -386,7 +386,7 @@ function specRow(label: string, value: string): string {
 function contactRow(label: string, value: string, href: string): string {
   return `<div style="display:flex;align-items:baseline;gap:12px;padding:8px 0">
     <span style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted);width:56px;flex-shrink:0">${esc(label)}</span>
-    <a href="${esc(href)}" style="font-size:14px;color:var(--color-ink-strong);text-decoration:none;font-weight:500">${esc(value)}</a>
+    <a href="${esc(safeUrl(href))}" style="font-size:14px;color:var(--color-ink-strong);text-decoration:none;font-weight:500">${esc(value)}</a>
   </div>`;
 }
 

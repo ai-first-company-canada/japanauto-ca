@@ -28,7 +28,7 @@ import type { Env } from "../../../types/env";
 import {
   getDonorCarBySlug, getMediaForEntity, listRelatedDonors, listDonorCountsByCity,
 } from "../../api/_lib/db";
-import { renderShell } from "../../_lib/page-shell";
+import { renderShell, safeUrl } from "../../_lib/page-shell";
 import {
   renderPartsNavBar, renderBreadcrumb, renderDepletedBand, renderPhotoGallery,
   renderTitleBlock, renderPrimaryCta, renderEducationalBlock, renderSpecGrid,
@@ -149,7 +149,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
     },
     ...(donor.dealer_phone ? { telephone: donor.dealer_phone } : {}),
     email: donor.dealer_email,
-    ...(donor.dealer_website ? { sameAs: donor.dealer_website } : {}),
+    ...(donor.dealer_website && safeUrl(donor.dealer_website) !== '#' ? { sameAs: safeUrl(donor.dealer_website) } : {}),
     ...(hoursSpecs.length > 0 ? { openingHoursSpecification: hoursSpecs } : {}),
     areaServed: donor.city_name,
   };

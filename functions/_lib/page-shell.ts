@@ -35,6 +35,27 @@ export function esc(s: string | number | null | undefined): string {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+const SAFE_URL_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:']);
+
+/**
+ * Return `href` only if it uses a safe scheme (http/https/mailto/tel) or is a
+ * relative path/anchor; otherwise '#'. Blocks `javascript:`/`data:`/`vbscript:`
+ * URLs that survive esc() (they carry no HTML metachars) and would execute on
+ * click inside an `<a href>`. `new URL()` strips embedded tab/newline, so
+ * obfuscations like `java\tscript:` are normalized and caught too.
+ */
+export function safeUrl(s: string | null | undefined): string {
+  if (s == null) return '#';
+  const raw = String(s).trim();
+  if (raw === '') return '#';
+  if (raw.startsWith('/') || raw.startsWith('#')) return raw;
+  try {
+    return SAFE_URL_SCHEMES.has(new URL(raw).protocol) ? raw : '#';
+  } catch {
+    return '#';
+  }
+}
+
 /** Format an integer with US-style thousands separators. */
 export function fmt(n: number): string {
   return n.toLocaleString('en-US');

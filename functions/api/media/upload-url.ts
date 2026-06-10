@@ -29,9 +29,10 @@
 import type { Env } from "../../../types/env";
 import { mediaUploadInputSchema, zodErrorToApiError } from "../../../lib/schema";
 import {
-  json, jsonError, badRequest, notFound, forbidden, internalError,
+  json, jsonError, badRequest, notFound, forbidden, internalError, tooManyRequests,
 } from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
+import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
 import { getListingById, getDonorCarById } from "../_lib/db";
 
 interface CfDirectUploadResponse {
@@ -43,6 +44,13 @@ interface CfDirectUploadResponse {
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const auth = await requireDealer(request, env);
   if (auth instanceof Response) return auth;
+
+  // Cap how many billable CF Images direct-upload URLs one dealer can mint per
+  // hour. Without this, any authenticated dealer can mint URLs in a loop and
+  // balloon the account's CF Images usage. Keyed by dealer, checked before any
+  // DB lookup so abuse is cheap to reject.
+  const rl = await rateLimit(env, auth.dealerId, RATE_LIMITS.MEDIA_UPLOAD_URL_PER_DEALER);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterSeconds);
 
   let body: unknown;
   try { body = await request.json(); }

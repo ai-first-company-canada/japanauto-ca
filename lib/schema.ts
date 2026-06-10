@@ -271,6 +271,26 @@ export const emailSchema = z.string()
   .email({ message: "Invalid email" })
   .max(254);
 
+/**
+ * URL ограниченный безопасными схемами http(s).
+ *
+ * Zod `.url()` под капотом использует `new URL()` и принимает ЛЮБУЮ парсящуюся
+ * схему, включая `javascript:` и `data:`. Сохранённое такое значение приводит
+ * к stored XSS при выводе в `<a href>` (esc() экранирует HTML-метасимволы, но
+ * не схему). Поэтому валидируем протокол явно — последняя линия защиты на входе.
+ */
+export const httpUrlSchema = z.string()
+  .trim()
+  .max(2048)
+  .refine((v) => {
+    try {
+      const u = new URL(v);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, { message: "Must be a valid http(s) URL" });
+
 /** Used-car year, rolling 10-year window. Mirrors D1 trigger. */
 export const listingYearSchema = z.number()
   .int()
@@ -361,7 +381,7 @@ const dealerBaseFields = {
   slug: slugSchema,
   email: emailSchema,
   phone: phoneSchema.nullable().optional(),
-  website: z.string().url().max(2048).nullable().optional(),
+  website: httpUrlSchema.nullable().optional(),
   description: z.string().trim().max(LIMITS.DESCRIPTION_MAX).nullable().optional(),
   address_line1: z.string().trim().max(200).nullable().optional(),
   address_line2: z.string().trim().max(200).nullable().optional(),
@@ -794,7 +814,7 @@ export const featuredSlotCreateInputSchema = z.object({
   promo_title: z.string().trim().min(3).max(LIMITS.TITLE_MAX),
   promo_msrp_cents: priceSchema,
   promo_image_id: z.string().nullable(),
-  promo_url: z.string().url().max(2048),
+  promo_url: httpUrlSchema,
   disclosure: z.string().trim().min(10).max(500),
   active_from: timestampSchema,
   active_until: timestampSchema,

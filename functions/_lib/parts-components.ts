@@ -12,7 +12,7 @@
  * `cfImageUrl()` builds Cloudflare Images delivery URLs.
  */
 
-import { esc, fmt, cfImageUrl, formatPhone } from "./page-shell";
+import { esc, fmt, cfImageUrl, formatPhone, safeUrl } from "./page-shell";
 import type { DonorCarDetailRow, DonorCardRow, DonorCityCountRow } from "../api/_lib/db";
 import type { MediaPublic } from "../../lib/schema";
 
@@ -430,7 +430,7 @@ export function renderJunkyardCard(donor: DonorCarDetailRow): string {
   const contactHtml = contactRows.map(([label, value, href]) => `
     <div style="display:flex;align-items:baseline;gap:12px;padding:8px 0">
       <span style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted);width:56px;flex-shrink:0">${esc(label)}</span>
-      <a href="${esc(href)}" style="font-size:14px;color:var(--color-ink-strong);text-decoration:none;font-weight:500">${esc(value)}</a>
+      <a href="${esc(safeUrl(href))}" style="font-size:14px;color:var(--color-ink-strong);text-decoration:none;font-weight:500">${esc(value)}</a>
     </div>`).join('');
 
   return `<section style="padding:32px 16px 0">
