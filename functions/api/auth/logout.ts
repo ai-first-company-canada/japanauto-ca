@@ -9,7 +9,7 @@
 
 import type { Env } from "../../../types/env";
 import { buildLogoutCookies, hashRefreshToken } from "../_lib/auth";
-import { revokeRefreshToken } from "../_lib/db";
+import { lookupRefreshToken, revokeRefreshToken, bumpTokenEpoch } from "../_lib/db";
 
 function readRefreshCookie(request: Request): string | null {
   const c = request.headers.get("cookie");
@@ -23,7 +23,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (token) {
     try {
       const hash = await hashRefreshToken(token);
+      // Revoke this refresh token, and bump the dealer's token_epoch so the
+      // current access token dies immediately rather than lingering until exp
+      // (audit #11). Epoch is per-dealer: other devices lose their access token
+      // too but re-mint it on their next refresh, so this is effectively an
+      // immediate current-session logout, not a force-logout-everywhere.
+      const row = await lookupRefreshToken(env, hash);
       await revokeRefreshToken(env, hash);
+      if (row) await bumpTokenEpoch(env, row.dealer_id);
     } catch { /* best-effort revoke */ }
   }
   const headers = new Headers();

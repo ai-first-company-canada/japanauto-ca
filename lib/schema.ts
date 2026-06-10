@@ -468,6 +468,9 @@ export const dealerSchema = z.object({
   stripe_customer_id: z.string().nullable(),
   daily_listing_count: z.number().int().min(0),
   daily_listing_reset_at: timestampSchema.nullable(),
+  // Session generation — bumped to invalidate all outstanding access tokens
+  // (audit #11). Internal; omitted from self/public views below.
+  token_epoch: z.number().int().min(0).default(0),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -495,6 +498,7 @@ export type DealerRow = z.infer<typeof dealerRowSchema>;
 export const dealerSelfSchema = dealerRowSchema.omit({
   password_hash: true,
   stripe_customer_id: true,
+  token_epoch: true,
 });
 export type DealerSelf = z.infer<typeof dealerSelfSchema>;
 
@@ -513,6 +517,7 @@ export const dealerPublicSchema = dealerRowSchema.omit({
   daily_listing_reset_at: true,
   business_number: true,
   gst_number: true,
+  token_epoch: true,
 });
 export type DealerPublic = z.infer<typeof dealerPublicSchema>;
 

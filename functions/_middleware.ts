@@ -23,6 +23,7 @@ import { resolveCity, type CityResolution } from "./api/_lib/geolocation";
 import { verifyAccessToken } from "./api/_lib/auth";
 import { isAllowedOrigin, isCrossSiteUnsafe } from "./api/_lib/csrf";
 import { forbidden } from "./api/_lib/response";
+import { getDealerById } from "./api/_lib/db";
 
 /**
  * Pages Functions data bag — used to pass geolocation + bot detection
@@ -136,6 +137,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
     const payload = await verifyAccessToken(accessToken, env);
     if (!payload) {
+      return Response.redirect(loginUrl, 302);
+    }
+    // Session kill-switch (audit #11): reject a signed-but-stale token whose
+    // epoch no longer matches the live dealer row (post logout/reset/suspend).
+    const dealer = await getDealerById(env, payload.sub);
+    if (!dealer || (dealer.token_epoch ?? 0) !== (payload.token_epoch ?? 0)) {
       return Response.redirect(loginUrl, 302);
     }
     md.dealerId = payload.sub;

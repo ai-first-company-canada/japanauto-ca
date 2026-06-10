@@ -78,7 +78,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const access = await signAccessToken({
     sub: dealer.id, email: dealer.email, dealer_type: dealer.type,
-    verified: dealer.verified,
+    verified: dealer.verified, token_epoch: dealer.token_epoch ?? 0,
   }, env);
 
   const cookies = buildAuthCookies(access.token, newRefresh, env);

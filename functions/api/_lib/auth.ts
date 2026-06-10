@@ -15,6 +15,7 @@
 import type { Env } from "../../../types/env";
 import { unauthorized, forbidden } from "./response";
 import { isCrossSiteUnsafe } from "./csrf";
+import { getDealerById } from "./db";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -51,6 +52,7 @@ export interface AccessTokenPayload {
   email: string;
   dealer_type: "dealer" | "salvage_yard";
   verified: 0 | 1;
+  token_epoch: number;    // dealers.token_epoch snapshot; revoked when it drifts (audit #11)
 }
 
 async function importHmacKey(secret: string): Promise<CryptoKey> {
@@ -233,11 +235,24 @@ export async function requireDealer(
   if (!token) return unauthorized();
   const payload = await verifyAccessToken(token, env);
   if (!payload) return unauthorized("Invalid or expired token");
+
+  // Server-side kill switch (audit #11): the access token is signed and unexpired,
+  // but re-check it against the live dealer row. A token_epoch mismatch means the
+  // token predates a revocation event (logout, password reset, suspension) and is
+  // rejected even before exp. `?? 0` keeps tokens minted before migration 0010
+  // (no token_epoch claim) valid against the default-0 column. Claims that gate
+  // authorization (verified, dealer_type) are rebuilt from the live row, never
+  // trusted from the 15-min-stale token.
+  const dealer = await getDealerById(env, payload.sub);
+  if (!dealer) return unauthorized("Account not found");
+  if ((dealer.token_epoch ?? 0) !== (payload.token_epoch ?? 0)) {
+    return unauthorized("Session revoked");
+  }
   return {
-    dealerId: payload.sub,
-    email: payload.email,
-    dealerType: payload.dealer_type,
-    verified: payload.verified === 1,
+    dealerId: dealer.id,
+    email: dealer.email,
+    dealerType: dealer.type,
+    verified: dealer.verified === 1,
   };
 }
 

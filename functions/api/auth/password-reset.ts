@@ -48,7 +48,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     //     consumed_at IS NULL, expires_at > now).
     //  2. UPDATE dealers SET password_hash = pbkdf2(...) WHERE id = ?.
     //  3. UPDATE verification_tokens SET consumed_at = now WHERE id = ?.
-    //  4. Revoke all refresh_tokens for that dealer (security best practice).
+    //  4. revokeAllRefreshTokensForDealer(env, dealerId) — kill refresh sessions.
+    //  5. bumpTokenEpoch(env, dealerId) — invalidate outstanding access tokens
+    //     immediately (audit #11), so a reset password ends every live session.
     return notImplemented("Password reset confirm — TODO");
   }
 };

@@ -80,6 +80,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   // Issue tokens
   const access = await signAccessToken({
     sub: id, email: input.email, dealer_type: input.type, verified: 0,
+    token_epoch: 0,   // fresh dealer row defaults token_epoch to 0
   }, env);
   const refresh = generateRefreshToken();
   const refreshTtl = parseInt(env.JWT_REFRESH_TTL_SECONDS, 10);

@@ -40,6 +40,19 @@ function parseDealerRow(row: Record<string, unknown>): Dealer {
   return dealerRowSchema.parse(r);
 }
 
+/**
+ * Bump a dealer's session generation (audit #11). Every outstanding access
+ * token carries the epoch it was minted under, so incrementing this instantly
+ * invalidates all of them (requireDealer + the /dealer/* page guard reject on
+ * mismatch). Called on logout; future password-reset confirm / suspension
+ * should call it too.
+ */
+export async function bumpTokenEpoch(env: Env, dealerId: string): Promise<void> {
+  await env.DB.prepare(
+    `UPDATE dealers SET token_epoch = token_epoch + 1 WHERE id = ?`
+  ).bind(dealerId).run();
+}
+
 export async function getDealerById(env: Env, id: string): Promise<Dealer | null> {
   const row = await env.DB.prepare(
     `SELECT * FROM dealers WHERE id = ? LIMIT 1`
