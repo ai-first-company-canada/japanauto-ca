@@ -45,9 +45,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
   const { email, password } = parsed.data;
 
-  // Email-bucket rate limit (after parsing valid email)
+  // Layered email-bucket rate limits (after parsing valid email): 5/min burst,
+  // 20/hour, 100/day per email — IP-rotated stuffing against one account trips
+  // the hour/day caps even when it dodges the per-minute burst (audit #16).
   const emailRl = await rateLimit(env, email, RATE_LIMITS.LOGIN_PER_EMAIL);
   if (!emailRl.allowed) return tooManyRequests(emailRl.retryAfterSeconds);
+  const emailHourRl = await rateLimit(env, email, RATE_LIMITS.LOGIN_PER_EMAIL_HOUR);
+  if (!emailHourRl.allowed) return tooManyRequests(emailHourRl.retryAfterSeconds);
+  const emailDayRl = await rateLimit(env, email, RATE_LIMITS.LOGIN_PER_EMAIL_DAY);
+  if (!emailDayRl.allowed) return tooManyRequests(emailDayRl.retryAfterSeconds);
+
+  // Global ceiling: bounds botnet-scale password spraying across the whole
+  // dealer base, which no per-email/per-IP bucket would individually catch.
+  const globalRl = await rateLimit(env, "all", RATE_LIMITS.LOGIN_GLOBAL);
+  if (!globalRl.allowed) return tooManyRequests(globalRl.retryAfterSeconds);
 
   const dealer = await getDealerByEmail(env, email);
   // Generic "Invalid credentials" — no enumeration via message OR timing: on an

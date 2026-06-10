@@ -103,6 +103,24 @@ export const RATE_LIMITS = {
     limit: 20,
     windowSeconds: 3600,    // 20 attempts/hour per IP
   } as RateLimitConfig,
+  // Per-email hour/day caps catch IP-rotated credential stuffing against ONE
+  // account that slips past the 5/min burst limiter; the global ceiling bounds
+  // botnet-scale password spraying across many accounts (audit #16).
+  LOGIN_PER_EMAIL_HOUR: {
+    bucket: "login-email-hour",
+    limit: 20,
+    windowSeconds: 3600,    // 20 attempts/hour per email
+  } as RateLimitConfig,
+  LOGIN_PER_EMAIL_DAY: {
+    bucket: "login-email-day",
+    limit: 100,
+    windowSeconds: 86400,   // 100 attempts/day per email
+  } as RateLimitConfig,
+  LOGIN_GLOBAL: {
+    bucket: "login-global",
+    limit: 5000,
+    windowSeconds: 3600,    // 5000 login attempts/hour site-wide (anti-spray ceiling)
+  } as RateLimitConfig,
   SIGNUP_PER_IP: {
     bucket: "signup-ip",
     limit: 5,

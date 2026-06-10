@@ -98,15 +98,18 @@ export async function getListingById(env: Env, id: string): Promise<Listing | nu
 }
 
 /**
- * Atomically set status='sold' + sold_at=now WHERE status != 'sold'.
- * Returns the updated row, or null if not found / already sold.
+ * Atomically set status='sold' + sold_at=now, but ONLY from status='active'
+ * (audit #21). Guarding on != 'sold' would let expired (soft-deleted), flagged,
+ * or draft rows be flipped to sold — firing an IndexNow ping for a URL the
+ * public route serves as 404, and corrupting sold-history. Returns the updated
+ * row, or null if not found / not active.
  */
 export async function markListingSold(env: Env, id: string): Promise<Listing | null> {
   const now = Math.floor(Date.now() / 1000);
   const row = await env.DB.prepare(
     `UPDATE listings
      SET status = 'sold', sold_at = ?, updated_at = ?
-     WHERE id = ? AND status != 'sold'
+     WHERE id = ? AND status = 'active'
      RETURNING *`
   ).bind(now, now, id).first();
   if (!row) return null;
@@ -419,14 +422,7 @@ export async function createMedia(
   // originals stored under e.g. "listings/<id>/01.jpg".
   const r2Key = `cf:${input.image_id}`;
 
-  if (isPrimary === 1) {
-    await env.DB.prepare(
-      `UPDATE media SET is_primary = 0
-       WHERE entity_type = ? AND entity_id = ? AND is_primary = 1`,
-    ).bind(input.entity_type, input.entity_id).run();
-  }
-
-  await env.DB.prepare(
+  const insertStmt = env.DB.prepare(
     `INSERT INTO media (
        id, entity_type, entity_id, r2_key, cf_image_id, alt_text,
        width, height, display_order, is_primary, bytes, created_at
@@ -435,7 +431,23 @@ export async function createMedia(
     id, input.entity_type, input.entity_id, r2Key, input.image_id, input.alt_text,
     input.width ?? null, input.height ?? null, input.display_order, isPrimary,
     input.bytes ?? null, now,
-  ).run();
+  );
+
+  if (isPrimary === 1) {
+    // Demote the old primary and insert the new one in a single D1 batch, which
+    // runs as one transaction (audit #22): if the INSERT fails, the demote rolls
+    // back too, so the entity is never left with zero primary images (which
+    // would blank its catalog thumbnail via the is_primary=1 LEFT JOIN).
+    await env.DB.batch([
+      env.DB.prepare(
+        `UPDATE media SET is_primary = 0
+         WHERE entity_type = ? AND entity_id = ? AND is_primary = 1`,
+      ).bind(input.entity_type, input.entity_id),
+      insertStmt,
+    ]);
+  } else {
+    await insertStmt.run();
+  }
 
   return rowToMediaPublic({
     id, entity_type: input.entity_type, entity_id: input.entity_id,
@@ -569,9 +581,10 @@ export async function listDonorsForDealer(
 }
 
 /**
- * Atomic mark-depleted: set both `condition` and `status` to 'depleted'
- * iff the row is not already depleted. Mirrors `markListingSold`.
- * Returns the updated row, or null on conflict (already depleted).
+ * Atomic mark-depleted: set both `condition` and `status` to 'depleted', but
+ * ONLY from status='active' (audit #21) — same reasoning as markListingSold:
+ * never resurrect an expired/flagged/draft donor into a depleted state.
+ * Returns the updated row, or null if not found / not active.
  */
 export async function markDonorDepleted(
   env: Env, id: string,
@@ -580,7 +593,7 @@ export async function markDonorDepleted(
   const row = await env.DB.prepare(
     `UPDATE donor_cars
      SET condition = 'depleted', status = 'depleted', updated_at = ?
-     WHERE id = ? AND condition != 'depleted'
+     WHERE id = ? AND status = 'active'
      RETURNING *`,
   ).bind(now, id).first<Record<string, unknown>>();
   return row ?? null;

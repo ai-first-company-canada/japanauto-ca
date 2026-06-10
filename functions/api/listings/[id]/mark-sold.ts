@@ -30,10 +30,12 @@ export const onRequestPost: PagesFunction<Env, "id"> = async (ctx) => {
   const listing = await getListingById(env, id);
   if (!listing) return notFound("Listing not found");
   if (listing.dealer_id !== auth.dealerId) return forbidden("Not your listing");
-  if (listing.status === "sold") return conflict("Listing already sold");
+  if (listing.status !== "active") {
+    return conflict("Only active listings can be marked sold");
+  }
 
   const updated = await markListingSold(env, id);
-  if (!updated) return conflict("Listing already sold");
+  if (!updated) return conflict("Only active listings can be marked sold");
 
   // Notify engines so the SoldOut Schema.org variant is recrawled promptly.
   ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/used-cars/listing/${updated.slug}/`]));

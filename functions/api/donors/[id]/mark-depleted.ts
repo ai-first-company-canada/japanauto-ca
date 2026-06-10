@@ -29,10 +29,12 @@ export const onRequestPost: PagesFunction<Env, "id"> = async (ctx) => {
   const donor = await getDonorCarById(env, id);
   if (!donor) return notFound("Donor car not found");
   if (donor.dealer_id !== auth.dealerId) return forbidden("Not your donor car");
-  if (donor.condition === "depleted") return conflict("Donor car already depleted");
+  if (donor.status !== "active") {
+    return conflict("Only active donor cars can be marked depleted");
+  }
 
   const updated = await markDonorDepleted(env, id);
-  if (!updated) return conflict("Donor car already depleted");
+  if (!updated) return conflict("Only active donor cars can be marked depleted");
 
   ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/parts/listing/${updated.slug}/`]));
 

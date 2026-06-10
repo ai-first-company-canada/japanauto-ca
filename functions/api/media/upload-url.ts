@@ -27,7 +27,7 @@
  */
 
 import type { Env } from "../../../types/env";
-import { mediaUploadInputSchema, zodErrorToApiError } from "../../../lib/schema";
+import { mediaUploadInputSchema, zodErrorToApiError, LIMITS } from "../../../lib/schema";
 import {
   json, jsonError, badRequest, notFound, forbidden, internalError, tooManyRequests,
 } from "../_lib/response";
@@ -80,6 +80,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   } else {
     return jsonError(422, "validation_failed",
       `entity_type='${entity_type}' upload not yet wired`);
+  }
+
+  // Pre-check the per-entity photo cap at mint time, not just at finalize
+  // (audit #17): otherwise a dealer could mint unbounded billable CF upload
+  // URLs against a single entity that is already at its photo limit.
+  const countRow = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM media WHERE entity_type = ? AND entity_id = ?`,
+  ).bind(entity_type, entity_id).first<{ n: number }>();
+  if ((countRow?.n ?? 0) >= LIMITS.PHOTOS_PER_LISTING_MAX) {
+    return jsonError(422, "validation_failed",
+      `Maximum ${LIMITS.PHOTOS_PER_LISTING_MAX} photos allowed per listing`);
   }
 
   const accountId = env.CLOUDFLARE_ACCOUNT_ID;
