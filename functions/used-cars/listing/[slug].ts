@@ -215,11 +215,11 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
         <div class="photo-lightbox-main">
           ${realPhotoUrls.map((_p, i) => `<input type="radio" name="lightbox-photo" id="lp-${i}" value="${i}"${i === 0 ? ' checked' : ''} class="sr-only" data-lightbox-radio />`).join('')}
           <div class="photo-lightbox-stage">
-            ${realPhotoUrls.map((p, i) => `<div class="photo-lightbox-slide" data-slide-idx="${i}" aria-hidden="${i !== 0}"><img src="${esc(p.url)}" alt="${esc(p.alt)}" style="width:100%;height:100%;object-fit:contain" /></div>`).join('')}
+            ${realPhotoUrls.map((p, i) => `<div class="photo-lightbox-slide" data-slide-idx="${i}" aria-hidden="${i !== 0}"><img src="${esc(p.url)}" alt="${esc(p.alt)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain" /></div>`).join('')}
           </div>
         </div>
         <div class="photo-lightbox-thumbs">
-          ${realPhotoUrls.map((p, i) => `<label for="lp-${i}" class="photo-thumb" aria-label="Photo ${i + 1}"><img src="${esc(p.url)}" alt="${esc(p.alt)}" style="width:100%;height:100%;object-fit:cover" /></label>`).join('')}
+          ${realPhotoUrls.map((p, i) => `<label for="lp-${i}" class="photo-thumb" aria-label="Photo ${i + 1}"><img src="${esc(p.url)}" alt="${esc(p.alt)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" /></label>`).join('')}
         </div>
       </dialog>
       <script>

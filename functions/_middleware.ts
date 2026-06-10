@@ -19,7 +19,7 @@
  */
 
 import type { Env } from "../types/env";
-import { resolveCity, type CityResolution } from "./api/_lib/geolocation";
+import { type CityResolution } from "./api/_lib/geolocation";
 import { verifyAccessToken } from "./api/_lib/auth";
 import { isAllowedOrigin, isCrossSiteUnsafe } from "./api/_lib/csrf";
 import { forbidden } from "./api/_lib/response";
@@ -125,11 +125,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return forbidden("Cross-site request rejected");
   }
 
-  // 1. Resolve city (only for non-API HTML — saves D1 hits on /api/* and assets).
-  const isAsset = /\.(css|js|svg|png|jpg|jpeg|webp|avif|ico|woff2?|map|xml|txt)$/i.test(url.pathname);
-  if (!isAsset) {
-    md.geo = await resolveCity(request, env);
-  }
+  // 1. City resolution removed from the hot path (audit #24): the city-first URL
+  //    architecture bakes city into every page at SSG/render time, so no handler
+  //    reads context.data.geo. Resolving it here cost an uncached D1 alias lookup
+  //    + KV read on every HTML request for a value that was then discarded. The
+  //    MiddlewareData.geo field stays for any future lazy consumer.
 
   // 2. Bot tag (cheap UA sniff)
   const ua = request.headers.get("user-agent") ?? "";

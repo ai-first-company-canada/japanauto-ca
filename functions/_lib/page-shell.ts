@@ -72,7 +72,7 @@ export function renderShell(opts: ShellOptions, body: string): string {
         '@id': 'https://japanauto.ca/#organization',
         name: 'japanauto.ca',
         url: 'https://japanauto.ca',
-        logo: 'https://japanauto.ca/logo.png',
+        logo: 'https://japanauto.ca/logo.svg',
         description: 'Canadian marketplace for used Japanese cars and parts donor cars',
         areaServed: { '@type': 'Country', name: 'Canada' },
       },
@@ -110,7 +110,8 @@ ${SHELL_HEAD}
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" /></noscript>
 <link rel="stylesheet" href="/styles/global.css" />
 <script type="application/ld+json">${JSON.stringify(graph).replace(/</g, '\\u003c')}</script>
 </head>

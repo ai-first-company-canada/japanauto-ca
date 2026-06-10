@@ -204,19 +204,21 @@ export async function listCatalog(
     LIMIT ? OFFSET ?
   `;
 
-  const result = await env.DB.prepare(sql)
-    .bind(q.makeId, q.modelId, q.city, ...yearBinds, ...mileageBinds, q.perPage, offset)
-    .all();
-
-  // Count total (separate, simpler query — could be cached in KV)
-  const totalRow = await env.DB.prepare(`
+  // Page rows and total count were two serial round-trips; run them as one D1
+  // batch so the busiest public read pays a single network round-trip (audit #26).
+  const pageStmt = env.DB.prepare(sql)
+    .bind(q.makeId, q.modelId, q.city, ...yearBinds, ...mileageBinds, q.perPage, offset);
+  const countStmt = env.DB.prepare(`
     SELECT COUNT(*) AS n FROM listings
     WHERE make_id = ? AND model_id = ? AND city = ? AND status = 'active'
     ${yearClause} ${mileageClause}
-  `).bind(q.makeId, q.modelId, q.city, ...yearBinds, ...mileageBinds).first<{ n: number }>();
+  `).bind(q.makeId, q.modelId, q.city, ...yearBinds, ...mileageBinds);
+
+  const [pageResult, countResult] = await env.DB.batch([pageStmt, countStmt]);
+  const totalRow = (countResult.results?.[0] ?? null) as { n: number } | null;
 
   return {
-    rows: (result.results ?? []) as unknown as CatalogRow[],
+    rows: (pageResult.results ?? []) as unknown as CatalogRow[],
     total: totalRow?.n ?? 0,
   };
 }
