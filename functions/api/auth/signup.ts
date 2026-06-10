@@ -20,7 +20,7 @@ import {
   buildAuthCookies,
 } from "../_lib/auth";
 import { storeRefreshToken, getDealerByEmail } from "../_lib/db";
-import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
+import { rateLimit, RATE_LIMITS, hashIpStable } from "../_lib/rate-limit";
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   // Rate limit by IP
@@ -89,7 +89,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     dealerId: id,
     tokenHash: await hashRefreshToken(refresh),
     userAgent: request.headers.get("user-agent") ?? null,
-    ipAddress: ip === "unknown" ? null : ip,
+    // Store a stable hash, never the raw IP (audit #20 — PII minimization).
+    ipAddress: ip === "unknown" ? null : await hashIpStable(env, ip),
     issuedAt: now,
     expiresAt: now + refreshTtl,
   });

@@ -20,6 +20,7 @@ import {
   lookupRefreshToken, revokeAllRefreshTokensForDealer,
   rotateRefreshToken, storeRefreshToken, getDealerById,
 } from "../_lib/db";
+import { hashIpStable } from "../_lib/rate-limit";
 
 function readRefreshCookie(request: Request): string | null {
   const c = request.headers.get("cookie");
@@ -64,13 +65,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const newRefreshId = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
   const refreshTtl = parseInt(env.JWT_REFRESH_TTL_SECONDS, 10);
+  const ip = request.headers.get("cf-connecting-ip");
 
   await storeRefreshToken(env, {
     id: newRefreshId,
     dealerId: dealer.id,
     tokenHash: newRefreshHash,
     userAgent: request.headers.get("user-agent") ?? null,
-    ipAddress: request.headers.get("cf-connecting-ip") ?? null,
+    // Store a stable hash, never the raw IP (audit #20 — PII minimization).
+    ipAddress: ip ? await hashIpStable(env, ip) : null,
     issuedAt: now,
     expiresAt: now + refreshTtl,
   });

@@ -157,3 +157,23 @@ export async function hashIp(env: Env, ip: string): Promise<string> {
   const bytes = new Uint8Array(buf);
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+/**
+ * Hash an IP with a STABLE salt (no daily rotation). Used for refresh_tokens,
+ * whose rows live up to 30 days — hashIp()'s daily salt would make a row's
+ * stored hash uncorrelatable with the same IP a day later, defeating session
+ * forensics (audit #20). We store this instead of the raw IP so a D1 read /
+ * backup leak never exposes a dealer's plaintext IP history (PIPEDA/GDPR), while
+ * still allowing "are this dealer's sessions all from one IP?" checks. The salt
+ * is sourced from JWT_SECRET (a stable, secret, always-present value — enforced
+ * >=32 chars) to avoid introducing another required secret; SHA-256 is one-way
+ * so this never exposes JWT_SECRET.
+ */
+export async function hashIpStable(env: Env, ip: string): Promise<string> {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest(
+    "SHA-256", enc.encode(`refresh-ip:${env.JWT_SECRET}:${ip}`),
+  );
+  const bytes = new Uint8Array(buf);
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}

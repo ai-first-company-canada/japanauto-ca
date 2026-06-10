@@ -50,6 +50,15 @@
 - [ ] №19 — CI deploy.yml не гоняет `audit:seo` (локальный `npm run deploy`
       гоняет; CI-путь должен тоже + `audit:launch` после запуска).
 
+## 3b. Data retention (PII-минимизация)
+
+- [ ] Настроить периодическую чистку (Cloudflare Cron Trigger / Worker — Pages
+      Functions крон не умеют): истёкшие/отозванные `refresh_tokens`,
+      использованные/просроченные `verification_tokens`, старые `contact_reveals`.
+      Пример: `DELETE FROM refresh_tokens WHERE expires_at < unixepoch()-2592000`.
+      Свежие строки уже хранят хеш IP, не сырой (аудит №20), но retention всё
+      равно нужен. До крона можно чистить вручную перед запуском.
+
 ## 4. Секреты и конфигурация прода
 
 - [ ] `JWT_SECRET` задан в Pages-проекте и **длиной ≥ 32 символов** — короче

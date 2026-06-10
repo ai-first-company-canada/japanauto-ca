@@ -19,7 +19,7 @@ import {
   buildAuthCookies,
 } from "../_lib/auth";
 import { getDealerByEmail, storeRefreshToken } from "../_lib/db";
-import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
+import { rateLimit, RATE_LIMITS, hashIpStable } from "../_lib/rate-limit";
 
 // A syntactically-valid PBKDF2 hash that no password matches. Verifying against
 // it on unknown emails makes the no-such-user path run the same ~100k-iteration
@@ -85,7 +85,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     dealerId: dealer.id,
     tokenHash: await hashRefreshToken(refresh),
     userAgent: request.headers.get("user-agent") ?? null,
-    ipAddress: ip === "unknown" ? null : ip,
+    // Store a stable hash, never the raw IP (audit #20 — PII minimization).
+    ipAddress: ip === "unknown" ? null : await hashIpStable(env, ip),
     issuedAt: now,
     expiresAt: now + refreshTtl,
   });

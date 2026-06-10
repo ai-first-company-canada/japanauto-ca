@@ -33,6 +33,18 @@ jobs:
       - name: Build
         run: npm run build
 
+      # The SEO/GEO gate that `npm run deploy` runs locally via the `predeploy`
+      # lifecycle hook. wrangler-action calls `pages deploy` directly, bypassing
+      # that hook, so without this step CI could ship SEO-broken HTML that a
+      # local deploy would have rejected (audit #19).
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: SEO audit gate
+        run: npm run audit:seo
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
         with:

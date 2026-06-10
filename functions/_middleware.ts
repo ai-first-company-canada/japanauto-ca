@@ -167,8 +167,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return new Response(null, { status: 403 });
   }
 
-  // 4. Forward to route handler / static asset.
-  const response = await next();
+  // 4. Forward to route handler / static asset. Wrap in try/catch (audit #23):
+  //    several db.ts read helpers call zod `.parse()` (throws, not safeParse) on
+  //    raw D1 rows, so any schema/data drift throws out of next(). Without this
+  //    boundary the platform 500 carries none of the SECURITY_HEADERS/CORS
+  //    applied below and breaks the JSON ApiError contract the rest of the API
+  //    guarantees. Catch it and emit a clean envelope that still gets headered.
+  let response: Response;
+  try {
+    response = await next();
+  } catch (err) {
+    console.error("[middleware] unhandled error in next():", err);
+    response = new Response(
+      JSON.stringify({ error: "internal_error", message: "Internal server error" }),
+      { status: 500, headers: { "content-type": "application/json; charset=utf-8" } },
+    );
+  }
 
   // 5. Apply security headers + per-request CORS to API responses.
   //    `new Headers(response.headers)` collapses multiple Set-Cookie entries
