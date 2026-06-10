@@ -13,7 +13,8 @@
  */
 
 import type { Env } from "../../../types/env";
-import { unauthorized } from "./response";
+import { unauthorized, forbidden } from "./response";
+import { isCrossSiteUnsafe } from "./csrf";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -220,6 +221,14 @@ function extractAccessToken(request: Request): string | null {
 export async function requireDealer(
   request: Request, env: Env,
 ): Promise<AuthContext | Response> {
+  // CSRF backstop (primary enforcement: functions/_middleware.ts). A token
+  // arriving via cookie on a cross-site unsafe request must not authenticate;
+  // Bearer-header requests are exempt — attacker pages cannot set that header.
+  const hasBearer = request.headers.get("authorization")?.startsWith("Bearer ") ?? false;
+  if (!hasBearer && isCrossSiteUnsafe(request, env)) {
+    return forbidden("Cross-site request rejected");
+  }
+
   const token = extractAccessToken(request);
   if (!token) return unauthorized();
   const payload = await verifyAccessToken(token, env);

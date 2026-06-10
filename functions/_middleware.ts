@@ -21,6 +21,8 @@
 import type { Env } from "../types/env";
 import { resolveCity, type CityResolution } from "./api/_lib/geolocation";
 import { verifyAccessToken } from "./api/_lib/auth";
+import { isAllowedOrigin, isCrossSiteUnsafe } from "./api/_lib/csrf";
+import { forbidden } from "./api/_lib/response";
 
 /**
  * Pages Functions data bag — used to pass geolocation + bot detection
@@ -55,25 +57,6 @@ function isDealerProtected(pathname: string): boolean {
   if (pathname.startsWith("/dealer/reset-password/")) return false;
   if (pathname.startsWith("/dealer/verify-email/")) return false;
   return true;
-}
-
-/**
- * Allowed Origin headers for CORS. Production = exact match;
- * preview/dev = pattern match against Pages preview domains.
- */
-function isAllowedOrigin(origin: string | null, env: Env): boolean {
-  if (!origin) return false;
-  const allowed = [
-    "https://japanauto.ca",
-    "https://www.japanauto.ca",
-  ];
-  if (allowed.includes(origin)) return true;
-  // Pages preview: https://<hash>.japanauto.pages.dev
-  if (env.ENV !== "production" && /^https:\/\/[a-z0-9-]+\.japanauto\.pages\.dev$/.test(origin)) {
-    return true;
-  }
-  if (env.ENV === "dev" && origin.startsWith("http://localhost:")) return true;
-  return false;
 }
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -119,8 +102,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // 1. Resolve city (only for non-API HTML — saves D1 hits on /api/* and assets).
+  // 0b. CSRF guard (audit #9) — reject cross-site unsafe-method API requests
+  //     before any handler or D1 work runs. Cookie-authed mutations are the
+  //     target; non-browser clients (no Origin/Sec-Fetch-Site: curl, Stripe
+  //     webhook) pass through. Logic + second layer in api/_lib/csrf.ts.
   const isApi = url.pathname.startsWith("/api/");
+  if (isApi && isCrossSiteUnsafe(request, env)) {
+    return forbidden("Cross-site request rejected");
+  }
+
+  // 1. Resolve city (only for non-API HTML — saves D1 hits on /api/* and assets).
   const isAsset = /\.(css|js|svg|png|jpg|jpeg|webp|avif|ico|woff2?|map|xml|txt)$/i.test(url.pathname);
   if (!isAsset) {
     md.geo = await resolveCity(request, env);
