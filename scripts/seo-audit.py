@@ -27,9 +27,17 @@ WARNINGS (reported, never block) — judgement calls, not correctness bugs:
 
 noindex pages (e.g. the auth-gated /dealer/* portal) and 404 are excluded
 from the hard checks by design — they are intentionally not SEO surfaces.
+
+LAUNCH MODE (`LAUNCH=1 python3 scripts/seo-audit.py` / `npm run audit:launch`):
+extra hard errors that only matter the day the site goes public — fabricated
+demo content (`data-demo-content` markers) still in the build, or a robots.txt
+that still blocks the whole host. Run it before connecting the production
+domain; see LAUNCH-CHECKLIST.md.
 """
 import re, json, os, sys, html
 from collections import defaultdict, Counter
+
+LAUNCH = os.environ.get('LAUNCH', '') == '1'
 
 PROD = 'https://japanauto.ca'
 CITIES = {'toronto', 'montreal', 'vancouver', 'calgary', 'edmonton', 'ottawa'}
@@ -125,6 +133,7 @@ def scan(dist):
                 types=graph_types(h),
                 words=len(visible_text(h).split()),
                 faq_visible=bool(re.search(r'Common questions|Frequently asked|>FAQ<', h, re.I)),
+                demo=('data-demo-content' in h),
             ))
     return pages
 
@@ -169,9 +178,27 @@ def main():
             if p['words'] < 200:
                 warnings.append((p['rel'], f"thin content ({p['words']} words)"))
 
+    # ---- launch-only gates: fabricated content & crawl blocks must not ship ----
+    if LAUNCH:
+        demo_pages = [p for p in pages if p['demo']]
+        for p in demo_pages[:5]:
+            errors.append((p['rel'], 'LAUNCH: page carries data-demo-content (fabricated inventory)'))
+        if len(demo_pages) > 5:
+            errors.append((f'… +{len(demo_pages) - 5} more pages', 'LAUNCH: data-demo-content'))
+        robots_path = os.path.join(dist, 'robots.txt')
+        if not os.path.isfile(robots_path):
+            errors.append(('robots.txt', 'LAUNCH: missing'))
+        else:
+            robots_txt = open(robots_path, encoding='utf-8').read()
+            if re.search(r'^Disallow:\s*/\s*$', robots_txt, re.M):
+                errors.append(('robots.txt', 'LAUNCH: still blocks the whole host (Disallow: /)'))
+        if not os.path.isfile(os.path.join(dist, 'sitemap.xml')):
+            errors.append(('sitemap.xml', 'LAUNCH: missing'))
+
     # ---- report ----
     idxn = sum(1 for p in pages if not p['noindex'] and p['grp'] != '404')
-    print(f"SEO/GEO audit — {len(pages)} pages ({idxn} indexable) in {dist}/\n")
+    mode = ' · LAUNCH mode (demo-content & robots gates active)' if LAUNCH else ''
+    print(f"SEO/GEO audit — {len(pages)} pages ({idxn} indexable) in {dist}/{mode}\n")
     hdr = f"{'GROUP':<18}{'n':>4} {'idx':>4} {'title':>6}{'desc':>5}{'canOK':>6}{'h1=1':>5}{'og':>4}{'JSON-LD':>8}{'FAQp':>5}"
     print(hdr)
     print('-' * len(hdr))

@@ -48,6 +48,14 @@ export interface CatalogPageData {
   totalCount: number;
   dealerCount: number;
   remaining: number;
+  /**
+   * True while listings come from this pseudo-random stub. Gates Vehicle/Offer
+   * JSON-LD and the "Sample preview" banner in the city-model template, and
+   * stamps `data-demo-content` into the HTML so the LAUNCH=1 seo-audit gate
+   * can refuse to ship fabricated inventory. Must become false (or derived
+   * per-row) when this is replaced with the real D1 query.
+   */
+  isDemo: boolean;
 }
 
 const FEATURED_COMBOS: Record<string, FeaturedData> = {
@@ -236,5 +244,5 @@ export function getCatalogForModelCity(
   const organic = allListings.slice(boostedCount);
   const remaining = Math.max(0, totalCount - allListings.length);
 
-  return { featured, boosted, organic, totalCount, dealerCount, remaining };
+  return { featured, boosted, organic, totalCount, dealerCount, remaining, isDemo: true };
 }

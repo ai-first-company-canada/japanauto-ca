@@ -11,6 +11,7 @@
     "preview": "astro preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "audit:seo": "python3 scripts/seo-audit.py dist",
+    "audit:launch": "LAUNCH=1 python3 scripts/seo-audit.py dist",
     "predeploy": "npm run typecheck && npm run build && npm run audit:seo",
     "deploy": "wrangler pages deploy dist --project-name japanauto",
     "astro": "astro"

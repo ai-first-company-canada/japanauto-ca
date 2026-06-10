@@ -72,7 +72,11 @@ const schemaLD = [
       { '@type': 'ListItem', position: 4, name: modelInfo.name, item: canonical },
     ],
   },
-  {
+  // Vehicle/Offer markup is only honest when listings are real D1 rows whose
+  // URLs resolve. Emitting it for the demo stub = structured data for
+  // nonexistent offers (Google manual-action territory), so it is gated until
+  // getCatalogForModelCity() is wired to the database.
+  ...(catalog.isDemo ? [] : [{
     '@type': 'ItemList',
     name: `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}`,
     numberOfItems: catalog.totalCount,
@@ -96,7 +100,7 @@ const schemaLD = [
         },
       },
     })),
-  },
+  }]),
   {
     '@type': 'Place',
     name: cityInfo.name,
@@ -107,7 +111,7 @@ const schemaLD = [
       addressCountry: 'CA',
     },
   },
-  ...(catalog.featured ? [{
+  ...(catalog.featured && !catalog.isDemo ? [{
     '@type': 'Offer',
     category: 'NewVehicle',
     name: `New ${catalog.featured.year} ${catalog.featured.make} ${catalog.featured.model}`,
@@ -165,14 +169,17 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
     Showing <span class="num">{visibleCount}</span> of <span class="num">{catalog.totalCount}</span> listings
   </p>
 
-  <div
-    id="catalog-preview-banner"
-    class="t-body-s"
-    style="margin:8px 16px 0;padding:10px 14px;border-radius:8px;background:var(--color-bg-subtle);border:1px solid var(--color-divider);font-size:13px;line-height:19px;color:var(--color-ink-muted)"
-  >
-    Sample preview — live listings open as {cityInfo.name} dealers onboard.
-    <a href="/dealer/signup/" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
-  </div>
+  {catalog.isDemo && (
+    <div
+      id="catalog-preview-banner"
+      data-demo-content="true"
+      class="t-body-s"
+      style="margin:8px 16px 0;padding:10px 14px;border-radius:8px;background:var(--color-bg-subtle);border:1px solid var(--color-divider);font-size:13px;line-height:19px;color:var(--color-ink-muted)"
+    >
+      Sample preview — live listings open as {cityInfo.name} dealers onboard.
+      <a href="/dealer/signup/" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
+    </div>
+  )}
 
   <CatalogList
     featured={catalog.featured}
