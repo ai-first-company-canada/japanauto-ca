@@ -65,13 +65,26 @@ const SECURITY_HEADERS: Record<string, string> = {
   "x-frame-options": "SAMEORIGIN",
   "referrer-policy": "strict-origin-when-cross-origin",
   "permissions-policy": "geolocation=(), camera=(), microphone=(), payment=(self)",
-  // CSP intentionally relaxed; tightened in Phase 2 after Astro asset map is finalised.
+  // CSP (audit #18). script-src/style-src still carry 'unsafe-inline': the site
+  // renders many legitimate inline scripts both at build time (Astro SSG) and at
+  // runtime (functions/_lib/page-shell.ts), and a shared CSP header can't drop
+  // 'unsafe-inline' for them without a full migration — adding a hash/nonce makes
+  // browsers IGNORE 'unsafe-inline' (CSP3), so a half-migration would break every
+  // inline script across 900+ pages. That migration (Astro build-time hashes for
+  // SSG + a per-request nonce threaded through page-shell for dynamic routes) is
+  // tracked separately. Until then these directives are pure hardening that does
+  // NOT depend on inline policy and closes real amplifiers:
+  //   object-src 'none'  — no <object>/<embed> plugin script execution
+  //   base-uri 'self'    — block <base> injection that hijacks every relative URL
+  //   form-action 'self' — injected forms can't POST to attacker origins
+  // Verified safe: no dist page uses <base>, and all 897 forms submit same-origin.
   "content-security-policy":
     "default-src 'self'; img-src 'self' data: https://imagedelivery.net; " +
     "script-src 'self' 'unsafe-inline' https://js.stripe.com; " +
     "style-src 'self' 'unsafe-inline'; " +
     "connect-src 'self' https://api.stripe.com; " +
     "frame-src https://js.stripe.com https://hooks.stripe.com; " +
+    "object-src 'none'; base-uri 'self'; form-action 'self'; " +
     "frame-ancestors 'self';",
   "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
 };
