@@ -657,7 +657,7 @@ export const catalogQuerySchema = z.object({
   make: brandSlugSchema,
   model: slugSchema,
   city: slugSchema,
-  years: z.array(listingYearSchema).optional(),       // multi-select
+  years: z.array(listingYearSchema).max(LIMITS.USED_CAR_AGE_CAP_YEARS + 2).optional(),  // multi-select, bounded (audit #33)
   mileage_max: z.number().int().min(0).max(LIMITS.MILEAGE_MAX_KM).optional(),
   sort: z.enum(["newest", "price_asc", "price_desc"]).default("newest"),
   page: z.number().int().min(1).default(1),
@@ -678,10 +678,13 @@ export type CatalogQuery = z.infer<typeof catalogQuerySchema>;
 
 const donorYearSchema = z.number().int().min(1980).max(2030);
 
-const donorCompatibleMakesSchema  = z.array(z.enum(BRAND_SLUGS)).min(1);
-const donorCompatibleModelsSchema = z.array(slugSchema).min(1);
-const donorCompatibleYearsSchema  = z.array(donorYearSchema).min(1);
-const donorCompatibleTrimsSchema  = z.array(z.string().trim().min(1).max(40)).min(1);
+// Upper bounds (audit #33): per-element rules don't cap array length, and
+// arrays allow duplicates, so without .max() a salvage_yard could persist
+// multi-megabyte JSON blobs into the donor TEXT columns (storage amplification).
+const donorCompatibleMakesSchema  = z.array(z.enum(BRAND_SLUGS)).min(1).max(BRAND_SLUGS.length);
+const donorCompatibleModelsSchema = z.array(slugSchema).min(1).max(50);
+const donorCompatibleYearsSchema  = z.array(donorYearSchema).min(1).max(60);
+const donorCompatibleTrimsSchema  = z.array(z.string().trim().min(1).max(40)).min(1).max(50);
 
 const donorCarBaseFields = {
   year: donorYearSchema,

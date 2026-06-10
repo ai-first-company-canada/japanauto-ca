@@ -47,7 +47,13 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
+        # Pass the branch name via env, not by interpolating ${{ github.ref_name }}
+        # directly into the shell command (audit #37): a branch named e.g.
+        # `fix/x$(...)` would otherwise be spliced into the command string and
+        # executed on the runner, which holds the CLOUDFLARE_* secrets.
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=japanauto --branch=${{ github.ref_name }}
+          command: pages deploy dist --project-name=japanauto --branch="$DEPLOY_BRANCH"

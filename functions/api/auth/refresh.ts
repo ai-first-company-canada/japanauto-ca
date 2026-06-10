@@ -12,7 +12,7 @@
  */
 
 import type { Env } from "../../../types/env";
-import { json, jsonError, unauthorized } from "../_lib/response";
+import { json, jsonError, unauthorized, tooManyRequests } from "../_lib/response";
 import {
   signAccessToken, generateRefreshToken, hashRefreshToken, buildAuthCookies,
 } from "../_lib/auth";
@@ -20,7 +20,7 @@ import {
   lookupRefreshToken, revokeAllRefreshTokensForDealer,
   rotateRefreshToken, storeRefreshToken, getDealerById,
 } from "../_lib/db";
-import { hashIpStable } from "../_lib/rate-limit";
+import { hashIpStable, rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
 
 function readRefreshCookie(request: Request): string | null {
   const c = request.headers.get("cookie");
@@ -30,6 +30,13 @@ function readRefreshCookie(request: Request): string | null {
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  // Throttle by IP (audit #42): refresh was the one unauthenticated auth
+  // endpoint with no rate limit, leaving refresh-token brute/rotation abuse
+  // unbounded.
+  const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+  const rl = await rateLimit(env, ip, RATE_LIMITS.REFRESH_PER_IP);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterSeconds);
+
   let token = readRefreshCookie(request);
   if (!token) {
     try {
@@ -65,7 +72,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const newRefreshId = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
   const refreshTtl = parseInt(env.JWT_REFRESH_TTL_SECONDS, 10);
-  const ip = request.headers.get("cf-connecting-ip");
 
   await storeRefreshToken(env, {
     id: newRefreshId,
@@ -73,7 +79,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     tokenHash: newRefreshHash,
     userAgent: request.headers.get("user-agent") ?? null,
     // Store a stable hash, never the raw IP (audit #20 — PII minimization).
-    ipAddress: ip ? await hashIpStable(env, ip) : null,
+    ipAddress: ip === "unknown" ? null : await hashIpStable(env, ip),
     issuedAt: now,
     expiresAt: now + refreshTtl,
   });

@@ -125,6 +125,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return forbidden("Cross-site request rejected");
   }
 
+  // Body-size guard (audit #33): reject oversized /api/* write bodies before any
+  // handler reads them, bounding storage-amplification via large JSON arrays.
+  if (isApi && /^(POST|PUT|PATCH)$/.test(request.method)) {
+    const len = parseInt(request.headers.get("content-length") ?? "0", 10);
+    if (Number.isFinite(len) && len > 64 * 1024) {
+      return new Response(
+        JSON.stringify({ error: "payload_too_large", message: "Request body exceeds 64 KB" }),
+        { status: 413, headers: { "content-type": "application/json; charset=utf-8" } },
+      );
+    }
+  }
+
   // 1. City resolution removed from the hot path (audit #24): the city-first URL
   //    architecture bakes city into every page at SSG/render time, so no handler
   //    reads context.data.geo. Resolving it here cost an uncached D1 alias lookup

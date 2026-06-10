@@ -141,6 +141,11 @@ export const RATE_LIMITS = {
     limit: 100,
     windowSeconds: 3600,    // 100 direct-upload URLs/hour per dealer — caps billable CF Images abuse
   } as RateLimitConfig,
+  REFRESH_PER_IP: {
+    bucket: "refresh-ip",
+    limit: 60,
+    windowSeconds: 3600,    // 60 refreshes/hour per IP — caps refresh-token brute/rotation abuse (audit #42)
+  } as RateLimitConfig,
 } as const;
 
 /**

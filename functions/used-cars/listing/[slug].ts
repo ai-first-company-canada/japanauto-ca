@@ -173,7 +173,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
-        { '@type': 'ListItem', position: 2, name: cityName, item: `https://japanauto.ca/used-cars/${makeRow.slug}/${modelRow.slug}/${listing.city}/` },
+        { '@type': 'ListItem', position: 2, name: cityName, item: `https://japanauto.ca/${listing.city}/${makeRow.slug}/${modelRow.slug}/` },
         { '@type': 'ListItem', position: 3, name: makeRow.name, item: `https://japanauto.ca/used-cars/${makeRow.slug}/` },
         { '@type': 'ListItem', position: 4, name: modelRow.name, item: `https://japanauto.ca/used-cars/${makeRow.slug}/${modelRow.slug}/` },
         { '@type': 'ListItem', position: 5, name: `${listing.year}${trimSep}`, item: canonical },
@@ -262,7 +262,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
 ${sold ? `<div style="background:var(--color-ink-strong);color:#fff;height:48px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;letter-spacing:0.08em">SOLD</div>` : ''}
 
 <nav aria-label="Breadcrumb" style="padding:12px 16px 0;font-size:12px;color:var(--color-ink-muted)">
-  <a href="/" style="color:inherit">Home</a> · <a href="/used-cars/${esc(makeRow.slug)}/${esc(modelRow.slug)}/${esc(listing.city)}/" style="color:inherit">${esc(cityName)}</a> · <a href="/used-cars/${esc(makeRow.slug)}/" style="color:inherit">${esc(makeRow.name)}</a> · <a href="/used-cars/${esc(makeRow.slug)}/${esc(modelRow.slug)}/" style="color:inherit">${esc(modelRow.name)}</a> · <span style="color:var(--color-ink-strong)">${listing.year}${trimSep ? esc(trimSep) : ''}</span>
+  <a href="/" style="color:inherit">Home</a> · <a href="/${esc(listing.city)}/${esc(makeRow.slug)}/${esc(modelRow.slug)}/" style="color:inherit">${esc(cityName)}</a> · <a href="/used-cars/${esc(makeRow.slug)}/" style="color:inherit">${esc(makeRow.name)}</a> · <a href="/used-cars/${esc(makeRow.slug)}/${esc(modelRow.slug)}/" style="color:inherit">${esc(modelRow.name)}</a> · <span style="color:var(--color-ink-strong)">${listing.year}${trimSep ? esc(trimSep) : ''}</span>
 </nav>
 
 ${photoGalleryHtml}

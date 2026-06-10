@@ -18,10 +18,18 @@ import { requireDealer } from "../../_lib/auth";
 import { getListingById, getMediaForEntity } from "../../_lib/db";
 import { pingIndexNow } from "../../_lib/indexnow";
 
-export const onRequestGet: PagesFunction<Env, "id"> = async ({ params, env }) => {
+export const onRequestGet: PagesFunction<Env, "id"> = async ({ request, params, env }) => {
   const id = params.id as string;
   const listing = await getListingById(env, id);
   if (!listing) return notFound();
+  // Public callers may read only active listings. draft/sold/expired/flagged
+  // rows — and their internal fields (flagged_reason, boost_*, dealer_id,
+  // expires_at) — are owner-only (audit #35: anonymous BAC/IDOR otherwise).
+  if (listing.status !== "active") {
+    const auth = await requireDealer(request, env);
+    if (auth instanceof Response) return auth;
+    if (listing.dealer_id !== auth.dealerId) return forbidden();
+  }
   const photos = await getMediaForEntity(env, "listing", id);
   return json({ listing, photos });
 };
