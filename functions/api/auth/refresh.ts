@@ -17,7 +17,8 @@ import {
   signAccessToken, generateRefreshToken, hashRefreshToken, buildAuthCookies,
 } from "../_lib/auth";
 import {
-  findActiveRefreshToken, rotateRefreshToken, storeRefreshToken, getDealerById,
+  lookupRefreshToken, revokeAllRefreshTokensForDealer,
+  rotateRefreshToken, storeRefreshToken, getDealerById,
 } from "../_lib/db";
 
 function readRefreshCookie(request: Request): string | null {
@@ -38,8 +39,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!token) return unauthorized("Refresh token missing");
 
   const tokenHash = await hashRefreshToken(token);
-  const existing = await findActiveRefreshToken(env, tokenHash);
+  const existing = await lookupRefreshToken(env, tokenHash);
   if (!existing) return unauthorized("Refresh token invalid or expired");
+
+  // Reuse detection (OWASP refresh-rotation, audit #10): a token that was
+  // already rotated/revoked is being presented again. Legitimate clients never
+  // reuse a rotated token, so treat this as a stolen-token replay and revoke
+  // the dealer's entire token family — the attacker's rotated session dies too,
+  // and the real owner must re-authenticate.
+  if (existing.revoked_at !== null) {
+    await revokeAllRefreshTokensForDealer(env, existing.dealer_id);
+    return unauthorized("Refresh token reuse detected; all sessions revoked");
+  }
+  if (existing.expires_at < Math.floor(Date.now() / 1000)) {
+    return unauthorized("Refresh token invalid or expired");
+  }
 
   const dealer = await getDealerById(env, existing.dealer_id);
   if (!dealer) return unauthorized("Dealer not found");

@@ -673,15 +673,20 @@ export async function storeRefreshToken(
   ).run();
 }
 
-export async function findActiveRefreshToken(
+/**
+ * Raw lookup by token hash — returns the row even when revoked or expired, so
+ * the caller can tell "unknown token" apart from "known-but-revoked token".
+ * That distinction is what enables refresh-rotation reuse detection (audit #10):
+ * presenting an already-rotated (revoked) token is the theft signal. Returns
+ * null only when no row with this hash exists.
+ */
+export async function lookupRefreshToken(
   env: Env, tokenHash: string,
 ): Promise<{ id: string; dealer_id: string; expires_at: number; revoked_at: number | null } | null> {
   const row = await env.DB.prepare(`
     SELECT id, dealer_id, expires_at, revoked_at FROM refresh_tokens WHERE token_hash = ? LIMIT 1
   `).bind(tokenHash).first<{ id: string; dealer_id: string; expires_at: number; revoked_at: number | null }>();
-  if (!row || row.revoked_at !== null) return null;
-  if (row.expires_at < Math.floor(Date.now() / 1000)) return null;
-  return row;
+  return row ?? null;
 }
 
 export async function rotateRefreshToken(
@@ -698,6 +703,21 @@ export async function revokeRefreshToken(env: Env, tokenHash: string): Promise<v
   await env.DB.prepare(
     `UPDATE refresh_tokens SET revoked_at = ? WHERE token_hash = ? AND revoked_at IS NULL`
   ).bind(now, tokenHash).run();
+}
+
+/**
+ * Revoke every still-active refresh token for a dealer. Invoked when refresh
+ * reuse is detected (audit #10): one stolen-then-rotated token presented again
+ * means the whole token family is suspect, so all live sessions are killed and
+ * the dealer must re-authenticate. Idempotent (only touches revoked_at IS NULL).
+ */
+export async function revokeAllRefreshTokensForDealer(
+  env: Env, dealerId: string,
+): Promise<void> {
+  const now = Math.floor(Date.now() / 1000);
+  await env.DB.prepare(
+    `UPDATE refresh_tokens SET revoked_at = ? WHERE dealer_id = ? AND revoked_at IS NULL`
+  ).bind(now, dealerId).run();
 }
 
 // ============================================================================
