@@ -2,8 +2,8 @@
  * lib/schema.ts — единый контракт между Workers, Astro компонентами и формами.
  *
  * Источник правды: миграция 0001_initial_schema.sql + project rules
- * (validation-zod.md, postal-phone-format.md, vin-validation.md, slug-format.md,
- * japanese-brands-whitelist.md, listing-lifecycle.md, adr-0007).
+ * (docs/rules/validation-zod.md, docs/rules/postal-phone-format.md, docs/rules/vin-validation.md, docs/rules/slug-format.md,
+ * docs/rules/japanese-brands-whitelist.md, docs/rules/listing-lifecycle.md, adr-0007).
  *
  * Правила:
  *  - TypeScript strict (no implicit any).
@@ -29,7 +29,7 @@ export const PROVINCES = [
 ] as const;
 export type Province = (typeof PROVINCES)[number];
 
-/** Whitelist (japanese-brands-whitelist.md). Display order = commercial weight. */
+/** Whitelist (docs/rules/japanese-brands-whitelist.md). Display order = commercial weight. */
 export const BRAND_SLUGS = [
   "toyota", "honda", "nissan", "mazda", "subaru",
   "lexus", "acura", "infiniti", "mitsubishi",
@@ -167,10 +167,10 @@ export function unixNow(now: Date = new Date()): number {
 }
 
 /**
- * Listing TTL check (audit #8). No cron sweeper flips rows past their TTL to
- * status='expired' (Pages Functions can't schedule), so a row can sit at
- * status='active' with a past expires_at — every public visibility decision
- * must combine the status check with this one.
+ * Listing TTL check (audit #8). The cron sweeper (workers/expire-sweeper) flips
+ * rows past their TTL to status='expired' only every 6 hours, so a row can sit
+ * at status='active' with a past expires_at in between — every public
+ * visibility decision must combine the status check with this one.
  */
 export function isListingExpired(
   listing: { expires_at: number | null }, nowSec: number = unixNow(),
@@ -928,7 +928,7 @@ export interface Paginated<T> {
   has_more: boolean;
 }
 
-/** Catalog response shape (model-catalog-page.md). */
+/** Catalog response shape (docs/rules/model-catalog-page.md). */
 export interface CatalogResponse {
   featured: FeaturedListing | null;
   boosted: ListingCard[];

@@ -18,7 +18,7 @@ import { json, jsonError, badRequest, noContent, notImplemented } from "../_lib/
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   // Route by URL — Pages doesn't sub-route from a single file, so this file
   // serves both endpoints; in real repo you'd split into request.ts/confirm.ts
-  // (see api-workers.md). Keeping single-file here as a skeleton placeholder.
+  // (see docs/rules/api-workers.md). Keeping single-file here as a skeleton placeholder.
   const url = new URL(request.url);
   const action = url.pathname.endsWith("/confirm") ? "confirm" : "request";
 

@@ -150,7 +150,7 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
 
 /**
  * Soft delete: set status='expired'. Real DELETE would break Schema.org
- * SoldOut window (listing-lifecycle.md). Use sold endpoint to mark sold.
+ * SoldOut window (docs/rules/listing-lifecycle.md). Use sold endpoint to mark sold.
  */
 export const onRequestDelete: PagesFunction<Env, "id"> = async (ctx) => {
   const { request, env, params } = ctx;
