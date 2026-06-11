@@ -1,5 +1,5 @@
 ---
-import { donorYearWindow } from '../../../lib/schema';
+import { donorYearWindow, DONOR_PART_GROUPS } from '../../../lib/schema';
 
 interface Props {
   mode: 'create' | 'edit';
@@ -293,6 +293,28 @@ const CONDITIONS: Array<[string, string]> = [
         Mark depleted via the "Mark depleted" button instead of changing here.
       </p>
       <div class="auth-form-error" data-field-error="condition"></div>
+    </div>
+
+    <div class="auth-form-group">
+      <span class="auth-form-label">Parts available from this donor</span>
+      <p class="t-body-s ink-muted" style="font-size:12px;margin:4px 0 10px">
+        Tick what's actually available — buyers and search engines see this list.
+        Leave a part unticked if it's damaged, sold, or missing.
+      </p>
+      {DONOR_PART_GROUPS.map((g) => (
+        <div style="margin:0 0 12px">
+          <span class="t-caption" style="display:block;font-size:11px;margin-bottom:6px">{g.label.toUpperCase()}</span>
+          <div style="display:flex;flex-wrap:wrap;gap:8px 16px">
+            {g.parts.map((p) => (
+              <label style="display:inline-flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
+                <input type="checkbox" name="parts_available" value={p.slug} style="width:16px;height:16px;accent-color:var(--color-ink-strong)" />
+                {p.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div class="auth-form-error" data-field-error="parts_available"></div>
     </div>
 
     <div class="auth-form-group">
@@ -613,6 +635,10 @@ const CONDITIONS: Array<[string, string]> = [
         transmission: fd.get('transmission') || null,
         condition: fd.get('condition') || 'fully_available',
         available_parts_notes: (fd.get('available_parts_notes') || '').trim() || null,
+        parts_available: (function () {
+          var ticked = fd.getAll('parts_available').map(String);
+          return ticked.length ? ticked : null;
+        })(),
         compatible_makes: parseCsvList(fd.get('compatible_makes')) || (makeSlug ? [makeSlug] : null),
         compatible_models: parseCsvList(fd.get('compatible_models')),
         compatible_years: parseCsvIntList(fd.get('compatible_years')),
@@ -624,6 +650,7 @@ const CONDITIONS: Array<[string, string]> = [
       // Drop null optional enum fields so zod doesn't choke
       ['transmission', 'tone', 'vin', 'trim', 'generation_code', 'generation_range',
        'color_exterior_full', 'color_interior', 'engine', 'available_parts_notes',
+       'parts_available',
        'compatible_makes', 'compatible_models', 'compatible_years', 'compatible_trims',
        'price', 'mileage'].forEach(function (k) {
         if (payload[k] === null) delete payload[k];
@@ -686,6 +713,18 @@ const CONDITIONS: Array<[string, string]> = [
       setVal('compatible_models', asCsv(d.compatible_models));
       setVal('compatible_years', asCsv(d.compatible_years));
       setVal('compatible_trims', asCsv(d.compatible_trims));
+
+      // parts_available checklist: stored as a JSON-stringified array (0011).
+      (function () {
+        var v = d.parts_available;
+        if (typeof v === 'string' && v) {
+          try { v = JSON.parse(v); } catch (_) { v = null; }
+        }
+        if (!Array.isArray(v)) return;
+        form.querySelectorAll('input[name="parts_available"]').forEach(function (cb) {
+          cb.checked = v.indexOf(cb.value) !== -1;
+        });
+      })();
 
       // status radio
       var statusRadios = form.querySelectorAll('input[name="status"]');

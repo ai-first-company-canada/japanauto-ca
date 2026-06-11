@@ -880,6 +880,7 @@ export interface DonorCarDetailRow {
   transmission: string | null;
   condition: "fully_available" | "partially_available" | "almost_depleted" | "depleted";
   available_parts_notes: string | null;
+  parts_available: string | null;   // JSON array of DONOR_PART_SLUGS (0011), NULL = no checklist
   compatible_makes: string | null;
   compatible_models: string | null;
   compatible_years: string | null;
@@ -931,7 +932,7 @@ export async function getDonorCarBySlug(
       dc.generation_code, dc.generation_range, dc.city_slug,
       dc.color_exterior, dc.color_exterior_full, dc.tone, dc.color_interior,
       dc.vin, dc.mileage, dc.engine, dc.transmission,
-      dc.condition, dc.available_parts_notes,
+      dc.condition, dc.available_parts_notes, dc.parts_available,
       dc.compatible_makes, dc.compatible_models, dc.compatible_years, dc.compatible_trims,
       dc.price, dc.price_currency, dc.status,
       dc.view_count, dc.contact_count, dc.created_at, dc.updated_at,

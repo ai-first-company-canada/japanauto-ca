@@ -36,6 +36,7 @@ import {
   renderDisclaimer, renderRelatedDonors, renderCityCountGrid, renderFaqList,
   renderFooter, renderPartsStickyBar, renderStickyBarObserverScript,
   render404DonorBody, parseCompatibility, donorPhone, formatTransmission,
+  parsePartsAvailable, partsAvailableSentence,
 } from "../../_lib/parts-components";
 import type { FaqItem } from "../../_lib/parts-components";
 
@@ -157,7 +158,17 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
   };
 
   // FAQ — static for Phase 3.2; Phase 3.3 dashboard will let yards customize.
-  const faqs: FaqItem[] = composeDonorFaqs(donor);
+  // When the yard ticked the parts_available checklist (Feature 4), lead with
+  // a donor-specific availability question built from it — deterministic copy,
+  // and it flows into the FAQPage JSON-LD node below automatically.
+  const partsAvail = parsePartsAvailable(donor);
+  const faqs: FaqItem[] = [
+    ...(partsAvail.length > 0 ? [{
+      q: `Which parts are available from this ${donor.year} ${donor.make_name} ${donor.model_name}?`,
+      a: `${partsAvailableSentence(donor, partsAvail)} Availability changes as parts sell — call ${donor.dealer_name} to confirm before visiting.`,
+    }] : []),
+    ...composeDonorFaqs(donor),
+  ];
   const faqNode = {
     '@type': 'FAQPage',
     '@id': canonical + '#faq',

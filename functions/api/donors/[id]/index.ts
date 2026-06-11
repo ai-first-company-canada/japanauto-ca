@@ -94,8 +94,11 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
     return json({ donor: refreshed });
   }
 
+  // Array-valued columns stored as JSON TEXT (compatible_* from 0005,
+  // parts_available from 0011) — stringify before binding.
   const compatibleKeys = new Set([
     "compatible_makes", "compatible_models", "compatible_years", "compatible_trims",
+    "parts_available",
   ]);
   const setClause = fields.map(([k]) => `${k} = ?`).join(", ");
   const values = fields.map(([k, v]) => {

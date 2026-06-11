@@ -14,7 +14,8 @@
 
 import { esc, fmt, cfImageUrl, formatPhone, safeUrl } from "./page-shell";
 import type { DonorCarDetailRow, DonorCardRow, DonorCityCountRow } from "../api/_lib/db";
-import type { MediaPublic } from "../../lib/schema";
+import type { MediaPublic, DonorPartSlug } from "../../lib/schema";
+import { DONOR_PART_GROUPS, DONOR_PART_LABELS } from "../../lib/schema";
 
 // ============================================================================
 // Constants
@@ -339,14 +340,59 @@ export function renderSpecGrid(donor: DonorCarDetailRow): string {
   </section>`;
 }
 
-/** "Parts availability" — long free-form notes from the junkyard. */
+/**
+ * Parse the parts_available JSON column into validated slugs. Unknown slugs
+ * (taxonomy drift between old rows and current deploy) are dropped silently.
+ */
+export function parsePartsAvailable(donor: DonorCarDetailRow): DonorPartSlug[] {
+  if (!donor.parts_available) return [];
+  try {
+    const v = JSON.parse(donor.parts_available);
+    if (!Array.isArray(v)) return [];
+    return v.filter((s): s is DonorPartSlug => typeof s === 'string' && s in DONOR_PART_LABELS);
+  } catch { return []; }
+}
+
+/**
+ * Deterministic availability sentence (Feature 4) — SEO body copy + FAQ
+ * answer, built from the yard's own checklist. No generation, no fabrication.
+ */
+export function partsAvailableSentence(donor: DonorCarDetailRow, parts: DonorPartSlug[]): string {
+  const labels = parts.map((s) => DONOR_PART_LABELS[s].toLowerCase());
+  return `Available from this ${donor.year} ${donor.make_name} ${donor.model_name} donor in ${donor.city_name}: ${labels.join(', ')}.`;
+}
+
+/**
+ * "Parts availability" — structured checklist chips grouped by taxonomy group
+ * (when the yard ticked parts_available) + free-form notes. Rows without a
+ * checklist fall back to notes-only, exactly the pre-0011 rendering.
+ */
 export function renderPartsAvailability(donor: DonorCarDetailRow): string {
-  const notes = donor.available_parts_notes ?? 'No detailed availability notes — call the junkyard for specifics.';
+  const parts = parsePartsAvailable(donor);
   const updated = relativeTimeFromUnix(donor.updated_at);
+
+  const checklistHtml = parts.length > 0
+    ? `<p style="margin:0 0 12px;font-size:15px;line-height:23px;color:var(--color-ink-default)">${esc(partsAvailableSentence(donor, parts))}</p>
+      ${DONOR_PART_GROUPS.map((g) => {
+        const inGroup = g.parts.filter((p) => parts.includes(p.slug));
+        if (inGroup.length === 0) return '';
+        return `<div style="margin:0 0 10px">
+        <span style="display:block;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted);margin-bottom:6px">${esc(g.label)}</span>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${inGroup.map((p) =>
+          `<span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid var(--color-divider);font-size:13px;color:var(--color-ink-strong)">${esc(p.label)}</span>`,
+        ).join('')}</div>
+      </div>`;
+      }).join('')}`
+    : '';
+
+  const notes = donor.available_parts_notes
+    ?? (parts.length > 0 ? null : 'No detailed availability notes — call the junkyard for specifics.');
+
   return `<section style="padding:32px 16px 0">
     <h2 style="font-size:17px;font-weight:600;color:var(--color-ink-strong);margin:0 0 12px">Parts availability</h2>
     <div style="background:var(--color-bg-subtle);border-radius:12px;padding:16px">
-      <p style="margin:0;font-size:15px;line-height:23px;color:var(--color-ink-default);white-space:pre-wrap">${esc(notes)}</p>
+      ${checklistHtml}
+      ${notes ? `<p style="margin:${parts.length > 0 ? '12px 0 0' : '0'};font-size:15px;line-height:23px;color:var(--color-ink-default);white-space:pre-wrap">${esc(notes)}</p>` : ''}
       <p style="margin:10px 0 0;font-size:12px;font-style:italic;color:var(--color-ink-muted)">Last updated ${esc(updated)} by ${esc(donor.dealer_name)}.</p>
     </div>
   </section>`;

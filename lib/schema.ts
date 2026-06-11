@@ -707,6 +707,90 @@ export function donorYearWindow(now: Date = new Date()): { min: number; max: num
   };
 }
 
+/**
+ * Canonical parts taxonomy for donor-car availability checklists (Feature 4,
+ * LAUNCH-PLAN-2026-06). Fixed enum slugs — NOT free text — so part names stay
+ * consistent across pages (SEO entities) and can later drive filters and
+ * city×model×part aggregation pages. Stored on donor_cars.parts_available as a
+ * JSON TEXT array (migration 0011), same pattern as compatible_*.
+ *
+ * Grouping below is UI-only; validation is against the flat slug enum.
+ * Extending: add the slug here AND a labeled entry in DONOR_PART_GROUPS.
+ */
+export const DONOR_PART_SLUGS = [
+  // engine
+  "engine-assembly", "engine-accessories", "cooling-radiator", "exhaust",
+  // transmission & drivetrain
+  "transmission", "axles-driveshafts", "transfer-case",
+  // body
+  "hood", "bumpers", "fenders", "doors", "trunk-tailgate", "mirrors",
+  // glass & lights
+  "windshield-glass", "headlights", "taillights",
+  // interior
+  "seats", "dashboard", "interior-trim", "infotainment-climate",
+  // suspension & brakes
+  "struts-control-arms", "brakes", "hubs-knuckles", "wheels-rims",
+  // electrical
+  "ecu-modules", "wiring-harness", "locks-handles",
+] as const;
+export type DonorPartSlug = (typeof DONOR_PART_SLUGS)[number];
+
+export const DONOR_PART_GROUPS: ReadonlyArray<{
+  label: string;
+  parts: ReadonlyArray<{ slug: DonorPartSlug; label: string }>;
+}> = [
+  { label: "Engine", parts: [
+    { slug: "engine-assembly", label: "Engine assembly" },
+    { slug: "engine-accessories", label: "Alternator / starter" },
+    { slug: "cooling-radiator", label: "Radiator & cooling" },
+    { slug: "exhaust", label: "Exhaust" },
+  ]},
+  { label: "Transmission & drivetrain", parts: [
+    { slug: "transmission", label: "Transmission" },
+    { slug: "axles-driveshafts", label: "Axles / driveshafts" },
+    { slug: "transfer-case", label: "Transfer case (AWD)" },
+  ]},
+  { label: "Body", parts: [
+    { slug: "hood", label: "Hood" },
+    { slug: "bumpers", label: "Bumpers" },
+    { slug: "fenders", label: "Fenders" },
+    { slug: "doors", label: "Doors" },
+    { slug: "trunk-tailgate", label: "Trunk / tailgate" },
+    { slug: "mirrors", label: "Mirrors" },
+  ]},
+  { label: "Glass & lights", parts: [
+    { slug: "windshield-glass", label: "Windshield / glass" },
+    { slug: "headlights", label: "Headlights" },
+    { slug: "taillights", label: "Taillights" },
+  ]},
+  { label: "Interior", parts: [
+    { slug: "seats", label: "Seats" },
+    { slug: "dashboard", label: "Dashboard" },
+    { slug: "interior-trim", label: "Interior trim" },
+    { slug: "infotainment-climate", label: "Infotainment / climate" },
+  ]},
+  { label: "Suspension & brakes", parts: [
+    { slug: "struts-control-arms", label: "Struts / control arms" },
+    { slug: "brakes", label: "Brakes" },
+    { slug: "hubs-knuckles", label: "Hubs / knuckles" },
+    { slug: "wheels-rims", label: "Wheels / rims" },
+  ]},
+  { label: "Electrical", parts: [
+    { slug: "ecu-modules", label: "ECU / modules" },
+    { slug: "wiring-harness", label: "Wiring harness" },
+    { slug: "locks-handles", label: "Locks / handles" },
+  ]},
+];
+
+/** slug -> display label, derived from the groups (single source of truth). */
+export const DONOR_PART_LABELS: Record<DonorPartSlug, string> = Object.fromEntries(
+  DONOR_PART_GROUPS.flatMap((g) => g.parts.map((p) => [p.slug, p.label])),
+) as Record<DonorPartSlug, string>;
+
+const donorPartsAvailableSchema = z.array(z.enum(DONOR_PART_SLUGS))
+  .min(1).max(DONOR_PART_SLUGS.length)
+  .refine((arr) => new Set(arr).size === arr.length, { message: "Duplicate part slugs" });
+
 // Upper bounds (audit #33): per-element rules don't cap array length, and
 // arrays allow duplicates, so without .max() a salvage_yard could persist
 // multi-megabyte JSON blobs into the donor TEXT columns (storage amplification).
@@ -733,6 +817,7 @@ const donorCarBaseFields = {
   transmission: donorCarTransmissionSchema.nullable().optional(),
   condition: donorCarConditionSchema.default("fully_available"),
   available_parts_notes: z.string().trim().max(2000).nullable().optional(),
+  parts_available: donorPartsAvailableSchema.nullable().optional(),
   compatible_makes: donorCompatibleMakesSchema.nullable().optional(),
   compatible_models: donorCompatibleModelsSchema.nullable().optional(),
   compatible_years: donorCompatibleYearsSchema.nullable().optional(),
@@ -761,6 +846,7 @@ export const donorCarSchema = z.object({
   compatible_models: z.string().nullable(),
   compatible_years: z.string().nullable(),
   compatible_trims: z.string().nullable(),
+  parts_available: z.string().nullable(),
   price_currency: cadCurrencySchema,
   status: donorCarStatusSchema,
   view_count: z.number().int().min(0),
