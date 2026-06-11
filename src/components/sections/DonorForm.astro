@@ -1,4 +1,6 @@
 ---
+import { donorYearWindow } from '../../../lib/schema';
+
 interface Props {
   mode: 'create' | 'edit';
 }
@@ -36,10 +38,10 @@ const TRANSMISSIONS: Array<[string, string]> = [
   ['dct', 'DCT'],
 ];
 
-// donor_cars has its own static year window (1980..2030 from migration 0005).
-// Older donor cars are valuable for rare-parts recovery — no rolling cap.
-const minYear = 2002;
-const maxYear = 2025;
+// Donor cars keep a wide 1980+ window (rare-parts recovery — no rolling cap,
+// unlike listings); ceiling = next model year. Derived from lib/schema so the
+// dropdown cannot drift from the zod validator / DB CHECK again.
+const { min: minYear, max: maxYear } = donorYearWindow();
 const yearOptions: number[] = [];
 for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
 

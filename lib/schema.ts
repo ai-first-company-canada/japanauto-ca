@@ -691,7 +691,21 @@ export type CatalogQuery = z.infer<typeof catalogQuerySchema>;
 //   * No rolling age cap — donor cars from older generations are valuable.
 // ============================================================================
 
-const donorYearSchema = z.number().int().min(1980).max(2030);
+export const DONOR_YEAR_MIN = 1980;            // rare-parts recovery — no rolling cap
+export const DONOR_YEAR_MAX = 2030;            // DB CHECK ceiling (migration 0005)
+const donorYearSchema = z.number().int().min(DONOR_YEAR_MIN).max(DONOR_YEAR_MAX);
+
+/**
+ * UI year window for donor cars: 1980 floor up to next model year, clamped to
+ * the DB CHECK ceiling. The DonorForm dropdown derives from this so it cannot
+ * drift from the validator again (it was hardcoded 2002–2025 and went stale).
+ */
+export function donorYearWindow(now: Date = new Date()): { min: number; max: number } {
+  return {
+    min: DONOR_YEAR_MIN,
+    max: Math.min(DONOR_YEAR_MAX, currentYear(now) + LIMITS.YEAR_FORWARD_LOOKAHEAD),
+  };
+}
 
 // Upper bounds (audit #33): per-element rules don't cap array length, and
 // arrays allow duplicates, so without .max() a salvage_yard could persist
