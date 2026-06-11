@@ -1,8 +1,8 @@
 # 0012 — Billing via Stripe with an "effective tier" indirection
 
-- **Status:** planned (designed 2026-06-11; product logic ships pre-launch, Stripe wiring post-launch)
+- **Status:** accepted — foundation shipped (entitlement layer, trial, active-listing cap); Stripe wiring still post-launch
 - **Date:** 2026-06-11
-- **Commits:** —
+- **Commits:** 5c13be8 (foundation: effectiveTier/getEntitlements/enforceActiveCap, migration 0013, 30-day trial, cap at create + draft→active)
 
 ## Context
 
