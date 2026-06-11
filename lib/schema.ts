@@ -167,6 +167,18 @@ export function unixNow(now: Date = new Date()): number {
 }
 
 /**
+ * Listing TTL check (audit #8). No cron sweeper flips rows past their TTL to
+ * status='expired' (Pages Functions can't schedule), so a row can sit at
+ * status='active' with a past expires_at — every public visibility decision
+ * must combine the status check with this one.
+ */
+export function isListingExpired(
+  listing: { expires_at: number | null }, nowSec: number = unixNow(),
+): boolean {
+  return listing.expires_at !== null && listing.expires_at <= nowSec;
+}
+
+/**
  * VIN ISO 3779 checksum verifier.
  * Returns true if the check digit at position 9 matches the weighted sum.
  * Reference: https://en.wikipedia.org/wiki/Vehicle_identification_number#Check-digit_calculation
@@ -315,7 +327,10 @@ export const mileageSchema = z.number()
   .max(LIMITS.MILEAGE_MAX_KM, { message: "Mileage exceeds 1M km" });
 
 export const titleSchema = z.string().trim().min(3).max(LIMITS.TITLE_MAX);
-export const descriptionSchema = z.string().trim().max(LIMITS.DESCRIPTION_MAX).optional();
+// Nullable AND optional: the D1 column is nullable (create binds `?? null`
+// when the form omits it), so the row type must admit null or every read of a
+// description-less listing would fail parse and 500 (#8 e2e fallout).
+export const descriptionSchema = z.string().trim().max(LIMITS.DESCRIPTION_MAX).nullable().optional();
 
 /** Numeric ID column (cuid2 / nanoid) — opaque, validated by length only. */
 export const idSchema = z.string().trim().min(8).max(64);

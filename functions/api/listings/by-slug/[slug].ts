@@ -12,7 +12,7 @@
  */
 
 import type { Env } from "../../../../types/env";
-import { dealerPublicSchema } from "../../../../lib/schema";
+import { dealerPublicSchema, isListingExpired } from "../../../../lib/schema";
 import { json, notFound } from "../../_lib/response";
 import {
   getListingBySlug, getMediaForEntity, getDealerById,
@@ -22,7 +22,10 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
   const slug = params.slug as string;
   const listing = await getListingBySlug(env, slug);
   if (!listing) return notFound("Listing not found");
-  if (listing.status !== "active") return notFound("Listing not available");
+  // TTL counts as gone too — no sweeper flips past-expiry rows (audit #8).
+  if (listing.status !== "active" || isListingExpired(listing)) {
+    return notFound("Listing not available");
+  }
 
   const [photos, dealer, makeRow, modelRow] = await Promise.all([
     getMediaForEntity(env, "listing", listing.id),

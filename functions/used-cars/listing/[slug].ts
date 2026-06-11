@@ -7,12 +7,14 @@
  * and full Schema.org markup. Falls back to the SVG silhouette gallery when
  * a listing has no photos uploaded yet.
  *
- * 404 — listing not found OR status != 'active'.
+ * 404 — listing not found OR status != 'active' OR past its TTL (audit #8 —
+ * no sweeper flips expired rows, so the read side must enforce expires_at).
  */
 
 import type { Env } from "../../../types/env";
+import { isListingExpired } from "../../../lib/schema";
 import {
-  getListingBySlug, getMediaForEntity, getDealerById,
+  getListingDetailBySlug, getMediaForEntity,
 } from "../../api/_lib/db";
 import {
   renderShell, takeCspNonce, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
@@ -30,29 +32,37 @@ const TIER_1_CITIES: Record<string, { name: string; province: string }> = {
 export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, data }) => {
   const slug = params.slug as string;
   const cspNonce = takeCspNonce(data);
-  const listing = await getListingBySlug(env, slug);
-  if (!listing || listing.status !== 'active') {
+  // One JOIN statement (listings+dealers+makes+models, audit #25) + one media
+  // query — 2 D1 round-trips. The INNER JOINs also subsume the old
+  // dealer/make/model missing-row 404 guard: a dangling FK yields no row.
+  const listing = await getListingDetailBySlug(env, slug);
+  if (!listing || listing.status !== 'active' || isListingExpired(listing)) {
     return new Response(notFoundHtml(cspNonce), {
       status: 404,
       headers: { 'content-type': 'text/html; charset=utf-8' },
     });
   }
 
-  const [photos, dealer, makeRow, modelRow] = await Promise.all([
-    getMediaForEntity(env, 'listing', listing.id),
-    getDealerById(env, listing.dealer_id),
-    env.DB.prepare(`SELECT id, slug, name FROM makes WHERE id = ?`)
-      .bind(listing.make_id).first<{ id: number; slug: string; name: string }>(),
-    env.DB.prepare(`SELECT id, slug, name FROM models WHERE id = ?`)
-      .bind(listing.model_id).first<{ id: number; slug: string; name: string }>(),
-  ]);
+  const photos = await getMediaForEntity(env, 'listing', listing.id);
 
-  if (!dealer || !makeRow || !modelRow) {
-    return new Response(notFoundHtml(cspNonce), {
-      status: 404,
-      headers: { 'content-type': 'text/html; charset=utf-8' },
-    });
-  }
+  const makeRow = { slug: listing.make_slug, name: listing.make_name };
+  const modelRow = { slug: listing.model_slug, name: listing.model_name };
+  const dealer = {
+    name: listing.dealer_name,
+    slug: listing.dealer_slug,
+    phone: listing.dealer_phone,
+    email: listing.dealer_email,
+    website: listing.dealer_website,
+    address_line1: listing.dealer_address_line1,
+    address_line2: listing.dealer_address_line2,
+    city: listing.dealer_city,
+    province: listing.dealer_province,
+    postal_code: listing.dealer_postal_code,
+    amvic_number: listing.dealer_amvic_number,
+    verified: listing.dealer_verified,
+    type: listing.dealer_type,
+    hours: listing.dealer_hours,
+  };
 
   const cfHash = env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '';
   const cityInfo = TIER_1_CITIES[listing.city];

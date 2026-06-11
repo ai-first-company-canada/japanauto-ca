@@ -10,6 +10,7 @@
 import type { Env } from "../../../../types/env";
 import {
   listingUpdateInputSchema, zodErrorToApiError, listingSchema,
+  listingYearWindow, isListingExpired, LIMITS, type ListingStatus,
 } from "../../../../lib/schema";
 import {
   json, jsonError, notFound, forbidden, badRequest, internalError, noContent, conflict,
@@ -25,13 +26,29 @@ export const onRequestGet: PagesFunction<Env, "id"> = async ({ request, params, 
   // Public callers may read only active listings. draft/sold/expired/flagged
   // rows — and their internal fields (flagged_reason, boost_*, dealer_id,
   // expires_at) — are owner-only (audit #35: anonymous BAC/IDOR otherwise).
-  if (listing.status !== "active") {
+  // Active rows past their TTL count as non-public too (audit #8).
+  if (listing.status !== "active" || isListingExpired(listing)) {
     const auth = await requireDealer(request, env);
     if (auth instanceof Response) return auth;
     if (listing.dealer_id !== auth.dealerId) return forbidden();
   }
   const photos = await getMediaForEntity(env, "listing", id);
   return json({ listing, photos });
+};
+
+/**
+ * Owner-initiated status transitions (audit #36/#51). Keys are the current
+ * status, values the statuses a PATCH may move it to. sold/expired CAN come
+ * back to active, but only through the →active sanitization below (fresh TTL,
+ * age-cap recheck, no resurrected boost). flagged is moderation-controlled —
+ * dealers cannot self-unflag (and the update schema cannot set it either).
+ */
+const LEGAL_STATUS_TRANSITIONS: Record<ListingStatus, readonly ListingStatus[]> = {
+  draft:   ["active", "expired"],
+  active:  ["sold", "expired"],
+  sold:    ["active"],
+  expired: ["active"],
+  flagged: [],
 };
 
 export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
@@ -61,13 +78,43 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
   const setCols = fields.map(([k]) => `${k} = ?`);
   const values: unknown[] = fields.map(([, v]) => v ?? null);
 
+  const now = Math.floor(Date.now() / 1000);
+  const nextStatus = parsed.data.status;
+  const isStatusChange = nextStatus !== undefined && nextStatus !== existing.status;
+
+  if (isStatusChange && !LEGAL_STATUS_TRANSITIONS[existing.status].includes(nextStatus)) {
+    return conflict(`Cannot change listing status from '${existing.status}' to '${nextStatus}'`);
+  }
+
+  if (isStatusChange && nextStatus === "active") {
+    // Re-entering the public catalog (draft publish or sold/expired revival).
+    // The D1 age-cap trigger only fires on UPDATE OF year, so a status-only
+    // PATCH would bypass it — re-run the rolling-window check here.
+    const effectiveYear = parsed.data.year ?? existing.year;
+    const { min, max } = listingYearWindow();
+    if (effectiveYear < min || effectiveYear > max) {
+      return jsonError(422, "validation_failed",
+        "listings.year out of rolling window (currentYear-10 .. currentYear+1)",
+        { year: ["Outside the rolling 10-year age cap"] });
+    }
+    // Fresh TTL — a revived listing must not inherit a stale (possibly already
+    // past) expires_at, and a paid boost never survives a lifecycle round-trip.
+    const ttlDaysRaw = parseInt(env.LISTING_DEFAULT_TTL_DAYS, 10);
+    const ttlDays = Number.isFinite(ttlDaysRaw) ? ttlDaysRaw : LIMITS.LISTING_DEFAULT_TTL_DAYS;
+    setCols.push("expires_at = ?", "boost_until = NULL", "boost_paid_cents = 0");
+    values.push(now + ttlDays * 86400);
+  } else if (isStatusChange && existing.status === "active") {
+    // Leaving the catalog (sold/expired): the boost slot is forfeited now, not
+    // parked for a future revival (audit #36 — free boost on revive otherwise).
+    setCols.push("boost_until = NULL", "boost_paid_cents = 0");
+  }
+
   // Keep sold_at consistent with status transitions. /mark-sold is the primary
   // path, but a direct PATCH of `status` must not leave sold_at out of sync —
   // the Schema.org SoldOut window and "sold N days ago" copy depend on it.
-  const nextStatus = parsed.data.status;
   if (nextStatus === "sold" && existing.status !== "sold") {
     setCols.push("sold_at = ?");
-    values.push(Math.floor(Date.now() / 1000));
+    values.push(now);
   } else if (nextStatus !== undefined && nextStatus !== "sold" && existing.sold_at !== null) {
     setCols.push("sold_at = NULL");
   }
@@ -92,8 +139,9 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
   const updated = await getListingById(env, id);
 
   // Notify IndexNow when the listing is publicly indexable. Captures status
-  // transitions into 'active' and updates to already-active listings.
-  if (updated?.status === "active") {
+  // transitions into 'active' and updates to already-active listings. A row
+  // past its TTL serves as 404, so don't point engines at it (audit #8).
+  if (updated?.status === "active" && !isListingExpired(updated)) {
     ctx.waitUntil(pingIndexNow(env, [`${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/used-cars/listing/${updated.slug}/`]));
   }
 

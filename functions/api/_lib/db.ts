@@ -81,6 +81,16 @@ export async function getDealerBySlug(env: Env, slug: string): Promise<Dealer | 
 // LISTINGS
 // ============================================================================
 
+/**
+ * Read-side TTL guard (audit #8). There is no cron sweeper flipping rows past
+ * their TTL to status='expired' (Pages Functions can't schedule), so every
+ * PUBLIC read of active listings must exclude rows whose expires_at has
+ * passed. Expects the listings table to be aliased `l`.
+ * idx_listings_status_expires covers (status, expires_at).
+ */
+const LISTING_NOT_EXPIRED =
+  `(l.expires_at IS NULL OR l.expires_at > CAST(strftime('%s','now') AS INTEGER))`;
+
 export async function getListingBySlug(env: Env, slug: string): Promise<Listing | null> {
   const row = await env.DB.prepare(
     `SELECT * FROM listings WHERE slug = ? LIMIT 1`
@@ -115,6 +125,7 @@ export interface ListingDetailRow {
   condition: string;
   negotiable: 0 | 1;
   status: string;
+  expires_at: number | null;
   city: string;
   province: string;
   description: string | null;
@@ -158,8 +169,8 @@ export async function getListingDetailBySlug(
     SELECT
       l.id, l.slug, l.dealer_id, l.make_id, l.model_id, l.year, l.trim, l.vin,
       l.mileage, l.price, l.transmission, l.drivetrain, l.fuel_type,
-      l.body_type, l.condition, l.negotiable, l.status, l.city, l.province,
-      l.description,
+      l.body_type, l.condition, l.negotiable, l.status, l.expires_at,
+      l.city, l.province, l.description,
       mk.slug AS make_slug, mk.name AS make_name,
       md.slug AS model_slug, md.name AS model_name,
       d.name AS dealer_name, d.slug AS dealer_slug,
@@ -289,6 +300,7 @@ export async function listCatalog(
       AND l.model_id = ?
       AND l.city = ?
       AND l.status = 'active'
+      AND ${LISTING_NOT_EXPIRED}
       ${yearClause}
       ${mileageClause}
     ${sortClause}
@@ -297,11 +309,14 @@ export async function listCatalog(
 
   // Page rows and total count were two serial round-trips; run them as one D1
   // batch so the busiest public read pays a single network round-trip (audit #26).
+  // The count query aliases listings as `l` because yearClause/mileageClause
+  // (and the TTL predicate) are written against that alias.
   const pageStmt = env.DB.prepare(sql)
     .bind(q.makeId, q.modelId, q.city, ...yearBinds, ...mileageBinds, q.perPage, offset);
   const countStmt = env.DB.prepare(`
-    SELECT COUNT(*) AS n FROM listings
-    WHERE make_id = ? AND model_id = ? AND city = ? AND status = 'active'
+    SELECT COUNT(*) AS n FROM listings l
+    WHERE l.make_id = ? AND l.model_id = ? AND l.city = ? AND l.status = 'active'
+      AND ${LISTING_NOT_EXPIRED}
     ${yearClause} ${mileageClause}
   `).bind(q.makeId, q.modelId, q.city, ...yearBinds, ...mileageBinds);
 
@@ -329,7 +344,7 @@ export interface RecentListingsParams {
 export async function listRecentListings(
   env: Env, q: RecentListingsParams,
 ): Promise<CatalogRow[]> {
-  const where: string[] = [`l.status = 'active'`];
+  const where: string[] = [`l.status = 'active'`, LISTING_NOT_EXPIRED];
   const binds: (string | number)[] = [];
   if (q.city) {
     where.push(`l.city = ?`);

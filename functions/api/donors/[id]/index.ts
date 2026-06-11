@@ -16,6 +16,7 @@ import {
 } from "../../../../lib/schema";
 import {
   json, jsonError, notFound, forbidden, badRequest, internalError, noContent,
+  conflict,
 } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
 import { getDonorCarById, getMediaForEntity } from "../../_lib/db";
@@ -65,6 +66,25 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
     return jsonError(422, "validation_failed",
       "Use POST /api/donors/:id/mark-depleted to mark donors depleted",
       { condition: ["Mark depleted via the dedicated endpoint"] });
+  }
+
+  // Status state-machine (audit #51): a soft-deleted (expired) or depleted
+  // donor cannot be silently re-activated via PATCH — a picked-apart car
+  // doesn't regrow, and revival would re-ping IndexNow for a 404 URL.
+  // flagged is moderation-controlled. Only draft→active/expired and
+  // active→expired are dealer-reachable here.
+  const DONOR_LEGAL_TRANSITIONS: Record<string, readonly string[]> = {
+    draft:    ["active", "expired"],
+    active:   ["expired"],
+    depleted: [],
+    expired:  [],
+    flagged:  [],
+  };
+  if (data.status !== undefined && data.status !== existing.status) {
+    const allowed = DONOR_LEGAL_TRANSITIONS[existing.status as string] ?? [];
+    if (!allowed.includes(data.status)) {
+      return conflict(`Cannot change donor status from '${existing.status}' to '${data.status}'`);
+    }
   }
 
   // Build dynamic UPDATE — only include keys present in the patch.
