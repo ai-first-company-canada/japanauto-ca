@@ -97,6 +97,97 @@ export async function getListingById(env: Env, id: string): Promise<Listing | nu
   return listingRowSchema.parse(row);
 }
 
+export interface ListingDetailRow {
+  id: string;
+  slug: string;
+  dealer_id: string;
+  make_id: number;
+  model_id: number;
+  year: number;
+  trim: string | null;
+  vin: string;
+  mileage: number;
+  price: number;
+  transmission: string | null;
+  drivetrain: string | null;
+  fuel_type: string | null;
+  body_type: string | null;
+  condition: string;
+  negotiable: 0 | 1;
+  status: string;
+  city: string;
+  province: string;
+  description: string | null;
+  // joined make/model
+  make_slug: string;
+  make_name: string;
+  model_slug: string;
+  model_name: string;
+  // joined dealer fields — every field the listing detail page renders
+  // (contact rows, AMVIC section, hours, JSON-LD seller)
+  dealer_name: string;
+  dealer_slug: string;
+  dealer_phone: string | null;
+  dealer_email: string;
+  dealer_website: string | null;
+  dealer_address_line1: string | null;
+  dealer_address_line2: string | null;
+  dealer_city: string;
+  dealer_province: string;
+  dealer_postal_code: string | null;
+  dealer_amvic_number: string | null;
+  dealer_verified: 0 | 1;
+  dealer_type: string;
+  dealer_hours: Array<{ dow: number[]; open: string | null; close: string | null }> | null;
+}
+
+/**
+ * Fetch a single listing by slug joined with its dealer, make, and model in
+ * ONE statement (audit #25) — collapses the detail page's listing + dealer +
+ * make + model point-queries (4 round-trips) into 1, mirroring
+ * getDonorCarBySlug. Selects only the columns the page renders, not
+ * SELECT *. Status is NOT filtered here: the route distinguishes
+ * not-found/non-active itself, matching the previous getListingBySlug path.
+ *
+ * `dealer_hours` is parsed from JSON TEXT into the typed structure.
+ */
+export async function getListingDetailBySlug(
+  env: Env, slug: string,
+): Promise<ListingDetailRow | null> {
+  const row = await env.DB.prepare(`
+    SELECT
+      l.id, l.slug, l.dealer_id, l.make_id, l.model_id, l.year, l.trim, l.vin,
+      l.mileage, l.price, l.transmission, l.drivetrain, l.fuel_type,
+      l.body_type, l.condition, l.negotiable, l.status, l.city, l.province,
+      l.description,
+      mk.slug AS make_slug, mk.name AS make_name,
+      md.slug AS model_slug, md.name AS model_name,
+      d.name AS dealer_name, d.slug AS dealer_slug,
+      d.phone AS dealer_phone, d.email AS dealer_email, d.website AS dealer_website,
+      d.address_line1 AS dealer_address_line1, d.address_line2 AS dealer_address_line2,
+      d.city AS dealer_city, d.province AS dealer_province, d.postal_code AS dealer_postal_code,
+      d.amvic_number AS dealer_amvic_number, d.verified AS dealer_verified,
+      d.type AS dealer_type, d.hours AS dealer_hours
+    FROM listings l
+    JOIN dealers d ON d.id = l.dealer_id
+    JOIN makes mk ON mk.id = l.make_id
+    JOIN models md ON md.id = l.model_id
+    WHERE l.slug = ?
+    LIMIT 1
+  `).bind(slug).first<Record<string, unknown>>();
+  if (!row) return null;
+
+  const raw = row.dealer_hours;
+  if (typeof raw === "string" && raw.length > 0) {
+    try { row.dealer_hours = JSON.parse(raw); }
+    catch { row.dealer_hours = null; }
+  } else if (raw === undefined || raw === null) {
+    row.dealer_hours = null;
+  }
+
+  return row as unknown as ListingDetailRow;
+}
+
 /**
  * Atomically set status='sold' + sold_at=now, but ONLY from status='active'
  * (audit #21). Guarding on != 'sold' would let expired (soft-deleted), flagged,

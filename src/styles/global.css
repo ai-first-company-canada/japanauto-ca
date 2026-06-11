@@ -707,14 +707,7 @@ select.auth-form-input {
   opacity: 0; transition: opacity 200ms;
   pointer-events: none;
 }
-#photo-lightbox:has(#lp-0:checked) [data-slide-idx="0"],
-#photo-lightbox:has(#lp-1:checked) [data-slide-idx="1"],
-#photo-lightbox:has(#lp-2:checked) [data-slide-idx="2"],
-#photo-lightbox:has(#lp-3:checked) [data-slide-idx="3"],
-#photo-lightbox:has(#lp-4:checked) [data-slide-idx="4"],
-#photo-lightbox:has(#lp-5:checked) [data-slide-idx="5"],
-#photo-lightbox:has(#lp-6:checked) [data-slide-idx="6"],
-#photo-lightbox:has(#lp-7:checked) [data-slide-idx="7"] {
+.photo-lightbox-slide.is-active {
   opacity: 1; pointer-events: auto;
 }
 .photo-lightbox-thumbs {
@@ -731,14 +724,7 @@ select.auth-form-input {
   cursor: pointer; background: #1a1a1c;
   display: block;
 }
-#photo-lightbox:has(#lp-0:checked) label[for="lp-0"],
-#photo-lightbox:has(#lp-1:checked) label[for="lp-1"],
-#photo-lightbox:has(#lp-2:checked) label[for="lp-2"],
-#photo-lightbox:has(#lp-3:checked) label[for="lp-3"],
-#photo-lightbox:has(#lp-4:checked) label[for="lp-4"],
-#photo-lightbox:has(#lp-5:checked) label[for="lp-5"],
-#photo-lightbox:has(#lp-6:checked) label[for="lp-6"],
-#photo-lightbox:has(#lp-7:checked) label[for="lp-7"] {
+.photo-thumb.is-active {
   border-color: var(--color-accent);
 }
 

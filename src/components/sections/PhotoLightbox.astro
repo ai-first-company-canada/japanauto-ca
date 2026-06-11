@@ -41,7 +41,7 @@ const { photos, title } = Astro.props;
     ))}
     <div class="photo-lightbox-stage">
       {photos.map((p, i) => (
-        <div class="photo-lightbox-slide" data-slide-idx={i} aria-hidden={i !== 0}>
+        <div class:list={['photo-lightbox-slide', { 'is-active': i === 0 }]} data-slide-idx={i} aria-hidden={i !== 0}>
           <ListingPhoto tone={p.tone} framing={p.framing} />
         </div>
       ))}
@@ -50,7 +50,7 @@ const { photos, title } = Astro.props;
 
   <div class="photo-lightbox-thumbs">
     {photos.map((p, i) => (
-      <label for={`lp-${i}`} class="photo-thumb" aria-label={`Photo ${i + 1}`}>
+      <label for={`lp-${i}`} class:list={['photo-thumb', { 'is-active': i === 0 }]} aria-label={`Photo ${i + 1}`}>
         <ListingPhoto tone={p.tone} framing={p.framing} />
       </label>
     ))}
@@ -63,11 +63,19 @@ const { photos, title } = Astro.props;
     if (!dialog) return;
     var radios = dialog.querySelectorAll('[data-lightbox-radio]');
     var current = dialog.querySelector('[data-lightbox-current]');
+    var slides = dialog.querySelectorAll('.photo-lightbox-slide');
+    var thumbs = dialog.querySelectorAll('.photo-thumb');
     radios.forEach(function (r, idx) {
       r.addEventListener('change', function () {
-        if (r.checked && current) {
-          current.textContent = String(idx + 1);
-        }
+        if (!r.checked) return;
+        if (current) current.textContent = String(idx + 1);
+        slides.forEach(function (s, i) {
+          s.classList.toggle('is-active', i === idx);
+          s.setAttribute('aria-hidden', String(i !== idx));
+        });
+        thumbs.forEach(function (t, i) {
+          t.classList.toggle('is-active', i === idx);
+        });
       });
     });
   })();
