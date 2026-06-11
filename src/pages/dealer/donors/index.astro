@@ -1,5 +1,6 @@
 ---
 import DealerLayout from '../../../layouts/DealerLayout.astro';
+import StatsModal from '../../../components/sections/StatsModal.astro';
 ---
 <DealerLayout
   title="My donor cars — japanauto.ca"
@@ -110,6 +111,9 @@ import DealerLayout from '../../../layouts/DealerLayout.astro';
             liveLink +
             '<div style="display:flex;gap:6px;flex-shrink:0">' +
             depleteBtn +
+            '<button type="button" class="btn btn-sm" data-stats-id="' + escapeHtml(d.id) +
+            '" data-stats-title="' + escapeHtml(d.year + ' ' + make + ' ' + model + trim) +
+            '" style="padding:0 12px;height:36px;font-size:12px;background:#fff;color:var(--color-ink-strong);border:1px solid var(--color-divider)">Stats</button>' +
             '<a href="/dealer/donors/edit/?id=' + id +
             '" class="btn btn-secondary btn-sm" style="padding:0 12px;height:36px;font-size:12px">Edit</a>' +
             '<button type="button" class="btn btn-sm" data-delete-id="' + escapeHtml(d.id) +
@@ -119,6 +123,13 @@ import DealerLayout from '../../../layouts/DealerLayout.astro';
             '</div>'
           );
         }).join('');
+
+        container.querySelectorAll('[data-stats-id]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            window.jcOpenStats('donor', btn.getAttribute('data-stats-id'),
+              btn.getAttribute('data-stats-title'));
+          });
+        });
 
         container.querySelectorAll('[data-delete-id]').forEach(function (btn) {
           btn.addEventListener('click', async function () {
@@ -227,4 +238,6 @@ import DealerLayout from '../../../layouts/DealerLayout.astro';
       })();
     })();
   </script>
+
+  <StatsModal />
 </DealerLayout>

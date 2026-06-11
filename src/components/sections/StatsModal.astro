@@ -1,0 +1,152 @@
+---
+/**
+ * StatsModal — the dealer-cabinet "Statistics" dialog (Feature 1,
+ * LAUNCH-PLAN-2026-06). One shared <dialog> per page; rows open it via the
+ * global `jcOpenStats(entityType, id, title)` defined below.
+ *
+ * Data: GET /api/{listings|donors}/:id/stats (owner-gated) — lifetime totals
+ * + a 30-day daily series. Everything renders client-side inside the dialog;
+ * the market-context block lands here in Phase 2 (Supabase sync).
+ *
+ * CSP: the script is `is:inline` on a noindex SSG page — hashed at build time
+ * by scripts/generate-csp-hashes.mjs like every other cabinet script.
+ */
+---
+<dialog
+  id="stats-modal"
+  style="border:0;border-radius:12px;padding:0;width:min(480px,calc(100vw - 32px));box-shadow:0 8px 40px rgba(0,0,0,0.18)"
+>
+  <div style="padding:20px 24px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:2px">
+      <h2 data-stats-title class="t-h-s" style="font-size:16px;line-height:22px;margin:0">Statistics</h2>
+      <button type="button" data-stats-close aria-label="Close"
+        style="border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:var(--color-ink-muted);padding:2px">×</button>
+    </div>
+    <p data-stats-sub class="t-body-s ink-muted" style="font-size:12px;margin:0 0 16px"></p>
+
+    <div data-stats-loading class="t-body-s ink-muted" style="padding:24px 0;text-align:center">Loading…</div>
+    <div data-stats-error class="t-body-s" style="display:none;padding:24px 0;text-align:center;color:var(--color-accent)"></div>
+
+    <div data-stats-body style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+        <div style="background:var(--color-bg-subtle);border-radius:8px;padding:10px 12px">
+          <span class="t-caption" style="display:block;font-size:10px;color:var(--color-ink-muted)">VIEWS</span>
+          <span data-stat-views class="num" style="font-size:20px;font-weight:600">—</span>
+        </div>
+        <div style="background:var(--color-bg-subtle);border-radius:8px;padding:10px 12px">
+          <span class="t-caption" style="display:block;font-size:10px;color:var(--color-ink-muted)">CONTACTS</span>
+          <span data-stat-contacts class="num" style="font-size:20px;font-weight:600">—</span>
+        </div>
+        <div style="background:var(--color-bg-subtle);border-radius:8px;padding:10px 12px">
+          <span class="t-caption" style="display:block;font-size:10px;color:var(--color-ink-muted)">CONVERSION</span>
+          <span data-stat-conversion class="num" style="font-size:20px;font-weight:600">—</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline">
+        <span class="t-caption" style="font-size:10px;color:var(--color-ink-muted)">VIEWS — LAST 30 DAYS</span>
+        <span data-stat-views-30 class="t-body-s num ink-muted" style="font-size:12px"></span>
+      </div>
+      <div data-stats-chart
+        style="display:flex;align-items:flex-end;gap:2px;height:56px;margin-bottom:16px;border-bottom:1px solid var(--color-divider);padding-bottom:1px"></div>
+
+      <p data-stat-market class="t-body-s ink-muted" style="font-size:12px;margin:0">
+        Market context for this model arrives with the next update.
+      </p>
+    </div>
+  </div>
+</dialog>
+
+<script is:inline>
+  (function () {
+    var dlg = document.getElementById('stats-modal');
+    if (!dlg) return;
+    var q = function (sel) { return dlg.querySelector(sel); };
+
+    function show(el, on) { if (el) el.style.display = on ? '' : 'none'; }
+
+    function fmtNum(n) { return Number(n || 0).toLocaleString('en-US'); }
+
+    function utcDayKeys(days) {
+      var keys = [];
+      var t = Date.now();
+      for (var i = days - 1; i >= 0; i--) {
+        keys.push(new Date(t - i * 86400000).toISOString().slice(0, 10));
+      }
+      return keys;
+    }
+
+    function renderChart(series) {
+      var byDay = {};
+      (series || []).forEach(function (r) { byDay[r.day] = r; });
+      var keys = utcDayKeys(30);
+      var max = 1, sum = 0;
+      keys.forEach(function (k) {
+        var v = byDay[k] ? Number(byDay[k].views || 0) : 0;
+        sum += v;
+        if (v > max) max = v;
+      });
+      var chart = q('[data-stats-chart]');
+      chart.innerHTML = '';
+      keys.forEach(function (k) {
+        var v = byDay[k] ? Number(byDay[k].views || 0) : 0;
+        var bar = document.createElement('div');
+        var h = v === 0 ? 2 : Math.max(4, Math.round((v / max) * 52));
+        bar.style.cssText = 'flex:1;border-radius:2px 2px 0 0;height:' + h +
+          'px;background:' + (v === 0 ? 'var(--color-divider)' : 'var(--color-ink-strong)');
+        bar.title = k + ': ' + v + ' view' + (v === 1 ? '' : 's');
+        chart.appendChild(bar);
+      });
+      var s30 = q('[data-stat-views-30]');
+      if (s30) s30.textContent = fmtNum(sum) + ' total';
+    }
+
+    window.jcOpenStats = async function (entityType, id, title) {
+      var apiBase = entityType === 'listing' ? '/api/listings/' : '/api/donors/';
+      q('[data-stats-title]').textContent = title || 'Statistics';
+      q('[data-stats-sub]').textContent = '';
+      show(q('[data-stats-loading]'), true);
+      show(q('[data-stats-error]'), false);
+      show(q('[data-stats-body]'), false);
+      dlg.showModal();
+
+      try {
+        var res = await fetch(apiBase + encodeURIComponent(id) + '/stats');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var d = await res.json();
+
+        q('[data-stat-views]').textContent = fmtNum(d.totals.views);
+        q('[data-stat-contacts]').textContent = fmtNum(d.totals.contacts);
+        var conv = d.totals.views > 0
+          ? ((d.totals.contacts / d.totals.views) * 100).toFixed(1) + '%'
+          : '—';
+        q('[data-stat-conversion]').textContent = conv;
+
+        var days = Math.max(0, Math.floor((Date.now() / 1000 - d.created_at) / 86400));
+        var sub;
+        if (d.sold_at) {
+          sub = 'Sold in ' + Math.max(1, Math.round((d.sold_at - d.created_at) / 86400)) + ' days';
+        } else {
+          sub = (days === 0 ? 'Listed today' : days + ' day' + (days === 1 ? '' : 's') + ' on market') +
+            ' · ' + (d.status || '');
+        }
+        q('[data-stats-sub]').textContent = sub;
+
+        renderChart(d.series);
+        show(q('[data-stats-loading]'), false);
+        show(q('[data-stats-body]'), true);
+      } catch (e) {
+        show(q('[data-stats-loading]'), false);
+        var err = q('[data-stats-error]');
+        err.textContent = 'Failed to load statistics (' + e.message + ').';
+        show(err, true);
+      }
+    };
+
+    q('[data-stats-close]').addEventListener('click', function () { dlg.close(); });
+    dlg.addEventListener('click', function (e) {
+      // click on the backdrop (outside the inner padding box) closes
+      if (e.target === dlg) dlg.close();
+    });
+  })();
+</script>
