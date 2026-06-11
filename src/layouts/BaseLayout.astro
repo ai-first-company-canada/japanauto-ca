@@ -108,9 +108,14 @@ const jsonLd = {
     <link
       rel="preload"
       as="style"
+      id="font-css"
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-      onload="this.onload=null;this.rel='stylesheet'"
     />
+    {/* Async-CSS rel flip lives in a script (not an onload= attribute) so the
+        CSP can stay free of 'unsafe-inline'/'unsafe-hashes'. Keep this byte-
+        identical across BaseLayout/DealerLayout/AuthLayout — it dedupes to a
+        single hash in the build-time CSP manifest. */}
+    <script is:inline>(function(){var l=document.getElementById('font-css');if(l)l.addEventListener('load',function(){l.rel='stylesheet'},{once:true});})();</script>
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
     </noscript>
@@ -134,6 +139,20 @@ const jsonLd = {
         document.cookie = "jc_province=" + province + "; max-age=" + yr + "; path=/; samesite=lax; secure";
         window.location.assign("/" + slug + "/");
       };
+      // Delegated replacement for onclick= attributes (blocked under a CSP
+      // without 'unsafe-inline'): [data-open-modal] opens the <dialog> with
+      // that id; [data-set-city] persists the city hint and navigates.
+      document.addEventListener("click", function (e) {
+        var el = e.target instanceof Element ? e.target.closest("[data-open-modal],[data-set-city]") : null;
+        if (!el) return;
+        var modalId = el.getAttribute("data-open-modal");
+        if (modalId) {
+          var dlg = document.getElementById(modalId);
+          if (dlg && typeof dlg.showModal === "function") dlg.showModal();
+          return;
+        }
+        window.setCityCookie(el.getAttribute("data-set-city"), el.getAttribute("data-set-province") || "");
+      });
     </script>
   </body>
 </html>

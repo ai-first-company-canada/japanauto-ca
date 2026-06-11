@@ -10,16 +10,17 @@
 import type { Env } from "../../types/env";
 import { getDealerBySlug, listRecentListings } from "../api/_lib/db";
 import {
-  renderShell, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
+  renderShell, takeCspNonce, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
 } from "../_lib/page-shell";
 
 const DOW_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) => {
+export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, data }) => {
   const slug = params.slug as string;
+  const cspNonce = takeCspNonce(data);
   const dealer = await getDealerBySlug(env, slug);
   if (!dealer) {
-    return new Response(notFoundHtml(), {
+    return new Response(notFoundHtml(cspNonce), {
       status: 404,
       headers: { 'content-type': 'text/html; charset=utf-8' },
     });
@@ -176,6 +177,7 @@ ${cardsHtml}
 
   const html = renderShell({
     title, description, canonical, schemaLD,
+    nonce: cspNonce,
   }, body);
 
   return new Response(html, {
@@ -203,11 +205,12 @@ function contactRow(label: string, value: string, href: string): string {
   </div>`;
 }
 
-function notFoundHtml(): string {
+function notFoundHtml(nonce: string): string {
   return renderShell({
     title: 'Dealer not found — japanauto.ca',
     description: 'This dealer profile could not be found.',
     canonical: 'https://japanauto.ca/dealers/',
+    nonce,
   }, `<main style="padding:48px 16px;text-align:center"><h1 style="font-size:24px;margin:0 0 12px">Dealer not found</h1><p style="color:var(--color-ink-muted);font-size:14px"><a href="/dealers/" style="color:var(--color-ink-strong)">Browse all dealers →</a></p></main>`);
 }
 

@@ -20,6 +20,25 @@ export interface ShellOptions {
   canonical: string;
   ogImage?: string | null;
   schemaLD?: unknown[];
+  /**
+   * Per-request CSP nonce from _middleware (via takeCspNonce). Required:
+   * the shell and route bodies carry inline <script> tags, and script-src
+   * no longer includes 'unsafe-inline' (audit #18) — an un-nonced script
+   * is silently blocked by the browser.
+   */
+  nonce: string;
+}
+
+/**
+ * Pull the per-request CSP nonce that _middleware generated into
+ * `context.data`, marking it consumed. The middleware only emits the
+ * 'nonce-…' source in script-src when a route actually used the nonce, so
+ * cacheable static/SSG responses never advertise an unused nonce.
+ */
+export function takeCspNonce(data: Record<string, unknown>): string {
+  const nonce = typeof data.cspNonce === 'string' ? data.cspNonce : '';
+  if (nonce) data.cspNonceUsed = true;
+  return nonce;
 }
 
 const SHELL_HEAD = `
@@ -110,7 +129,8 @@ ${SHELL_HEAD}
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+<link rel="preload" as="style" id="font-css" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
+<script nonce="${esc(opts.nonce)}">(function(){var l=document.getElementById('font-css');if(l)l.addEventListener('load',function(){l.rel='stylesheet'},{once:true});})();</script>
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" /></noscript>
 <link rel="stylesheet" href="/styles/global.css" />
 <script type="application/ld+json">${JSON.stringify(graph).replace(/</g, '\\u003c')}</script>

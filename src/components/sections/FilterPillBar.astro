@@ -18,7 +18,7 @@ const {
     class="pill"
     data-pill-key="year"
     data-state={yearActive ? 'selected' : 'default'}
-    onclick="document.getElementById('year-filter').showModal()"
+    data-open-modal="year-filter"
     aria-label={`Filter by year — currently ${yearLabel}`}
   >
     <span style="color:var(--color-ink-muted)">Year:</span>
@@ -30,7 +30,7 @@ const {
     class="pill"
     data-pill-key="sort"
     data-state="emphasis"
-    onclick="document.getElementById('sort-filter').showModal()"
+    data-open-modal="sort-filter"
     aria-label={`Sort listings — currently ${sortLabel}`}
   >
     <span style="color:var(--color-ink-muted)">Sort:</span>

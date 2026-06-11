@@ -15,7 +15,7 @@ import {
   getListingBySlug, getMediaForEntity, getDealerById,
 } from "../../api/_lib/db";
 import {
-  renderShell, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
+  renderShell, takeCspNonce, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
 } from "../../_lib/page-shell";
 
 const TIER_1_CITIES: Record<string, { name: string; province: string }> = {
@@ -27,11 +27,12 @@ const TIER_1_CITIES: Record<string, { name: string; province: string }> = {
   ottawa:    { name: 'Ottawa',    province: 'ON' },
 };
 
-export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) => {
+export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, data }) => {
   const slug = params.slug as string;
+  const cspNonce = takeCspNonce(data);
   const listing = await getListingBySlug(env, slug);
   if (!listing || listing.status !== 'active') {
-    return new Response(notFoundHtml(), {
+    return new Response(notFoundHtml(cspNonce), {
       status: 404,
       headers: { 'content-type': 'text/html; charset=utf-8' },
     });
@@ -47,7 +48,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
   ]);
 
   if (!dealer || !makeRow || !modelRow) {
-    return new Response(notFoundHtml(), {
+    return new Response(notFoundHtml(cspNonce), {
       status: 404,
       headers: { 'content-type': 'text/html; charset=utf-8' },
     });
@@ -196,12 +197,12 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
           <img src="${esc(realPhotoUrls[0]!.url)}" alt="${esc(realPhotoUrls[0]!.alt)}" loading="eager"
                style="width:100%;height:100%;object-fit:cover" />
           <button type="button" class="photo-main-button" aria-label="View all photos"
-                  onclick="document.getElementById('photo-lightbox').showModal()"></button>
+                  data-open-lightbox></button>
           <div style="position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:5px;pointer-events:none">
             ${realPhotoUrls.map((_, i) => `<span style="width:6px;height:6px;border-radius:3px;background:${i === 0 ? 'var(--color-accent)' : 'rgba(140,140,140,0.6)'}"></span>`).join('')}
           </div>
           <button type="button" class="photo-counter-overlay"
-                  onclick="document.getElementById('photo-lightbox').showModal()">
+                  data-open-lightbox>
             ${realPhotoUrls.length} photo${realPhotoUrls.length === 1 ? '' : 's'} · Tap to view all
           </button>
         </div>
@@ -215,22 +216,35 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
         <div class="photo-lightbox-main">
           ${realPhotoUrls.map((_p, i) => `<input type="radio" name="lightbox-photo" id="lp-${i}" value="${i}"${i === 0 ? ' checked' : ''} class="sr-only" data-lightbox-radio />`).join('')}
           <div class="photo-lightbox-stage">
-            ${realPhotoUrls.map((p, i) => `<div class="photo-lightbox-slide" data-slide-idx="${i}" aria-hidden="${i !== 0}"><img src="${esc(p.url)}" alt="${esc(p.alt)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain" /></div>`).join('')}
+            ${realPhotoUrls.map((p, i) => `<div class="photo-lightbox-slide${i === 0 ? ' is-active' : ''}" data-slide-idx="${i}" aria-hidden="${i !== 0}"><img src="${esc(p.url)}" alt="${esc(p.alt)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain" /></div>`).join('')}
           </div>
         </div>
         <div class="photo-lightbox-thumbs">
-          ${realPhotoUrls.map((p, i) => `<label for="lp-${i}" class="photo-thumb" aria-label="Photo ${i + 1}"><img src="${esc(p.url)}" alt="${esc(p.alt)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" /></label>`).join('')}
+          ${realPhotoUrls.map((p, i) => `<label for="lp-${i}" class="photo-thumb${i === 0 ? ' is-active' : ''}" aria-label="Photo ${i + 1}"><img src="${esc(p.url)}" alt="${esc(p.alt)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" /></label>`).join('')}
         </div>
       </dialog>
-      <script>
+      <script nonce="${esc(cspNonce)}">
         (function () {
           var dialog = document.getElementById('photo-lightbox');
           if (!dialog) return;
+          document.querySelectorAll('[data-open-lightbox]').forEach(function (btn) {
+            btn.addEventListener('click', function () { dialog.showModal(); });
+          });
           var radios = dialog.querySelectorAll('[data-lightbox-radio]');
           var current = dialog.querySelector('[data-lightbox-current]');
+          var slides = dialog.querySelectorAll('.photo-lightbox-slide');
+          var thumbs = dialog.querySelectorAll('.photo-thumb');
           radios.forEach(function (r, idx) {
             r.addEventListener('change', function () {
-              if (r.checked && current) current.textContent = String(idx + 1);
+              if (!r.checked) return;
+              if (current) current.textContent = String(idx + 1);
+              slides.forEach(function (s, i) {
+                s.classList.toggle('is-active', i === idx);
+                s.setAttribute('aria-hidden', String(i !== idx));
+              });
+              thumbs.forEach(function (t, i) {
+                t.classList.toggle('is-active', i === idx);
+              });
             });
           });
         })();
@@ -365,6 +379,7 @@ ${!sold && phoneFmt.tel ? `<div role="region" aria-label="Contact dealer" style=
     canonical,
     ogImage: primaryImage,
     schemaLD,
+    nonce: cspNonce,
   }, body);
 
   return new Response(html, {
@@ -390,11 +405,12 @@ function contactRow(label: string, value: string, href: string): string {
   </div>`;
 }
 
-function notFoundHtml(): string {
+function notFoundHtml(nonce: string): string {
   return renderShell({
     title: 'Listing not found — japanauto.ca',
     description: 'This listing is no longer available.',
     canonical: 'https://japanauto.ca/used-cars/',
+    nonce,
   }, `<main style="padding:48px 16px;text-align:center"><h1 style="font-size:24px;margin:0 0 12px">Listing not found</h1><p style="color:var(--color-ink-muted);font-size:14px">This listing may have sold or been removed. <a href="/used-cars/" style="color:var(--color-ink-strong)">Browse current inventory →</a></p></main>`);
 }
 

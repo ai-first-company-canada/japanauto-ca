@@ -33,7 +33,8 @@ const TIER1: Array<{ name: string; province: string; slug: string }> = [
       <button
         type="button"
         class="card"
-        onclick={`window.setCityCookie('${c.slug}','${c.province}')`}
+        data-set-city={c.slug}
+        data-set-province={c.province}
         style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left;cursor:pointer;background:#fff"
       >
         <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>

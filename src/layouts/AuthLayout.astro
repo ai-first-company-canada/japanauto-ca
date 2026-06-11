@@ -24,9 +24,11 @@ const { title, description, canonical } = Astro.props;
     <link
       rel="preload"
       as="style"
+      id="font-css"
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-      onload="this.onload=null;this.rel='stylesheet'"
     />
+    {/* Keep byte-identical with BaseLayout's copy — dedupes to one CSP hash. */}
+    <script is:inline>(function(){var l=document.getElementById('font-css');if(l)l.addEventListener('load',function(){l.rel='stylesheet'},{once:true});})();</script>
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
     </noscript>

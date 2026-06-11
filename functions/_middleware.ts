@@ -24,6 +24,7 @@ import { verifyAccessToken } from "./api/_lib/auth";
 import { isAllowedOrigin, isCrossSiteUnsafe } from "./api/_lib/csrf";
 import { forbidden } from "./api/_lib/response";
 import { getDealerById } from "./api/_lib/db";
+import { SCRIPT_HASHES } from "./_lib/csp-script-hashes";
 
 /**
  * Pages Functions data bag — used to pass geolocation + bot detection
@@ -36,6 +37,10 @@ export interface MiddlewareData {
   geo?: CityResolution;
   isBot?: boolean;
   dealerId?: string;
+  /** Per-request CSP nonce — dynamic HTML routes consume it via takeCspNonce(). */
+  cspNonce?: string;
+  /** Set by takeCspNonce() when a route stamped the nonce into its HTML. */
+  cspNonceUsed?: boolean;
 }
 
 /**
@@ -65,29 +70,46 @@ const SECURITY_HEADERS: Record<string, string> = {
   "x-frame-options": "SAMEORIGIN",
   "referrer-policy": "strict-origin-when-cross-origin",
   "permissions-policy": "geolocation=(), camera=(), microphone=(), payment=(self)",
-  // CSP (audit #18). script-src/style-src still carry 'unsafe-inline': the site
-  // renders many legitimate inline scripts both at build time (Astro SSG) and at
-  // runtime (functions/_lib/page-shell.ts), and a shared CSP header can't drop
-  // 'unsafe-inline' for them without a full migration — adding a hash/nonce makes
-  // browsers IGNORE 'unsafe-inline' (CSP3), so a half-migration would break every
-  // inline script across 900+ pages. That migration (Astro build-time hashes for
-  // SSG + a per-request nonce threaded through page-shell for dynamic routes) is
-  // tracked separately. Until then these directives are pure hardening that does
-  // NOT depend on inline policy and closes real amplifiers:
-  //   object-src 'none'  — no <object>/<embed> plugin script execution
-  //   base-uri 'self'    — block <base> injection that hijacks every relative URL
-  //   form-action 'self' — injected forms can't POST to attacker origins
-  // Verified safe: no dist page uses <base>, and all 897 forms submit same-origin.
-  "content-security-policy":
+  "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+};
+
+/**
+ * CSP (audit #18, full fix) — script-src carries NO 'unsafe-inline'.
+ *
+ * Inline scripts are allowlisted two ways, sharing this one header:
+ *   - SSG pages (dist/): every unique inline <script> body is SHA-256-hashed
+ *     at build time (scripts/generate-csp-hashes.mjs → csp-script-hashes.ts)
+ *     and listed in script-src. ~24 unique bodies across 900+ pages.
+ *   - Dynamic Pages Functions HTML (page-shell.ts routes): a per-request
+ *     nonce, generated below and consumed via takeCspNonce(). The nonce
+ *     source is only emitted when a route actually used it, so cacheable
+ *     static responses never advertise one.
+ * Inline event handler attributes (onclick=/onload=) are allowed by NEITHER
+ * hash nor nonce — generate-csp-hashes.mjs fails the build if one ships.
+ *
+ * style-src keeps 'unsafe-inline' for now: Astro inlines all stylesheets
+ * (inlineStylesheets: 'always') and the markup leans on style="" attributes;
+ * hashing those is tracked as a follow-up. fonts.googleapis.com (style-src)
+ * + fonts.gstatic.com (font-src) unblock the IBM Plex webfonts that the
+ * previous policy was silently rejecting.
+ */
+const CSP_SCRIPT_EXTRA = SCRIPT_HASHES.map((h) => `'${h}'`).join(" ");
+
+function buildCsp(nonce?: string): string {
+  return (
     "default-src 'self'; img-src 'self' data: https://imagedelivery.net; " +
-    "script-src 'self' 'unsafe-inline' https://js.stripe.com; " +
-    "style-src 'self' 'unsafe-inline'; " +
+    `script-src 'self' ${nonce ? `'nonce-${nonce}' ` : ""}${CSP_SCRIPT_EXTRA} https://js.stripe.com; ` +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
     "connect-src 'self' https://api.stripe.com; " +
     "frame-src https://js.stripe.com https://hooks.stripe.com; " +
     "object-src 'none'; base-uri 'self'; form-action 'self'; " +
-    "frame-ancestors 'self';",
-  "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-};
+    "frame-ancestors 'self';"
+  );
+}
+
+/** Nonce-free variant — precomputed once per isolate for the common case. */
+const CSP_STATIC = buildCsp();
 
 /** Lightweight bot UA detection. Not a security feature — used for analytics gating only. */
 const BOT_UA_RE = /(googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp|petalbot|facebot|twitterbot|linkedinbot|applebot|gptbot|claude|perplexity|chatgpt-user)/i;
@@ -146,6 +168,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 2. Bot tag (cheap UA sniff)
   const ua = request.headers.get("user-agent") ?? "";
   md.isBot = BOT_UA_RE.test(ua);
+
+  // 2a. Per-request CSP nonce for dynamic HTML routes (audit #18). Generated
+  //     for every non-API request (cheap: 16 random bytes); only routes that
+  //     render runtime HTML through page-shell consume it (takeCspNonce sets
+  //     cspNonceUsed), and only then does the CSP header carry a nonce source.
+  if (!isApi) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    md.cspNonce = btoa(String.fromCharCode(...bytes));
+  }
 
   // 2b. Auth guard for /dealer/* paths (except auth pages themselves).
   //     Redirects to /dealer/login?next=<path> when access token is missing
@@ -220,6 +252,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     for (const c of setCookies) headers.append("set-cookie", c);
   }
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
+  headers.set(
+    "content-security-policy",
+    md.cspNonceUsed && md.cspNonce ? buildCsp(md.cspNonce) : CSP_STATIC,
+  );
 
   if (isApi) {
     const origin = request.headers.get("origin");

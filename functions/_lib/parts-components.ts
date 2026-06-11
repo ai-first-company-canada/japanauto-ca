@@ -575,9 +575,10 @@ export function renderPartsStickyBar(donor: DonorCarDetailRow, primaryPhoto: Med
 }
 
 /** Inline IntersectionObserver script — toggles `.visible` on the sticky bar
- *  once the user scrolls past the spec grid. Pure JS, no library. */
-export function renderStickyBarObserverScript(): string {
-  return `<script>(function(){
+ *  once the user scrolls past the spec grid. Pure JS, no library. Takes the
+ *  per-request CSP nonce — script-src has no 'unsafe-inline' (audit #18). */
+export function renderStickyBarObserverScript(nonce: string): string {
+  return `<script nonce="${esc(nonce)}">(function(){
   var bar = document.getElementById('parts-sticky-bar');
   var trigger = document.getElementById('key-specs');
   if (!bar || !trigger || !('IntersectionObserver' in window)) {

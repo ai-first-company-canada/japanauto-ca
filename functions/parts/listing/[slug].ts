@@ -28,7 +28,7 @@ import type { Env } from "../../../types/env";
 import {
   getDonorCarBySlug, getMediaForEntity, listRelatedDonors, listDonorCountsByCity,
 } from "../../api/_lib/db";
-import { renderShell, safeUrl } from "../../_lib/page-shell";
+import { renderShell, takeCspNonce, safeUrl } from "../../_lib/page-shell";
 import {
   renderPartsNavBar, renderBreadcrumb, renderDepletedBand, renderPhotoGallery,
   renderTitleBlock, renderPrimaryCta, renderEducationalBlock, renderSpecGrid,
@@ -41,8 +41,9 @@ import type { FaqItem } from "../../_lib/parts-components";
 
 const DOW_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) => {
+export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, data }) => {
   const slug = params.slug as string;
+  const cspNonce = takeCspNonce(data);
   const donor = await getDonorCarBySlug(env, slug);
   if (!donor) {
     return new Response(
@@ -50,6 +51,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
         title: 'Donor car not found — japanauto.ca',
         description: 'This donor car may have been removed or fully parted out.',
         canonical: `${env.PUBLIC_SITE_URL}/parts/`,
+        nonce: cspNonce,
       }, render404DonorBody(slug)),
       { status: 404, headers: { 'content-type': 'text/html; charset=utf-8' } },
     );
@@ -243,13 +245,14 @@ ${renderFaqList('Questions about this donor car', faqs)}
 ${renderFooter()}
 
 ${!isDepleted ? renderPartsStickyBar(donor, photos[0], cfHash) : ''}
-${!isDepleted ? renderStickyBarObserverScript() : ''}
+${!isDepleted ? renderStickyBarObserverScript(cspNonce) : ''}
 `;
 
   const html = renderShell({
     title, description, canonical,
     ogImage: primaryPhotoUrl,
     schemaLD,
+    nonce: cspNonce,
   }, body);
 
   return new Response(html, {
