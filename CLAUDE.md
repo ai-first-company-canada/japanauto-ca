@@ -10,6 +10,7 @@ Working dir: `/Users/andreuziubanov/sites/japanauto`. Prod: https://japanauto.pa
 - **D1** (binding `DB`, database `japanauto-prod`), **KV**, **R2** — see `wrangler.toml`
 - Deploy: `npm run deploy` — runs the pre-deploy gate (`predeploy`: typecheck → build → `npm run audit:seo`) then `wrangler pages deploy dist`. The SEO/GEO audit (`scripts/seo-audit.py`) scans built `dist/` and **blocks deploy** on any indexable page missing title/description/self-canonical, with h1≠1, or missing Open Graph / JSON-LD. noindex (`/dealer/*`) and 404 are excluded by design.
 - Dev: `npm run dev` (port 4321). For Cowork preview use the `japanauto-dev` config in brandlifts launch.json (port 4322) — wraps `cd /Users/andreuziubanov/sites/japanauto && npm run dev`.
+- **Cron Worker** `workers/expire-sweeper/` (audit #8): every 6h flips `status='active'` listings past `expires_at` to `'expired'` in prod D1 (Pages Functions can't run `scheduled()`). **NOT covered by `npm run deploy`** — after changes there, run `cd workers/expire-sweeper && npx wrangler deploy`. Its `wrangler dev` uses the real prod DB (`remote = true`); see its README.
 
 ## URL architecture (city-first, as of 2026-05-19)
 

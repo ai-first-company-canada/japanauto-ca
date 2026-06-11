@@ -1,0 +1,31 @@
+# japanauto-expire-sweeper — cron Worker that retires TTL-expired listings.
+#
+# Second half of audit #8: public reads already filter
+# (expires_at IS NULL OR expires_at > unixepoch), but rows past their TTL
+# stayed status='active' forever — dealer dashboards and analytics counted
+# them as live. This Worker flips them to 'expired' every 6 hours.
+#
+# Pages Functions cannot run scheduled() handlers, hence a separate Worker.
+# NOT deployed by the Pages `npm run deploy` — deploy separately:
+#   cd workers/expire-sweeper && npx wrangler deploy
+
+name = "japanauto-expire-sweeper"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+# Cron-only Worker with no fetch handler — no public workers.dev URL.
+workers_dev = false
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+# Make scheduled-run logs visible in the dashboard (Workers → Logs).
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "japanauto-prod"
+database_id = "b0d65b95-2f43-403d-9237-0d4cac6e186a"
+# `wrangler dev` talks to the real prod DB — the local simulator is empty and
+# useless here, and the sweep is idempotent (only flips rows already past TTL).
+remote = true
