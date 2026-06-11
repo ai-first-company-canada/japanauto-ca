@@ -776,10 +776,77 @@ export async function recordContactReveal(
     if (!res.meta.changes) return;
   }
 
-  await env.DB.prepare(`
-    INSERT INTO contact_reveals (id, entity_type, entity_id, ip_hash, user_agent_hash, revealed_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).bind(crypto.randomUUID(), entityType, entityId, ipHash, userAgentHash, now).run();
+  const statements = [
+    env.DB.prepare(`
+      INSERT INTO contact_reveals (id, entity_type, entity_id, ip_hash, user_agent_hash, revealed_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(crypto.randomUUID(), entityType, entityId, ipHash, userAgentHash, now),
+  ];
+  // Daily rollup (Feature 1 stats) — only for types the table's CHECK accepts.
+  if (entityType === "listing" || entityType === "donor_car") {
+    statements.push(
+      env.DB.prepare(`
+        INSERT INTO entity_stats_daily (entity_type, entity_id, day, views, contacts)
+        VALUES (?, ?, ?, 0, 1)
+        ON CONFLICT(entity_type, entity_id, day) DO UPDATE SET contacts = contacts + 1
+      `).bind(entityType, entityId, statsDay()),
+    );
+  }
+  await env.DB.batch(statements);
+}
+
+// ============================================================================
+// ENTITY STATS — daily view/contact rollups (Feature 1, migration 0012)
+// ============================================================================
+
+type StatsEntityType = "listing" | "donor_car";
+const STATS_TABLES: Record<StatsEntityType, "listings" | "donor_cars"> = {
+  listing: "listings",
+  donor_car: "donor_cars",
+};
+
+/** UTC YYYY-MM-DD key for the daily rollup. */
+function statsDay(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * Count one detail-page view: lifetime counter on the entity row + today's
+ * rollup bucket, in one atomic D1 batch. Called via ctx.waitUntil off the
+ * render path; callers must skip bots (md.isBot) so the numbers shown to
+ * dealers reflect humans.
+ */
+export async function recordView(
+  env: Env, entityType: StatsEntityType, entityId: string,
+): Promise<void> {
+  await env.DB.batch([
+    env.DB.prepare(
+      `UPDATE ${STATS_TABLES[entityType]} SET view_count = view_count + 1 WHERE id = ?`,
+    ).bind(entityId),
+    env.DB.prepare(`
+      INSERT INTO entity_stats_daily (entity_type, entity_id, day, views, contacts)
+      VALUES (?, ?, ?, 1, 0)
+      ON CONFLICT(entity_type, entity_id, day) DO UPDATE SET views = views + 1
+    `).bind(entityType, entityId, statsDay()),
+  ]);
+}
+
+export interface DailyStatsRow {
+  day: string;
+  views: number;
+  contacts: number;
+}
+
+/** Last-N-days series for one entity (days without traffic have no row). */
+export async function getDailyStats(
+  env: Env, entityType: StatsEntityType, entityId: string, days = 30,
+): Promise<DailyStatsRow[]> {
+  const res = await env.DB.prepare(`
+    SELECT day, views, contacts FROM entity_stats_daily
+    WHERE entity_type = ? AND entity_id = ? AND day >= date('now', ?)
+    ORDER BY day
+  `).bind(entityType, entityId, `-${days} days`).all<DailyStatsRow>();
+  return res.results ?? [];
 }
 
 // ============================================================================

@@ -14,7 +14,7 @@
 import type { Env } from "../../../types/env";
 import { isListingExpired } from "../../../lib/schema";
 import {
-  getListingDetailBySlug, getMediaForEntity,
+  getListingDetailBySlug, getMediaForEntity, recordView,
 } from "../../api/_lib/db";
 import {
   renderShell, takeCspNonce, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
@@ -29,7 +29,7 @@ const TIER_1_CITIES: Record<string, { name: string; province: string }> = {
   ottawa:    { name: 'Ottawa',    province: 'ON' },
 };
 
-export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, data }) => {
+export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, data, waitUntil }) => {
   const slug = params.slug as string;
   const cspNonce = takeCspNonce(data);
   // One JOIN statement (listings+dealers+makes+models, audit #25) + one media
@@ -41,6 +41,14 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
       status: 404,
       headers: { 'content-type': 'text/html; charset=utf-8' },
     });
+  }
+
+  // Cabinet stats (Feature 1): count the human view off the render path.
+  // Bots are tagged by the middleware UA sniff and excluded so dealers see
+  // people, not crawlers. s-maxage=60 means cached hits go uncounted — the
+  // numbers are a floor, which is the honest direction to err.
+  if (!(data as { isBot?: boolean }).isBot) {
+    waitUntil(recordView(env, 'listing', listing.id));
   }
 
   const photos = await getMediaForEntity(env, 'listing', listing.id);

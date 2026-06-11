@@ -27,6 +27,7 @@
 import type { Env } from "../../../types/env";
 import {
   getDonorCarBySlug, getMediaForEntity, listRelatedDonors, listDonorCountsByCity,
+  recordView,
 } from "../../api/_lib/db";
 import { renderShell, takeCspNonce, safeUrl } from "../../_lib/page-shell";
 import {
@@ -42,7 +43,7 @@ import type { FaqItem } from "../../_lib/parts-components";
 
 const DOW_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, data }) => {
+export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, data, waitUntil }) => {
   const slug = params.slug as string;
   const cspNonce = takeCspNonce(data);
   const donor = await getDonorCarBySlug(env, slug);
@@ -60,6 +61,14 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
 
   const isDepleted = donor.condition === 'depleted' || donor.status === 'depleted';
   const cfHash = env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '';
+
+  // Cabinet stats (Feature 1): count the human view off the render path —
+  // depleted donors included, the yard still wants to see interest. Bots are
+  // excluded via the middleware UA tag; cached hits (s-maxage=60) go
+  // uncounted, so the numbers are a floor.
+  if (!(data as { isBot?: boolean }).isBot) {
+    waitUntil(recordView(env, 'donor_car', donor.id));
+  }
 
   const [photos, sameYard, sameCityModel, otherCities] = await Promise.all([
     getMediaForEntity(env, 'donor_car', donor.id),
