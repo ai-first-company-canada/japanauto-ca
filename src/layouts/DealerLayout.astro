@@ -44,7 +44,14 @@ const cfAccountHash = (import.meta.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '') as 
       <a href="/" aria-label="japanauto, home" style="display:inline-flex;align-items:center">
         <Wordmark size={20} />
       </a>
-      <a href="/dealer/logout/" class="dealer-logout-link">Sign out</a>
+      <div style="display:flex;align-items:center;gap:12px">
+        <a
+          data-plan-badge
+          href="/dealer/profile/"
+          style="display:none;align-items:center;font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;text-decoration:none"
+        ></a>
+        <a href="/dealer/logout/" class="dealer-logout-link">Sign out</a>
+      </div>
     </header>
     <nav class="dealer-tabs" aria-label="Dealer navigation">
       <a
@@ -74,13 +81,15 @@ const cfAccountHash = (import.meta.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '') as 
     <script is:inline>
       (async function () {
         // Single fetch + sessionStorage cache. The layout renders a Listings
-        // tab by default; swap to Donors once we know the dealer.type. Doing
-        // this client-side avoids turning every dashboard page into SSR.
+        // tab by default; swap to Donors once we know the dealer.type, and
+        // renders the plan badge from entitlements (Feature 5). Doing this
+        // client-side avoids turning every dashboard page into SSR.
         try {
           var cached = null;
-          try { cached = sessionStorage.getItem('jc_dealer_type'); } catch (_) {}
-          if (cached === 'salvage_yard' || cached === 'dealer') {
-            applyType(cached);
+          try { cached = JSON.parse(sessionStorage.getItem('jc_dealer_meta') || 'null'); } catch (_) {}
+          if (cached && cached.type) {
+            applyType(cached.type);
+            applyBadge(cached.badge);
             return;
           }
           var res = await fetch('/api/dealers/me');
@@ -88,11 +97,36 @@ const cfAccountHash = (import.meta.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '') as 
           if (!res.ok) return;
           var data = await res.json();
           var type = (data.dealer || data || {}).type;
+          var badge = badgeFor(data.entitlements);
           if (type === 'salvage_yard' || type === 'dealer') {
-            try { sessionStorage.setItem('jc_dealer_type', type); } catch (_) {}
+            try { sessionStorage.setItem('jc_dealer_meta', JSON.stringify({ type: type, badge: badge })); } catch (_) {}
             applyType(type);
+            applyBadge(badge);
           }
         } catch (_) { /* nav stays in default state */ }
+
+        function badgeFor(ent) {
+          if (!ent) return null;
+          if (ent.onTrial) return { text: 'Pro trial · ' + ent.trialDaysLeft + 'd left', kind: 'trial' };
+          if (ent.tier === 'pro') return { text: 'Pro', kind: 'pro' };
+          return { text: 'Free plan', kind: 'free' };
+        }
+
+        function applyBadge(badge) {
+          var el = document.querySelector('[data-plan-badge]');
+          if (!el || !badge) return;
+          el.textContent = badge.text;
+          if (badge.kind === 'free') {
+            el.style.background = 'var(--color-bg-subtle)';
+            el.style.color = 'var(--color-ink-muted)';
+            el.title = 'Free plan — up to 5 active listings. Click to upgrade.';
+          } else {
+            el.style.background = 'var(--color-ink-strong)';
+            el.style.color = '#fff';
+            el.title = badge.kind === 'trial' ? 'Pro features free during your trial.' : 'Pro plan — unlimited listings.';
+          }
+          el.style.display = 'inline-flex';
+        }
 
         function applyType(type) {
           var listingsTab = document.querySelector('[data-tab-listings]');

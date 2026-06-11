@@ -141,6 +141,9 @@ export const LIMITS = {
   REFRESH_TOKEN_TTL_DAYS: 30,
   PHOTOS_PER_LISTING_MAX: 20,
   PHOTO_MAX_BYTES: 10 * 1024 * 1024,    // 10MB pre-compression
+  // Billing (Feature 5): free tier caps active inventory; Pro is unlimited.
+  FREE_MAX_ACTIVE_LISTINGS: 5,
+  TRIAL_DAYS: 30,
 } as const;
 
 // ============================================================================
@@ -481,6 +484,11 @@ export const dealerSchema = z.object({
   subscription_tier: subscriptionTierSchema,
   subscription_status: subscriptionStatusSchema.nullable(),
   stripe_customer_id: z.string().nullable(),
+  stripe_subscription_id: z.string().nullable().default(null),
+  // Free Pro trial window (Feature 5, migration 0013). While now < trial_ends_at
+  // the account is treated as Pro. NULL = no trial. Visible in self view so the
+  // cabinet can show the countdown; omitted from the public view.
+  trial_ends_at: timestampSchema.nullable().default(null),
   daily_listing_count: z.number().int().min(0),
   daily_listing_reset_at: timestampSchema.nullable(),
   // Session generation — bumped to invalidate all outstanding access tokens
@@ -513,6 +521,7 @@ export type DealerRow = z.infer<typeof dealerRowSchema>;
 export const dealerSelfSchema = dealerRowSchema.omit({
   password_hash: true,
   stripe_customer_id: true,
+  stripe_subscription_id: true,
   token_epoch: true,
 });
 export type DealerSelf = z.infer<typeof dealerSelfSchema>;
@@ -528,6 +537,8 @@ export type DealerSelf = z.infer<typeof dealerSelfSchema>;
 export const dealerPublicSchema = dealerRowSchema.omit({
   password_hash: true,
   stripe_customer_id: true,
+  stripe_subscription_id: true,
+  trial_ends_at: true,
   daily_listing_count: true,
   daily_listing_reset_at: true,
   business_number: true,

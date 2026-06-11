@@ -40,6 +40,7 @@ import {
   getDealerById,
 } from "../_lib/db";
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
+import { enforceActiveCap } from "../_lib/entitlements";
 import { pingIndexNow } from "../_lib/indexnow";
 
 // ============================================================================
@@ -239,6 +240,14 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   // Default 'draft' if the form omits status (back-compat with Phase 2c2a clients);
   // Phase 2b3 form always sends 'active' or 'draft' explicitly.
   const initialStatus = input.status ?? "draft";
+
+  // Free-tier active-listing cap (Feature 5). Drafts don't count toward it, so
+  // only enforce when this listing goes live now; the draft→active PATCH path
+  // re-checks. Pro/trial are uncapped.
+  if (initialStatus === "active") {
+    const capped = await enforceActiveCap(env, dealer, "listings");
+    if (capped) return capped;
+  }
 
   try {
     await env.DB.prepare(`

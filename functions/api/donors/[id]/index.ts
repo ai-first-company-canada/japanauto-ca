@@ -19,7 +19,8 @@ import {
   conflict,
 } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
-import { getDonorCarById, getMediaForEntity } from "../../_lib/db";
+import { getDonorCarById, getMediaForEntity, getDealerById } from "../../_lib/db";
+import { enforceActiveCap } from "../../_lib/entitlements";
 import { pingIndexNow } from "../../_lib/indexnow";
 
 export const onRequestGet: PagesFunction<Env, "id"> = async (
@@ -84,6 +85,14 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
     const allowed = DONOR_LEGAL_TRANSITIONS[existing.status as string] ?? [];
     if (!allowed.includes(data.status)) {
       return conflict(`Cannot change donor status from '${existing.status}' to '${data.status}'`);
+    }
+    // Free-tier active-listing cap (Feature 5): publishing a draft donor counts
+    // toward the shared allowance. Exclude this row so it never self-blocks.
+    if (data.status === "active") {
+      const dealer = await getDealerById(env, auth.dealerId);
+      if (!dealer) return notFound();
+      const capped = await enforceActiveCap(env, dealer, "donor_cars", id);
+      if (capped) return capped;
     }
   }
 

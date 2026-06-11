@@ -16,7 +16,8 @@ import {
   json, jsonError, notFound, forbidden, badRequest, internalError, noContent, conflict,
 } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
-import { getListingById, getMediaForEntity } from "../../_lib/db";
+import { getListingById, getMediaForEntity, getDealerById } from "../../_lib/db";
+import { enforceActiveCap } from "../../_lib/entitlements";
 import { pingIndexNow } from "../../_lib/indexnow";
 
 export const onRequestGet: PagesFunction<Env, "id"> = async ({ request, params, env }) => {
@@ -87,6 +88,13 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
   }
 
   if (isStatusChange && nextStatus === "active") {
+    // Free-tier active-listing cap (Feature 5) — publishing/reviving counts the
+    // listing toward the cap; exclude this row so re-activating never self-blocks.
+    const dealer = await getDealerById(env, auth.dealerId);
+    if (!dealer) return notFound();
+    const capped = await enforceActiveCap(env, dealer, "listings", existing.id);
+    if (capped) return capped;
+
     // Re-entering the public catalog (draft publish or sold/expired revival).
     // The D1 age-cap trigger only fires on UPDATE OF year, so a status-only
     // PATCH would bypass it — re-run the rolling-window check here.

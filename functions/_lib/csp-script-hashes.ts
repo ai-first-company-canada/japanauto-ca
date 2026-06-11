@@ -24,11 +24,11 @@ export const SCRIPT_HASHES: readonly string[] = [
   'sha256-btjWeb1yzRrcijKcjFFTc6fmL1MfApKBZyUHie4d8yQ=',
   'sha256-djX9FyZZDgJNltSnvBxOrPzo2xRoDVRvypUWqzOp+ZU=',
   'sha256-eHRz9EBS7/Q3ovG8Gx1LwnNwO3KYvAQid1AwfrL8Snw=',
+  'sha256-f39JFH91bhzQFA2Y5cI9ZmNDWE/zZyysJo3zZ0boAao=',
   'sha256-k88iyx1/GNzdTJaD/aBBKZiNGFFtU3+czWawfz8t7d4=',
   'sha256-osoV/qZGCL4tBGGRJrR88D3tQKJKWcy4+MAYuavvZj8=',
   'sha256-u+GsEYo5xKu5gOeIKwDJPsq0dVfsGW87/KP9+EQcjiU=',
   'sha256-vNvza+oteQZ7bRGGV/7rGyzf5024BJeahpTlANGISiU=',
-  'sha256-wNFeat/IlwgAtYRhT3mlZVVasHz39yuBuj6PvWgsJ9A=',
   'sha256-xBC6O3v6r+vmTB00mY8GQX4WDX/Jx3joVlt1T359C0M=',
   'sha256-ys94+zpQ9o8owo1uGZsqDIwVNZYMLbj4Ve78vV+shF4=',
 ];

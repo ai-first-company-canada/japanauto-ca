@@ -8,6 +8,7 @@ import { dealerUpdateInputSchema, zodErrorToApiError, dealerSelfSchema } from ".
 import { json, jsonError, badRequest, internalError, notFound, conflict } from "../_lib/response";
 import { requireDealer } from "../_lib/auth";
 import { getDealerById } from "../_lib/db";
+import { getEntitlements } from "../_lib/entitlements";
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const auth = await requireDealer(request, env);
@@ -15,7 +16,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
   const dealer = await getDealerById(env, auth.dealerId);
   if (!dealer) return notFound();
-  return json({ dealer: dealerSelfSchema.parse(dealer) });
+  // Effective tier + entitlements (Feature 5) drive the cabinet's plan badge,
+  // trial countdown, and feature gating. maxActiveListings is Infinity for Pro,
+  // which JSON.stringify emits as null — the client treats null as unlimited.
+  return json({ dealer: dealerSelfSchema.parse(dealer), entitlements: getEntitlements(dealer) });
 };
 
 /**

@@ -13,7 +13,7 @@
  */
 
 import type { Env } from "../../../types/env";
-import { dealerCreateInputSchema, zodErrorToApiError, dealerPublicSchema } from "../../../lib/schema";
+import { dealerCreateInputSchema, zodErrorToApiError, dealerPublicSchema, LIMITS } from "../../../lib/schema";
 import { created, jsonError, conflict, tooManyRequests, internalError } from "../_lib/response";
 import {
   hashPassword, signAccessToken, generateRefreshToken, hashRefreshToken,
@@ -58,8 +58,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         address_line1, address_line2, city, province, postal_code,
         lat, lng, business_number, gst_number, amvic_number,
         specializes_in, bio, founded_year,
-        verified, subscription_tier, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'free', ?, ?)
+        verified, subscription_tier, trial_ends_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'free', ?, ?, ?)
     `).bind(
       id, input.type, input.name, input.slug, input.email, passwordHash,
       input.phone ?? null, input.website ?? null, input.description ?? null,
@@ -67,7 +67,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       input.province, input.postal_code ?? null, input.lat ?? null, input.lng ?? null,
       input.business_number ?? null, input.gst_number ?? null, input.amvic_number ?? null,
       input.specializes_in ?? null, input.bio ?? null, input.founded_year ?? null,
-      now, now,
+      // Free 30-day Pro trial, no card (Feature 5). effectiveTier() reads this.
+      now + LIMITS.TRIAL_DAYS * 86400, now, now,
     ).run();
   } catch (e) {
     // UNIQUE constraint races (email/slug) — surface as 409.

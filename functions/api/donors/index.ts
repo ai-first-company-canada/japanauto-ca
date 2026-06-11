@@ -32,6 +32,7 @@ import {
   getDealerById, listDonorsForDealer,
 } from "../_lib/db";
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
+import { enforceActiveCap } from "../_lib/entitlements";
 import { pingIndexNow } from "../_lib/indexnow";
 
 // ============================================================================
@@ -130,6 +131,14 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
 
   const now = Math.floor(Date.now() / 1000);
   const initialStatus = input.status ?? "draft";
+
+  // Free-tier active-listing cap (Feature 5) — donors share the same allowance.
+  // Only enforced when the donor goes live now; drafts are uncapped.
+  if (initialStatus === "active") {
+    const capped = await enforceActiveCap(env, dealer, "donor_cars");
+    if (capped) return capped;
+  }
+
   const compatibleMakes  = input.compatible_makes  ?? [makeRow?.slug ?? ""].filter(Boolean);
   const compatibleModels = input.compatible_models ?? null;
   const compatibleYears  = input.compatible_years  ?? null;
