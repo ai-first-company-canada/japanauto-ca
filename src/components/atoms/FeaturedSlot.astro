@@ -5,49 +5,97 @@ import CarSilhouetteFeatured from './CarSilhouetteFeatured.astro';
 type FeaturedVariant = 'sedan' | 'suv';
 type FeaturedTone = 'pearl' | 'midnight' | 'crimson' | 'silver' | 'graphite';
 
+/**
+ * Two modes (ADR-0013):
+ * - 'house' — unsold slot: honest placeholder linking to the brand's official
+ *   Canadian site. No dealer name, no MSRP (we don't maintain real MSRPs, and
+ *   inventing one is fabricated advertising). Carries an "Advertise here" CTA.
+ * - 'paid'  — a sold city×brand exclusive slot (featured_slots row): dealer
+ *   creative with MSRP + mandatory visible "Sponsored" label and
+ *   rel="sponsored" on the outbound link.
+ */
 interface Props {
+  kind: 'house' | 'paid';
   make: string;
   model: string;
-  year: number;
-  msrp: number;
-  dealer: { name: string; href: string };
+  href: string;
   variant?: FeaturedVariant;
   tone?: FeaturedTone;
+  /* paid-only */
+  year?: number;
+  msrp?: number;
+  dealerName?: string;
+  disclosure?: string;
 }
 const {
-  make, model, year, msrp,
-  dealer,
+  kind, make, model, href,
   variant = 'sedan',
   tone = 'pearl',
+  year, msrp, dealerName, disclosure,
 } = Astro.props;
-const msrpStr = msrp.toLocaleString('en-US');
+const brandHost = kind === 'house' ? new URL(href).hostname.replace(/^www\./, '') : '';
+const msrpStr = (msrp ?? 0).toLocaleString('en-US');
 ---
 <article class="featured-edge">
   <div class="featured-photo-overlay">
-    <span class="eyebrow-overlay">New vehicle · Sponsored</span>
+    <span class="eyebrow-overlay">{kind === 'paid' ? 'New vehicle · Sponsored' : 'New vehicle'}</span>
     <CarSilhouetteFeatured variant={variant} tone={tone} />
   </div>
   <div class="featured-content">
-    <div>
-      <h3 class="t-h-m" style="font-size:18px;line-height:24px">
-        New {year} {make} {model}
-      </h3>
-      <p class="t-body-s ink-muted" style="margin-top:4px;font-size:13px;line-height:18px">
-        Starting MSRP from {dealer.name}
-      </p>
-    </div>
-    <div style="display:flex;align-items:baseline;gap:8px">
-      <span class="t-body-s ink-muted" style="font-size:13px">from</span>
-      <span class="num" style="font-size:26px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.015em">
-        CA${msrpStr}
-      </span>
-    </div>
-    <a class="btn btn-primary btn-block" href={dealer.href} style="margin-top:4px">
-      Visit dealer website
-      <Icon name="arrowRight" size={16} />
-    </a>
-    <p style="font-size:11px;line-height:16px;color:var(--color-ink-subtle);margin-top:4px">
-      Sponsored by {dealer.name} — official {make} dealer.
-    </p>
+    {kind === 'house' ? (
+      <>
+        <div>
+          <h3 class="t-h-m" style="font-size:18px;line-height:24px">
+            The new {make} {model}
+          </h3>
+          <p class="t-body-s ink-muted" style="margin-top:4px;font-size:13px;line-height:18px">
+            Explore trims, current offers and build yours on {brandHost}
+          </p>
+        </div>
+        <a
+          class="btn btn-primary btn-block"
+          href={href}
+          target="_blank"
+          rel="noopener"
+          style="margin-top:4px"
+        >
+          Visit {brandHost}
+          <Icon name="arrowRight" size={16} />
+        </a>
+        <p style="font-size:11px;line-height:16px;color:var(--color-ink-subtle);margin-top:4px">
+          Official {make} dealer in your city? <a href="mailto:support@japanauto.ca?subject=Featured%20slot%20on%20japanauto.ca" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Advertise here</a>.
+        </p>
+      </>
+    ) : (
+      <>
+        <div>
+          <h3 class="t-h-m" style="font-size:18px;line-height:24px">
+            New {year} {make} {model}
+          </h3>
+          <p class="t-body-s ink-muted" style="margin-top:4px;font-size:13px;line-height:18px">
+            Starting MSRP from {dealerName}
+          </p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span class="t-body-s ink-muted" style="font-size:13px">from</span>
+          <span class="num" style="font-size:26px;font-weight:600;color:var(--color-ink-strong);letter-spacing:-0.015em">
+            CA${msrpStr}
+          </span>
+        </div>
+        <a
+          class="btn btn-primary btn-block"
+          href={href}
+          target="_blank"
+          rel="sponsored noopener"
+          style="margin-top:4px"
+        >
+          Visit dealer website
+          <Icon name="arrowRight" size={16} />
+        </a>
+        <p style="font-size:11px;line-height:16px;color:var(--color-ink-subtle);margin-top:4px">
+          {disclosure ?? `Sponsored by ${dealerName} — official ${make} dealer.`}
+        </p>
+      </>
+    )}
   </div>
 </article>

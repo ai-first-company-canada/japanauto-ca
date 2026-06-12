@@ -7,6 +7,7 @@
  */
 
 import { CITY_FACTORS } from './models-stubs';
+import { BRAND_CONTENT } from './brand-content';
 
 export type ListingVariant = 'sedan' | 'suv' | 'hatch' | 'wagon';
 export type ListingTone =
@@ -31,12 +32,17 @@ export interface CatalogListing {
   tone: ListingTone;
 }
 
+/**
+ * House ad for the featured slot (ADR-0013): every city/make/model page leads
+ * with an honest new-vehicle block linking to the brand's official Canadian
+ * site. Paid exclusive slots (featured_slots rows) replace this when the D1
+ * catalog wiring lands — this stub never fabricates dealers or MSRPs.
+ */
 export interface FeaturedData {
+  kind: 'house';
   make: string;
   model: string;
-  year: number;
-  msrp: number;
-  dealer: string;
+  href: string;
   variant: 'sedan' | 'suv';
   tone: 'pearl' | 'midnight' | 'crimson' | 'silver' | 'graphite';
 }
@@ -58,28 +64,8 @@ export interface CatalogPageData {
   isDemo: boolean;
 }
 
-const FEATURED_COMBOS: Record<string, FeaturedData> = {
-  'toronto-toyota-camry': {
-    make: 'Toyota', model: 'Camry', year: 2026, msrp: 34900,
-    dealer: 'Toyota Downtown Toronto', variant: 'sedan', tone: 'pearl',
-  },
-  'calgary-toyota-corolla': {
-    make: 'Toyota', model: 'Corolla', year: 2026, msrp: 26900,
-    dealer: 'Country Hills Toyota', variant: 'sedan', tone: 'silver',
-  },
-  'vancouver-honda-cr-v': {
-    make: 'Honda', model: 'CR-V', year: 2026, msrp: 38900,
-    dealer: 'Pacific Honda', variant: 'suv', tone: 'midnight',
-  },
-  'toronto-honda-civic': {
-    make: 'Honda', model: 'Civic', year: 2026, msrp: 28900,
-    dealer: 'Honda Downtown Toronto', variant: 'sedan', tone: 'crimson',
-  },
-  'montreal-mazda-cx-5': {
-    make: 'Mazda', model: 'CX-5', year: 2026, msrp: 36900,
-    dealer: 'Mazda Centre-Ville', variant: 'suv', tone: 'crimson',
-  },
-};
+const FEATURED_TONES: ReadonlyArray<FeaturedData['tone']> =
+  ['pearl', 'midnight', 'crimson', 'silver', 'graphite'];
 
 const MODEL_VARIANTS: Record<string, { variant: ListingVariant; tones: ListingTone[] }> = {
   'camry':         { variant: 'sedan', tones: ['pearl','silver','midnight','graphite'] },
@@ -231,7 +217,18 @@ export function getCatalogForModelCity(
   const dealerCount = Math.max(2, Math.round(totalCount * 0.6));
 
   const seed = `${make}-${model}-${city}`;
-  const featured = FEATURED_COMBOS[`${city}-${make}-${model}`] ?? null;
+
+  // House ad on every page: real brand, real official site, nothing invented.
+  const brand = BRAND_CONTENT[make];
+  const mv = MODEL_VARIANTS[model];
+  const featured: FeaturedData | null = brand ? {
+    kind: 'house',
+    make: brand.name,
+    model: modelName,
+    href: brand.officialSite,
+    variant: mv?.variant === 'suv' || mv?.variant === 'wagon' ? 'suv' : 'sedan',
+    tone: FEATURED_TONES[pseudoRandom(`${seed}-featured`, FEATURED_TONES.length)]!,
+  } : null;
 
   const boostedCount = factor > 0.7 ? 2 : factor > 0.4 ? 1 : 0;
 

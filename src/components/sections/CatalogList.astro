@@ -15,11 +15,10 @@ const { featured, boosted, organic } = Astro.props;
 <section style="padding:16px 16px 32px">
   {featured && (
     <FeaturedSlot
+      kind={featured.kind}
       make={featured.make}
       model={featured.model}
-      year={featured.year}
-      msrp={featured.msrp}
-      dealer={{ name: featured.dealer, href: '#' }}
+      href={featured.href}
       variant={featured.variant}
       tone={featured.tone}
     />

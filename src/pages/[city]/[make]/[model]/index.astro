@@ -111,14 +111,9 @@ const schemaLD = [
       addressCountry: 'CA',
     },
   },
-  ...(catalog.featured && !catalog.isDemo ? [{
-    '@type': 'Offer',
-    category: 'NewVehicle',
-    name: `New ${catalog.featured.year} ${catalog.featured.make} ${catalog.featured.model}`,
-    price: catalog.featured.msrp,
-    priceCurrency: 'CAD',
-    seller: { '@type': 'AutoDealer', name: catalog.featured.dealer },
-  }] : []),
+  // The featured slot is a house ad (brand-site link, no price, no seller —
+  // ADR-0013) and must not emit Offer markup. Paid featured_slots get their
+  // own JSON-LD design when the D1 catalog wiring lands.
   {
     '@type': 'FAQPage',
     mainEntity: modelFaqs.map((f) => ({

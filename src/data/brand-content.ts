@@ -10,6 +10,8 @@
 
 export interface BrandContent {
   name: string;
+  /** Official Canadian brand site — house-ad target in the featured slot (ADR-0013). */
+  officialSite: string;
   aboutTitle: string;
   aboutParagraphs: string[];
   faqs: Array<{ q: string; a: string }>;
@@ -20,6 +22,7 @@ export interface BrandContent {
 export const BRAND_CONTENT: Record<string, BrandContent> = {
   toyota: {
     name: 'Toyota',
+    officialSite: 'https://www.toyota.ca/',
     aboutTitle: 'About Toyota in Canada',
     aboutParagraphs: [
       'Toyota is the most-sold Japanese brand in Canada with a long reputation for reliability and resale value. Models like the Camry, Corolla, and RAV4 routinely lead their segments in Canadian sales.',
@@ -35,6 +38,7 @@ export const BRAND_CONTENT: Record<string, BrandContent> = {
   },
   honda: {
     name: 'Honda',
+    officialSite: 'https://www.honda.ca/',
     aboutTitle: 'About Honda in Canada',
     aboutParagraphs: [
       'Honda has built a strong reputation in Canada around the Civic (most popular compact car for over a decade) and the CR-V (consistently among the top SUVs).',
@@ -49,6 +53,7 @@ export const BRAND_CONTENT: Record<string, BrandContent> = {
   },
   nissan: {
     name: 'Nissan',
+    officialSite: 'https://www.nissan.ca/',
     aboutTitle: 'About Nissan in Canada',
     aboutParagraphs: [
       'Nissan offers a wide range of models from the budget-friendly Sentra to the family-focused Pathfinder and the off-road-capable Frontier.',
@@ -62,6 +67,7 @@ export const BRAND_CONTENT: Record<string, BrandContent> = {
   },
   mazda: {
     name: 'Mazda',
+    officialSite: 'https://www.mazda.ca/',
     aboutTitle: 'About Mazda in Canada',
     aboutParagraphs: [
       'Mazda focuses on driving engagement — the Mazda3 and CX-5 are widely praised for their handling and interior quality at their price point.',
@@ -75,6 +81,7 @@ export const BRAND_CONTENT: Record<string, BrandContent> = {
   },
   subaru: {
     name: 'Subaru',
+    officialSite: 'https://www.subaru.ca/',
     aboutTitle: 'About Subaru in Canada',
     aboutParagraphs: [
       "Subaru's symmetrical AWD comes standard on every model — making them popular across snowy Canadian provinces. The Outback and Forester dominate among AWD-first buyers.",
@@ -88,6 +95,7 @@ export const BRAND_CONTENT: Record<string, BrandContent> = {
   },
   lexus: {
     name: 'Lexus',
+    officialSite: 'https://www.lexus.ca/',
     aboutTitle: 'About Lexus in Canada',
     aboutParagraphs: [
       "Lexus is Toyota's luxury division — combining Toyota reliability with premium materials, sound insulation, and refined ride.",
@@ -101,6 +109,7 @@ export const BRAND_CONTENT: Record<string, BrandContent> = {
   },
   acura: {
     name: 'Acura',
+    officialSite: 'https://www.acura.ca/',
     aboutTitle: 'About Acura in Canada',
     aboutParagraphs: [
       "Acura is Honda's premium brand. Known for sportier characteristics than Lexus — tighter handling, more focused engines.",
@@ -114,6 +123,7 @@ export const BRAND_CONTENT: Record<string, BrandContent> = {
   },
   infiniti: {
     name: 'Infiniti',
+    officialSite: 'https://www.infiniti.ca/',
     aboutTitle: 'About Infiniti in Canada',
     aboutParagraphs: [
       "Infiniti is Nissan's luxury division. Known for distinctive styling and powerful engines.",
@@ -127,6 +137,7 @@ export const BRAND_CONTENT: Record<string, BrandContent> = {
   },
   mitsubishi: {
     name: 'Mitsubishi',
+    officialSite: 'https://www.mitsubishi-motors.ca/',
     aboutTitle: 'About Mitsubishi in Canada',
     aboutParagraphs: [
       'Mitsubishi is the smallest of the 9 Japanese brands in the Canadian market. Known for the Outlander PHEV — one of the few mainstream three-row plug-in hybrid SUVs.',
