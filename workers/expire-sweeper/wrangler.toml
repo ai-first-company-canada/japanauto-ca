@@ -5,11 +5,11 @@
 #                  (second half of audit #8; public reads already filter).
 #   "45 9 * * *"   market-sync — pulls the scraper project's
 #                  japanauto_market_stats Supabase view into D1 market_stats
-#                  (Feature 1 step 3). No-op until the three MARKET_* secrets
-#                  are set:
-#                    npx wrangler secret put MARKET_SUPABASE_URL
-#                    npx wrangler secret put MARKET_SUPABASE_ANON_KEY
-#                    npx wrangler secret put MARKET_SYNC_JWT
+#                  (Feature 1 step 3). URL is a [vars] entry below; auth is a
+#                  Secret API key (the scraper project runs ES256 signing
+#                  keys, so the originally-planned role-scoped HS256 JWT
+#                  cannot validate there). No-op until the secret is set:
+#                    npx wrangler secret put MARKET_SUPABASE_SECRET_KEY
 #
 # Pages Functions cannot run scheduled() handlers, hence a separate Worker.
 # NOT deployed by the Pages `npm run deploy` — deploy separately:
@@ -23,6 +23,11 @@ workers_dev = false
 
 [triggers]
 crons = ["0 */6 * * *", "45 9 * * *"]
+
+[vars]
+# The scraper project's Supabase URL — public knowledge (it's in every client
+# request), so a var rather than a secret.
+MARKET_SUPABASE_URL = "https://tgqyjuzutdbdqdrywlfv.supabase.co"
 
 # Make scheduled-run logs visible in the dashboard (Workers → Logs).
 [observability]

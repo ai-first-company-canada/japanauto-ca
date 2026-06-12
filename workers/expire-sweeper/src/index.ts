@@ -2,11 +2,17 @@
 
 interface Env {
   DB: D1Database;
-  // Market-sync secrets (Feature 1 step 3). All three absent → the sync is a
-  // logged no-op and the sweeper keeps working. Set via `wrangler secret put`.
-  MARKET_SUPABASE_URL?: string;       // https://<project>.supabase.co
+  MARKET_SUPABASE_URL?: string;       // https://<project>.supabase.co — non-secret, set in [vars]
+  // Auth: the scraper project migrated to ES256 JWT signing keys, so the
+  // originally-designed self-minted HS256 JWT (role japanauto_sync) cannot
+  // validate there. Fallback: a Secret API key (sb_secret_…) sent as the
+  // apikey header — broader rights than designed (service_role), accepted
+  // because it lives only in Cloudflare secrets. Set via:
+  //   npx wrangler secret put MARKET_SUPABASE_SECRET_KEY
+  MARKET_SUPABASE_SECRET_KEY?: string;
+  // Legacy pair kept for the day the scraper project mints role-scoped keys:
   MARKET_SUPABASE_ANON_KEY?: string;  // anon key (PostgREST apikey header)
-  MARKET_SYNC_JWT?: string;           // JWT with {"role":"japanauto_sync"} — sees ONLY the stats view
+  MARKET_SYNC_JWT?: string;           // JWT with {"role":"japanauto_sync"}
 }
 
 const MARKET_SYNC_CRON = "45 9 * * *"; // daily 09:45 UTC ≈ 03:45 Calgary, after the scraper's nightly cadence
@@ -34,9 +40,20 @@ interface ViewRow {
  * Money: the view emits whole CAD dollars; D1 stores cents (app invariant).
  */
 async function syncMarketStats(env: Env): Promise<void> {
-  const { MARKET_SUPABASE_URL, MARKET_SUPABASE_ANON_KEY, MARKET_SYNC_JWT } = env;
-  if (!MARKET_SUPABASE_URL || !MARKET_SUPABASE_ANON_KEY || !MARKET_SYNC_JWT) {
+  const { MARKET_SUPABASE_URL, MARKET_SUPABASE_SECRET_KEY, MARKET_SUPABASE_ANON_KEY, MARKET_SYNC_JWT } = env;
+  // sb_secret keys are NOT JWTs — they go in `apikey` alone (a Bearer header
+  // with a non-JWT would make PostgREST reject the request outright).
+  let headers: Record<string, string>;
+  if (MARKET_SUPABASE_SECRET_KEY) {
+    headers = { apikey: MARKET_SUPABASE_SECRET_KEY };
+  } else if (MARKET_SUPABASE_ANON_KEY && MARKET_SYNC_JWT) {
+    headers = { apikey: MARKET_SUPABASE_ANON_KEY, Authorization: `Bearer ${MARKET_SYNC_JWT}` };
+  } else {
     console.log("market-sync: secrets not configured — skipping");
+    return;
+  }
+  if (!MARKET_SUPABASE_URL) {
+    console.log("market-sync: MARKET_SUPABASE_URL not configured — skipping");
     return;
   }
 
@@ -51,12 +68,7 @@ async function syncMarketStats(env: Env): Promise<void> {
   for (let offset = 0; ; ) {
     const url = `${MARKET_SUPABASE_URL.replace(/\/$/, "")}/rest/v1/japanauto_market_stats` +
       `?select=*&order=${ORDER}&limit=${PAGE}&offset=${offset}`;
-    const res = await fetch(url, {
-      headers: {
-        apikey: MARKET_SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${MARKET_SYNC_JWT}`,
-      },
-    });
+    const res = await fetch(url, { headers });
     if (!res.ok) {
       throw new Error(`market-sync: PostgREST ${res.status} at offset ${offset}: ${(await res.text()).slice(0, 200)}`);
     }
