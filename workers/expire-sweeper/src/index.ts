@@ -48,14 +48,29 @@ interface ViewRow {
  */
 async function syncMarketStats(env: Env): Promise<void> {
   const { MARKET_SUPABASE_URL, MARKET_SUPABASE_SECRET_KEY, MARKET_SUPABASE_ANON_KEY, MARKET_SYNC_JWT } = env;
-  // sb_secret keys are NOT JWTs — they go in `apikey` alone (a Bearer header
-  // with a non-JWT would make PostgREST reject the request outright).
-  let headers: Record<string, string>;
+  // Auth ladder (contract §3, JWT handover 2026-06-12). The gateway always
+  // needs an api key in `apikey`; the japanauto_sync JWT rides in
+  // Authorization and narrows the Postgres role to the stats view only.
+  // If PostgREST rejects the HS256 JWT (the project runs ES256 signing keys;
+  // legacy-secret acceptance unconfirmed), we fall back one rung and LOG
+  // LOUDLY — a daily sync must not die over an auth experiment.
+  const attempts: Array<{ label: string; headers: Record<string, string> }> = [];
+  if (MARKET_SUPABASE_SECRET_KEY && MARKET_SYNC_JWT) {
+    attempts.push({
+      label: "jwt-role (least privilege)",
+      headers: { apikey: MARKET_SUPABASE_SECRET_KEY, Authorization: `Bearer ${MARKET_SYNC_JWT}` },
+    });
+  }
+  if (MARKET_SUPABASE_ANON_KEY && MARKET_SYNC_JWT) {
+    attempts.push({
+      label: "legacy anon+jwt",
+      headers: { apikey: MARKET_SUPABASE_ANON_KEY, Authorization: `Bearer ${MARKET_SYNC_JWT}` },
+    });
+  }
   if (MARKET_SUPABASE_SECRET_KEY) {
-    headers = { apikey: MARKET_SUPABASE_SECRET_KEY };
-  } else if (MARKET_SUPABASE_ANON_KEY && MARKET_SYNC_JWT) {
-    headers = { apikey: MARKET_SUPABASE_ANON_KEY, Authorization: `Bearer ${MARKET_SYNC_JWT}` };
-  } else {
+    attempts.push({ label: "sb-secret only", headers: { apikey: MARKET_SUPABASE_SECRET_KEY } });
+  }
+  if (attempts.length === 0) {
     console.log("market-sync: secrets not configured — skipping");
     return;
   }
@@ -71,19 +86,36 @@ async function syncMarketStats(env: Env): Promise<void> {
   // "full" page); terminate only on an empty page.
   const PAGE = 1000;
   const ORDER = "city_slug.asc,make_slug.asc,model_slug.asc,anchor_year.asc,mileage_bucket.asc,source.asc,seller_kind.asc";
-  const rows: ViewRow[] = [];
-  for (let offset = 0; ; ) {
-    const url = `${MARKET_SUPABASE_URL.replace(/\/$/, "")}/rest/v1/japanauto_market_stats` +
-      `?select=*&order=${ORDER}&limit=${PAGE}&offset=${offset}`;
-    const res = await fetch(url, { headers });
-    if (!res.ok) {
-      throw new Error(`market-sync: PostgREST ${res.status} at offset ${offset}: ${(await res.text()).slice(0, 200)}`);
+  let rows: ViewRow[] | null = null;
+  for (const attempt of attempts) {
+    const fetched: ViewRow[] = [];
+    let authFailed = false;
+    for (let offset = 0; ; ) {
+      const url = `${MARKET_SUPABASE_URL.replace(/\/$/, "")}/rest/v1/japanauto_market_stats` +
+        `?select=*&order=${ORDER}&limit=${PAGE}&offset=${offset}`;
+      const res = await fetch(url, { headers: attempt.headers });
+      if ((res.status === 401 || res.status === 403) && offset === 0) {
+        console.error(`market-sync: auth '${attempt.label}' rejected (${res.status}) — trying next rung`);
+        authFailed = true;
+        break;
+      }
+      if (!res.ok) {
+        throw new Error(`market-sync: PostgREST ${res.status} at offset ${offset}: ${(await res.text()).slice(0, 200)}`);
+      }
+      const page = await res.json<ViewRow[]>();
+      if (page.length === 0) break;
+      fetched.push(...page);
+      offset += page.length;
+      if (offset > 100_000) throw new Error("market-sync: runaway pagination — aborting");
     }
-    const page = await res.json<ViewRow[]>();
-    if (page.length === 0) break;
-    rows.push(...page);
-    offset += page.length;
-    if (offset > 100_000) throw new Error("market-sync: runaway pagination — aborting");
+    if (!authFailed) {
+      console.log(`market-sync: auth '${attempt.label}' OK`);
+      rows = fetched;
+      break;
+    }
+  }
+  if (rows === null) {
+    throw new Error("market-sync: every auth rung rejected — check secrets/contract");
   }
 
   if (rows.length === 0) {
