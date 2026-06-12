@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+
+const url = Astro.url.toString();
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Contact', item: url },
+    ],
+  },
+  {
+    '@type': 'ContactPage',
+    '@id': `${url}#page`,
+    name: 'Contact — japanauto.ca',
+    description: 'How to reach japanauto.ca — support, dealer onboarding, and advertising.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+];
+---
+<BaseLayout
+  title="Contact — japanauto.ca"
+  description="Reach japanauto.ca: buyer and seller support, dealer onboarding, advertising and press. Based in Calgary, AB."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Contact' },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:16px">Contact</h1>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is a Canadian marketplace for used Japanese cars and parts donor cars, based in
+      Calgary, AB. We don't take part in transactions — for questions about a specific vehicle or
+      part, contact the seller directly through the listing page. For everything else:
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Support</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Account problems, listing issues, bug reports —
+      <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>.
+      We answer within one business day.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Dealers &amp; salvage yards</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Listing your inventory is self-serve — <a href="/dealer/signup/" style="color:var(--color-ink-strong);text-decoration:underline">create a seller account</a>.
+      Every new account starts with a 30-day Pro trial, no card required. Questions about plans or
+      onboarding help: <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Advertising</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Official-brand dealers can sponsor the new-vehicle slot across all of their brand's model
+      pages in a city — one dealer per brand per city, clearly labelled as sponsored. Email
+      <a href="mailto:support@japanauto.ca?subject=Featured%20slot%20on%20japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>
+      with the subject "Featured slot".
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Editorial</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Corrections and press — <a href="mailto:editorial@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">editorial@japanauto.ca</a>.
+      See our <a href="/editorial-policy/" style="color:var(--color-ink-strong);text-decoration:underline">editorial policy</a>.
+    </p>
+  </article>
+</BaseLayout>

@@ -71,6 +71,20 @@ Vars (in `wrangler.toml`): `ENV` (production/preview), `JWT_ISSUER`,
 `LISTING_DEFAULT_TTL_DAYS=90`, `USED_CAR_AGE_CAP_YEARS=10`, `PUBLIC_SITE_URL`,
 `PUBLIC_CLOUDFLARE_ACCOUNT_HASH`. Full list: `types/env.d.ts`.
 
+Gotchas (each one cost a debugging session — don't relearn them):
+
+- **A new/updated Pages secret only takes effect on the NEXT deployment.**
+  `wrangler pages secret put` alone is not enough — redeploy after.
+- **Build-time vs runtime env are different worlds.** `wrangler.toml [vars]`
+  reach Pages Functions at runtime; Astro's `import.meta.env.*` is baked at
+  `npm run build` on the machine that builds (we deploy with a LOCAL build —
+  the Pages dashboard build env never applies). Public build-time constants
+  get committed defaults in `astro.config.mjs`.
+- **New third-party browser calls need CSP allowances** in
+  `functions/_middleware.ts` (e.g. `connect-src https://upload.imagedelivery.net`
+  for direct photo upload). An API path can be 100% green via curl and still
+  dead in the browser — test new origins in a real browser.
+
 ## Launch / domain cutover
 
 ⚠️ **Attaching japanauto.ca = instant indexing.** The static `robots.txt` in the
