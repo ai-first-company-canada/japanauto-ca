@@ -38,7 +38,9 @@ import {
   renderFooter, renderPartsStickyBar, renderStickyBarObserverScript,
   render404DonorBody, parseCompatibility, donorPhone, formatTransmission,
   parsePartsAvailable, partsAvailableSentence,
+  renderDonorLead, renderPartsLongTail, renderDonorSummary,
 } from "../../_lib/parts-components";
+import { DONOR_PART_LABELS } from "../../../lib/schema";
 import type { FaqItem } from "../../_lib/parts-components";
 
 const DOW_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -84,10 +86,23 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
   const trimSep = trim ? ` ${trim}` : '';
   const cityShort = `${donor.city_name}, ${donor.city_province}`;
   const canonical = `${env.PUBLIC_SITE_URL}/parts/listing/${slug}/`;
-  const title = `${donor.year} ${donor.make_name} ${donor.model_name}${trimSep} donor car — ${cityShort} — japanauto.ca`;
-  const description = donor.available_parts_notes
-    ? `${donor.year} ${donor.make_name} ${donor.model_name}${trimSep} donor car at ${donor.dealer_name} in ${cityShort}. ${donor.available_parts_notes.slice(0, 140)}${donor.available_parts_notes.length > 140 ? '…' : ''}`
-    : `${donor.year} ${donor.make_name} ${donor.model_name}${trimSep} parts donor car at ${donor.dealer_name} in ${cityShort}. Call for parts availability.`;
+  // GEO: when the yard ticked the checklist, the title/description carry the
+  // actual part names — that's what long-tail queries match on.
+  const partsAvail = parsePartsAvailable(donor);
+  const partLabelsLc = partsAvail.map((s) => DONOR_PART_LABELS[s].toLowerCase());
+  const title = partsAvail.length > 0
+    ? `${donor.year} ${donor.make_name} ${donor.model_name} parts in ${donor.city_name} — ${partLabelsLc.slice(0, 3).join(', ')} — japanauto.ca`
+    : `${donor.year} ${donor.make_name} ${donor.model_name}${trimSep} donor car — ${cityShort} — japanauto.ca`;
+  const description = partsAvail.length > 0
+    ? (() => {
+        const head = `Used parts from a ${donor.year} ${donor.make_name} ${donor.model_name}${trimSep} donor at ${donor.dealer_name} in ${cityShort}: `;
+        const list = partLabelsLc.join(', ');
+        const room = 150 - head.length;
+        return `${head}${list.length > room ? list.slice(0, room).replace(/,\s*[^,]*$/, '') + '…' : list}. Call to confirm fitment.`;
+      })()
+    : donor.available_parts_notes
+      ? `${donor.year} ${donor.make_name} ${donor.model_name}${trimSep} donor car at ${donor.dealer_name} in ${cityShort}. ${donor.available_parts_notes.slice(0, 140)}${donor.available_parts_notes.length > 140 ? '…' : ''}`
+      : `${donor.year} ${donor.make_name} ${donor.model_name}${trimSep} parts donor car at ${donor.dealer_name} in ${cityShort}. Call for parts availability.`;
   const phone = donorPhone(donor.dealer_phone);
   const primaryPhotoUrl = photos.length > 0 && cfHash
     ? `https://imagedelivery.net/${cfHash}/${photos[0]!.image_id}/public`
@@ -164,13 +179,29 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
     ...(donor.dealer_website && safeUrl(donor.dealer_website) !== '#' ? { sameAs: safeUrl(donor.dealer_website) } : {}),
     ...(hoursSpecs.length > 0 ? { openingHoursSpecification: hoursSpecs } : {}),
     areaServed: donor.city_name,
+    // GEO: the yard's own checklist as an OfferCatalog — honest entity data
+    // (no prices, no fabrication; only ticked parts appear).
+    ...(partsAvail.length > 0 ? {
+      hasOfferCatalog: {
+        '@type': 'OfferCatalog',
+        name: `Used parts from this ${donor.year} ${donor.make_name} ${donor.model_name}`,
+        itemListElement: partsAvail.map((s) => ({
+          '@type': 'Offer',
+          availability: 'https://schema.org/InStock',
+          businessFunction: 'https://schema.org/Sell',
+          itemOffered: {
+            '@type': 'Product',
+            name: `${DONOR_PART_LABELS[s]} — ${donor.year} ${donor.make_name} ${donor.model_name} (used)`,
+          },
+        })),
+      },
+    } : {}),
   };
 
   // FAQ — static for Phase 3.2; Phase 3.3 dashboard will let yards customize.
   // When the yard ticked the parts_available checklist (Feature 4), lead with
   // a donor-specific availability question built from it — deterministic copy,
   // and it flows into the FAQPage JSON-LD node below automatically.
-  const partsAvail = parsePartsAvailable(donor);
   const faqs: FaqItem[] = [
     ...(partsAvail.length > 0 ? [{
       q: `Which parts are available from this ${donor.year} ${donor.make_name} ${donor.model_name}?`,
@@ -240,6 +271,8 @@ ${renderPhotoGallery(photos, donor.tone, cfHash, captionLabel)}
 
 ${renderTitleBlock(donor, isDepleted)}
 
+${renderDonorLead(donor, partsAvail)}
+
 ${renderPrimaryCta(donor, isDepleted)}
 
 ${educationalBlock}
@@ -247,6 +280,8 @@ ${educationalBlock}
 ${renderSpecGrid(donor)}
 
 ${renderPartsAvailability(donor)}
+
+${renderPartsLongTail(donor, partsAvail)}
 
 ${renderCompatibilityCard(donor)}
 
@@ -261,6 +296,8 @@ ${renderRelatedDonors(sameCityModel, `More ${donor.generation_range ? donor.gene
 ${renderCityCountGrid(otherCities, donor.make_slug, donor.model_slug, `${donor.make_name} ${donor.model_name} donor cars in other Canadian cities`)}
 
 ${renderFaqList('Questions about this donor car', faqs)}
+
+${renderDonorSummary(donor, partsAvail)}
 
 ${renderFooter()}
 

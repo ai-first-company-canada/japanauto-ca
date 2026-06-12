@@ -363,26 +363,17 @@ export function partsAvailableSentence(donor: DonorCarDetailRow, parts: DonorPar
 }
 
 /**
- * "Parts availability" — structured checklist chips grouped by taxonomy group
- * (when the yard ticked parts_available) + free-form notes. Rows without a
- * checklist fall back to notes-only, exactly the pre-0011 rendering.
+ * "Parts availability" — overview sentence from the checklist + free-form
+ * notes. The per-part detail lives in renderPartsLongTail (H2/H3 sections)
+ * right below this card, so no chips grid here. Rows without a checklist fall
+ * back to notes-only, exactly the pre-0011 rendering.
  */
 export function renderPartsAvailability(donor: DonorCarDetailRow): string {
   const parts = parsePartsAvailable(donor);
   const updated = relativeTimeFromUnix(donor.updated_at);
 
-  const checklistHtml = parts.length > 0
-    ? `<p style="margin:0 0 12px;font-size:15px;line-height:23px;color:var(--color-ink-default)">${esc(partsAvailableSentence(donor, parts))}</p>
-      ${DONOR_PART_GROUPS.map((g) => {
-        const inGroup = g.parts.filter((p) => parts.includes(p.slug));
-        if (inGroup.length === 0) return '';
-        return `<div style="margin:0 0 10px">
-        <span style="display:block;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted);margin-bottom:6px">${esc(g.label)}</span>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">${inGroup.map((p) =>
-          `<span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid var(--color-divider);font-size:13px;color:var(--color-ink-strong)">${esc(p.label)}</span>`,
-        ).join('')}</div>
-      </div>`;
-      }).join('')}`
+  const overview = parts.length > 0
+    ? `<p style="margin:0;font-size:15px;line-height:23px;color:var(--color-ink-default)">${esc(partsAvailableSentence(donor, parts))}</p>`
     : '';
 
   const notes = donor.available_parts_notes
@@ -391,10 +382,77 @@ export function renderPartsAvailability(donor: DonorCarDetailRow): string {
   return `<section style="padding:32px 16px 0">
     <h2 style="font-size:17px;font-weight:600;color:var(--color-ink-strong);margin:0 0 12px">Parts availability</h2>
     <div style="background:var(--color-bg-subtle);border-radius:12px;padding:16px">
-      ${checklistHtml}
+      ${overview}
       ${notes ? `<p style="margin:${parts.length > 0 ? '12px 0 0' : '0'};font-size:15px;line-height:23px;color:var(--color-ink-default);white-space:pre-wrap">${esc(notes)}</p>` : ''}
       <p style="margin:10px 0 0;font-size:12px;font-style:italic;color:var(--color-ink-muted)">Last updated ${esc(updated)} by ${esc(donor.dealer_name)}.</p>
     </div>
+  </section>`;
+}
+
+/**
+ * Year-fit label used across the GEO copy: compatible-years range when the
+ * yard provided one, else generation_range, else the donor's own year.
+ */
+export function donorFitLabel(donor: DonorCarDetailRow): string {
+  const compat = parseCompatibility(donor);
+  if (compat.years.length > 0) return formatYearRange(compat.years);
+  return donor.generation_range ?? String(donor.year);
+}
+
+/**
+ * Lead answer paragraph (GEO): one extractable sentence right under the title
+ * that answers "are there parts from a {year} {model} in {city}" outright.
+ * Deterministic — built from row data only.
+ */
+export function renderDonorLead(donor: DonorCarDetailRow, parts: DonorPartSlug[]): string {
+  const base = `${donor.year} ${donor.make_name} ${donor.model_name} donor car at ${donor.dealer_name} in ${donor.city_name}`;
+  const text = parts.length > 0
+    ? `${parts.length} used part${parts.length === 1 ? ' is' : 's are'} available from this ${base}, including ${parts.slice(0, 3).map((s) => DONOR_PART_LABELS[s].toLowerCase()).join(', ')}. Parts typically fit ${donorFitLabel(donor)} ${donor.model_name} models of the same generation.`
+    : `This ${base} is being parted out — call the yard to confirm which parts are currently in stock.`;
+  return `<section style="padding:12px 16px 0">
+    <p style="margin:0;font-size:15px;line-height:23px;color:var(--color-ink-default)">${esc(text)}</p>
+  </section>`;
+}
+
+/**
+ * Long-tail part sections (GEO): one H2 per taxonomy group ("Body parts for
+ * 2018 Toyota Corolla"), one H3 per available part ("Doors for 2018 Toyota
+ * Corolla") with a keyword-complete catalog sentence. One donor page ranks
+ * for dozens of "{part} {model} {year} {city}" queries without per-part
+ * pages. Sections exist ONLY for ticked parts — nothing fabricated.
+ */
+export function renderPartsLongTail(donor: DonorCarDetailRow, parts: DonorPartSlug[]): string {
+  if (parts.length === 0) return '';
+  const fit = donorFitLabel(donor);
+  const car = `${donor.year} ${donor.make_name} ${donor.model_name}`;
+  return DONOR_PART_GROUPS.map((g) => {
+    const inGroup = g.parts.filter((p) => parts.includes(p.slug));
+    if (inGroup.length === 0) return '';
+    return `<section style="padding:24px 16px 0">
+    <h2 style="font-size:16px;font-weight:600;color:var(--color-ink-strong);margin:0 0 4px">${esc(`${g.label} for ${car}`)}</h2>
+    <p style="margin:0 0 6px;font-size:13px;line-height:19px;color:var(--color-ink-muted)">Pulled from this donor at ${esc(donor.dealer_name)} — typically fits ${esc(fit)} ${esc(donor.model_name)} models. Confirm trim-specific fitment before purchase.</p>
+    ${inGroup.map((p) => `<h3 style="font-size:14px;font-weight:600;color:var(--color-ink-strong);margin:10px 0 2px">${esc(`${p.label} for ${car}`)}</h3>
+    <p style="margin:0;font-size:13px;line-height:19px;color:var(--color-ink-default)">Used ${esc(p.label.toLowerCase())} for the ${esc(car)} — available at ${esc(donor.dealer_name)} in ${esc(donor.city_name)}. Ask for condition photos and pricing when you call.</p>`).join('')}
+  </section>`;
+  }).join('');
+}
+
+/**
+ * Closing summary (GEO "conclusions"): restates the key facts at the end of
+ * the page — answer engines frequently extract the closing recap.
+ */
+export function renderDonorSummary(donor: DonorCarDetailRow, parts: DonorPartSlug[]): string {
+  const car = `${donor.year} ${donor.make_name} ${donor.model_name}`;
+  const partsText = parts.length > 0
+    ? `Available parts include ${parts.map((s) => DONOR_PART_LABELS[s].toLowerCase()).join(', ')}. `
+    : '';
+  return `<section style="padding:32px 16px 0">
+    <h2 style="font-size:17px;font-weight:600;color:var(--color-ink-strong);margin:0 0 8px">Summary</h2>
+    <p style="margin:0;font-size:14px;line-height:21px;color:var(--color-ink-default)">${esc(
+      `This ${car} donor car is at ${donor.dealer_name}, a salvage yard in ${donor.city_name}, ${donor.dealer_province}. ` +
+      partsText +
+      `Most parts fit ${donorFitLabel(donor)} ${donor.model_name} models of the same generation. Availability changes as parts sell — call the yard to confirm stock and arrange pickup or shipping.`,
+    )}</p>
   </section>`;
 }
 

@@ -104,6 +104,13 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
     dealer.verified ? 'Verified seller' : 'Independent dealer';
   const showAmvic = dealer.province === 'AB' && dealer.type === 'dealer' && dealer.amvic_number;
 
+  // GEO copy descriptor — keeps the badge's casing and picks the right article.
+  const dealerDescriptor =
+    dealerBadge === 'AMVIC-licensed' ? 'an AMVIC-licensed dealer' :
+    dealerBadge === 'OMVIC-registered' ? 'an OMVIC-registered dealer' :
+    dealerBadge === 'Verified seller' ? 'a verified seller' :
+    'an independent dealer';
+
   const realPhotoUrls = photos.map((p) => ({
     url: cfImageUrl(cfHash, p.image_id, 'public'),
     alt: p.alt_text,
@@ -324,18 +331,37 @@ ${photoGalleryHtml}
   ${!sold ? `<p style="margin-top:4px;font-size:13px;color:var(--color-ink-muted)">${negotiable ? 'Negotiable' : 'Firm price'}</p>` : ''}
 </section>
 
+<section style="padding:12px 16px 0">
+  <p style="margin:0;font-size:15px;line-height:23px;color:var(--color-ink-default)">${esc(
+    sold
+      ? `This ${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} with ${fmt(listing.mileage)} km was listed in ${cityName}, ${cityProvince} by ${dealer.name} and has been sold.`
+      : `This ${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} with ${fmt(listing.mileage)} km is for sale in ${cityName}, ${cityProvince} for CA$${fmt(priceDollars)} by ${dealer.name}, ${dealerDescriptor}.`,
+  )}</p>
+</section>
+
 <section style="padding:24px 16px 0">
-  <h2 class="t-h-s" style="font-size:18px;font-weight:600;margin:0 0 12px;color:var(--color-ink-strong)">Key specs</h2>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;font-size:13px">
-    ${specRow('Year', String(listing.year))}
-    ${specRow('Mileage', `${fmt(listing.mileage)} km`)}
-    ${specRow('Transmission', transmission)}
-    ${specRow('Drivetrain', drive)}
-    ${specRow('Body', bodyLabel)}
-    ${specRow('Fuel', fuelLabel)}
-    ${listing.vin ? specRow('VIN', listing.vin) : ''}
-    ${specRow('Condition', conditionLabel)}
-  </div>
+  <h2 class="t-h-s" style="font-size:18px;font-weight:600;margin:0 0 12px;color:var(--color-ink-strong)">At a glance</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tbody>
+      ${[
+        ['Year', String(listing.year)],
+        ['Make / model', `${makeRow.name} ${modelRow.name}${trimSep}`],
+        ['Price', sold ? 'Sold' : `CA$${fmt(priceDollars)}${negotiable ? ' (negotiable)' : ''}`],
+        ['Mileage', `${fmt(listing.mileage)} km`],
+        ['Transmission', transmission],
+        ['Drivetrain', drive],
+        ['Body', bodyLabel],
+        ['Fuel', fuelLabel],
+        ...(listing.vin ? [['VIN', listing.vin]] : []),
+        ['Condition', conditionLabel],
+        ['Location', `${cityName}, ${cityProvince}`],
+        ['Seller', `${dealer.name} (${dealerBadge})`],
+      ].map(([k, v]) => `<tr style="border-top:1px solid var(--color-divider)">
+        <th scope="row" style="text-align:left;padding:7px 12px 7px 0;font-weight:500;color:var(--color-ink-muted);white-space:nowrap;width:40%">${esc(k!)}</th>
+        <td style="padding:7px 0;color:var(--color-ink-strong);font-weight:500">${esc(v!)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
 </section>
 
 <section style="padding:24px 16px 0">
@@ -387,6 +413,15 @@ ${showAmvic ? `<section style="padding:16px;margin:16px;background:var(--color-b
     </details>`).join('')}
 </section>
 
+<section style="padding:0 16px 24px">
+  <h2 class="t-h-s" style="font-size:18px;font-weight:600;margin:0 0 8px;color:var(--color-ink-strong)">Summary</h2>
+  <p style="margin:0;font-size:14px;line-height:21px;color:var(--color-ink-default)">${esc(
+    sold
+      ? `This ${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} (${fmt(listing.mileage)} km, ${transmission}, ${drive}) was sold by ${dealer.name} in ${cityName}, ${cityProvince}. Browse current ${makeRow.name} ${modelRow.name} listings for available alternatives.`
+      : `${dealer.name}, ${dealerDescriptor} in ${cityName}, ${cityProvince}, is selling this ${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} with ${fmt(listing.mileage)} km (${transmission}, ${drive}, ${fuelLabel.toLowerCase()}) for CA$${fmt(priceDollars)}${negotiable ? ', negotiable' : ''}. Contact the dealer directly by phone or email to ask questions or arrange a viewing — japanauto.ca does not handle transactions.`,
+  )}</p>
+</section>
+
 ${!sold && phoneFmt.tel ? `<div role="region" aria-label="Contact dealer" style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--color-divider);padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:40">
   <div style="flex:1;min-width:0">
     <p style="font-size:13px;font-weight:600;color:var(--color-ink-strong);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${listing.year} ${esc(modelRow.name)}${esc(trimSep)}</p>
@@ -414,12 +449,6 @@ ${!sold && phoneFmt.tel ? `<div role="region" aria-label="Contact dealer" style=
   });
 };
 
-function specRow(label: string, value: string): string {
-  return `<div style="display:flex;flex-direction:column;gap:2px">
-    <span style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-ink-muted);font-weight:500">${esc(label)}</span>
-    <span style="font-weight:500;color:var(--color-ink-strong)">${esc(value)}</span>
-  </div>`;
-}
 
 function contactRow(label: string, value: string, href: string): string {
   return `<div style="display:flex;align-items:baseline;gap:12px;padding:8px 0">
