@@ -810,24 +810,50 @@ function statsDay(now: Date = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
+/** Acquisition source of a view, classified from OUR OWN utm params (0018). */
+export type ViewSource = "direct" | "social" | "paid";
+
+/**
+ * Classify a detail-page request by the utm params we ourselves put on links:
+ * social-boost posts carry utm_medium=social (boost-<job_id> campaigns),
+ * Meta catalog ads carry utm_medium=catalog_ads (ADR-0015). Anything else —
+ * including no utm at all — counts as direct/search. Deliberately no
+ * referrer sniffing: only links we control are attributed (decision 0016).
+ */
+export function classifyViewSource(url: URL): ViewSource {
+  const medium = (url.searchParams.get("utm_medium") ?? "").toLowerCase();
+  const campaign = (url.searchParams.get("utm_campaign") ?? "").toLowerCase();
+  // Require OUR campaign markers, not just a medium — anyone can append
+  // ?utm_medium=social to a shared link, and these splits substantiate the
+  // "30% to ads" claim shown to paying dealers (review 2026-06-12).
+  if (medium === "social" && campaign.startsWith("boost-")) return "social";
+  if (medium === "catalog_ads" && campaign === "pro-promo") return "paid";
+  return "direct";
+}
+
 /**
  * Count one detail-page view: lifetime counter on the entity row + today's
- * rollup bucket, in one atomic D1 batch. Called via ctx.waitUntil off the
- * render path; callers must skip bots (md.isBot) so the numbers shown to
- * dealers reflect humans.
+ * rollup bucket (with per-source split, 0018), in one atomic D1 batch.
+ * Called via ctx.waitUntil off the render path; callers must skip bots
+ * (md.isBot) so the numbers shown to dealers reflect humans.
  */
 export async function recordView(
-  env: Env, entityType: StatsEntityType, entityId: string,
+  env: Env, entityType: StatsEntityType, entityId: string, source: ViewSource = "direct",
 ): Promise<void> {
+  const social = source === "social" ? 1 : 0;
+  const paid = source === "paid" ? 1 : 0;
   await env.DB.batch([
     env.DB.prepare(
       `UPDATE ${STATS_TABLES[entityType]} SET view_count = view_count + 1 WHERE id = ?`,
     ).bind(entityId),
     env.DB.prepare(`
-      INSERT INTO entity_stats_daily (entity_type, entity_id, day, views, contacts)
-      VALUES (?, ?, ?, 1, 0)
-      ON CONFLICT(entity_type, entity_id, day) DO UPDATE SET views = views + 1
-    `).bind(entityType, entityId, statsDay()),
+      INSERT INTO entity_stats_daily (entity_type, entity_id, day, views, contacts, views_social, views_paid)
+      VALUES (?1, ?2, ?3, 1, 0, ?4, ?5)
+      ON CONFLICT(entity_type, entity_id, day) DO UPDATE SET
+        views = views + 1,
+        views_social = views_social + ?4,
+        views_paid = views_paid + ?5
+    `).bind(entityType, entityId, statsDay(), social, paid),
   ]);
 }
 
@@ -835,6 +861,8 @@ export interface DailyStatsRow {
   day: string;
   views: number;
   contacts: number;
+  views_social: number;
+  views_paid: number;
 }
 
 /**
@@ -856,7 +884,7 @@ export async function getDailyStats(
   env: Env, entityType: StatsEntityType, entityId: string, days = 30,
 ): Promise<DailyStatsRow[]> {
   const res = await env.DB.prepare(`
-    SELECT day, views, contacts FROM entity_stats_daily
+    SELECT day, views, contacts, views_social, views_paid FROM entity_stats_daily
     WHERE entity_type = ? AND entity_id = ? AND day >= date('now', ?)
     ORDER BY day
   `).bind(entityType, entityId, `-${days} days`).all<DailyStatsRow>();

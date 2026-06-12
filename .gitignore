@@ -39,3 +39,4 @@ _worker.bundle
 _archives
 .social-factory-token.local
 .meta-feed-key.local
+.reports-unsub-secret.local

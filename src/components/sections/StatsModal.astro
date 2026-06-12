@@ -48,7 +48,8 @@
         <span data-stat-views-30 class="t-body-s num ink-muted" style="font-size:12px"></span>
       </div>
       <div data-stats-chart
-        style="display:flex;align-items:flex-end;gap:2px;height:56px;margin-bottom:16px;border-bottom:1px solid var(--color-divider);padding-bottom:1px"></div>
+        style="display:flex;align-items:flex-end;gap:2px;height:56px;margin-bottom:6px;border-bottom:1px solid var(--color-divider);padding-bottom:1px"></div>
+      <p data-stat-sources class="t-body-s ink-muted" style="font-size:11px;line-height:16px;margin:0 0 16px"></p>
 
       <div data-market-root style="display:none;border-top:1px solid var(--color-divider);padding-top:14px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
@@ -110,6 +111,21 @@
       });
       var s30 = q('[data-stat-views-30]');
       if (s30) s30.textContent = fmtNum(sum) + ' total';
+
+      // Traffic-source split over the same 30 days (decision 0016): organic
+      // social = boost posts (utm_medium=social), paid = Meta catalog ads.
+      var social = 0, paid = 0;
+      (series || []).forEach(function (r) {
+        social += Number(r.views_social || 0);
+        paid += Number(r.views_paid || 0);
+      });
+      var src = q('[data-stat-sources]');
+      if (src) {
+        src.textContent = (social + paid) > 0
+          ? 'Sources: ' + fmtNum(social) + ' from social posts · ' + fmtNum(paid) +
+            ' from ads · ' + fmtNum(Math.max(0, sum - social - paid)) + ' direct & search'
+          : '';
+      }
     }
 
     var SOURCE_LABELS = {

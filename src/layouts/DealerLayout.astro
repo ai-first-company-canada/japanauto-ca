@@ -119,11 +119,12 @@ const cfAccountHash = (import.meta.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '') as 
           if (badge.kind === 'free') {
             el.style.background = 'var(--color-bg-subtle)';
             el.style.color = 'var(--color-ink-muted)';
-            el.title = 'Free plan — up to 5 active listings. Click to upgrade.';
+            el.title = 'Free plan — up to 5 active listings. On Pro, 30% of your subscription funds Facebook ads for your own cars.';
           } else {
             el.style.background = 'var(--color-ink-strong)';
             el.style.color = '#fff';
-            el.title = badge.kind === 'trial' ? 'Pro features free during your trial.' : 'Pro plan — unlimited listings.';
+            el.title = (badge.kind === 'trial' ? 'Pro features free during your trial. ' : 'Pro plan — unlimited listings. ')
+              + '30% of the Pro subscription funds Facebook promotion of your live cars.';
           }
           el.style.display = 'inline-flex';
         }

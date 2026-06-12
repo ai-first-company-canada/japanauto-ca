@@ -62,6 +62,8 @@ export interface Env {
   SOCIAL_FACTORY_TOKEN?: string;
   /** Access key for the Meta vehicle-catalog feed /feeds/meta-vehicles.csv (decision 0015). Absent = feed returns 503. */
   META_FEED_KEY?: string;
+  /** HMAC secret for report unsubscribe links (decision 0016) — shared with the cron worker. Absent = endpoint 503. */
+  REPORTS_UNSUB_SECRET?: string;
   /** Override the improver model (var, not secret). Defaults to claude-haiku-4-5 in the handler. */
   AI_IMPROVER_MODEL?: string;
 }

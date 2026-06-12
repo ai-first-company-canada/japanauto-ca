@@ -1,7 +1,13 @@
 /// <reference types="@cloudflare/workers-types" />
 
+import { sendReports, type ReportsEnv } from "./reports";
+
 interface Env {
   DB: D1Database;
+  // Dealer e-mail reports (decision 0016): both absent → logged no-op.
+  RESEND_API_KEY?: string;        // wrangler secret put RESEND_API_KEY
+  REPORTS_UNSUB_SECRET?: string;  // shared with /api/reports/unsubscribe on Pages
+  REPORTS_FROM?: string;          // optional var override
   MARKET_SUPABASE_URL?: string;       // https://<project>.supabase.co — non-secret, set in [vars]
   // Auth: the scraper project migrated to ES256 JWT signing keys, so the
   // originally-designed self-minted HS256 JWT (role japanauto_sync) cannot
@@ -178,6 +184,8 @@ async function sweepExpired(env: Env, cron: string): Promise<void> {
 }
 
 const SWEEP_CRON = "0 */6 * * *";
+const WEEKLY_REPORT_CRON = "0 14 * * 1";   // Mondays 14:00 UTC ≈ 08:00 Calgary
+const MONTHLY_REPORT_CRON = "30 14 1 * *"; // 1st of month, 14:30 UTC
 
 export default {
   async scheduled(controller, env, _ctx) {
@@ -188,6 +196,10 @@ export default {
       await syncMarketStats(env);
     } else if (controller.cron === SWEEP_CRON) {
       await sweepExpired(env, controller.cron);
+    } else if (controller.cron === WEEKLY_REPORT_CRON) {
+      await sendReports(env as ReportsEnv, "weekly");
+    } else if (controller.cron === MONTHLY_REPORT_CRON) {
+      await sendReports(env as ReportsEnv, "monthly");
     } else {
       throw new Error(`unknown cron "${controller.cron}" — update the dispatch in src/index.ts`);
     }

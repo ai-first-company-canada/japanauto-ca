@@ -114,6 +114,32 @@ Every panel mutation lands in `admin_audit_log` (migration 0017). Password
 reset for a locked-out dealer: Dealers → "Reset link" → copy the 1-hour
 single-use URL and send it to the partner yourself (no email service yet).
 
+## Dealer e-mail reports (decision 0016)
+
+Weekly (Mon 14:00 UTC) + monthly (1st) reports are composed and sent by the
+cron worker via Resend. Dark until configured:
+
+1. **Resend domain**: [resend.com](https://resend.com) → Domains → Add
+   `japanauto.ca` → add the shown DNS records (SPF TXT + DKIM CNAME/TXT) in
+   the Cloudflare DNS of the zone → wait for "Verified".
+2. **API key**: Resend → API Keys → create (sending access) →
+   `cd workers/expire-sweeper && npx wrangler secret put RESEND_API_KEY`.
+3. `REPORTS_UNSUB_SECRET` is already set on both the worker and Pages
+   (generated 2026-06-12, local copy `.reports-unsub-secret.local`).
+4. Migration 0018 must be applied before the first run (source columns,
+   reports_opt_out, report_runs).
+
+Test a single send without waiting for Monday:
+`npx wrangler dev --test-scheduled` +
+`curl "http://localhost:8787/__scheduled?cron=0+14+*+*+1"` (needs
+RESEND_API_KEY + REPORTS_UNSUB_SECRET in `workers/expire-sweeper/.dev.vars`;
+the D1 binding is remote — it WILL send real mail to every dealer and mark
+report_runs; to dry-run a single dealer, temporarily set every other
+dealer's reports_opt_out=1).
+
+Unsubscribes: `dealers.reports_opt_out` (CASL one-click link in every mail).
+Re-subscribe = set it back to 0 (admin panel /dealers or SQL).
+
 ## Launch / domain cutover
 
 ⚠️ **Attaching japanauto.ca = instant indexing.** The static `robots.txt` in the

@@ -20,7 +20,10 @@ Two distinct revenue products were designed but had no committed prices:
 
 ## Decision
 
-1. **Pro: CA$99/month or CA$990/year** (2 months free). Applies to used-car
+1. **Pro: CA$99/month or CA$990/year** (2 months free). **30% of the
+   subscription is committed to promoting that dealer's own lots** (the
+   $1/day Meta catalog budget, ADR-0015/0016) — stated in the cabinet badge
+   and on the future Pricing page. Applies to used-car
    dealers and yards; collected via Stripe when billing wires up (0012).
 2. **Featured slots are sold as city×brand exclusivity**: one official
    (franchise) dealer buys ALL new-vehicle placements for their brand in a
@@ -29,7 +32,9 @@ Two distinct revenue products were designed but had no committed prices:
    activation via `featured_slots` insert at first). Official dealers buying
    slots are a separate audience from Pro subscribers — the products are
    orthogonal.
-3. **Slot pricing: list price anchored at CA$2,995/mo per city×brand**, with
+3. **Slot pricing: list price anchored at CA$2,995/mo per city×brand** —
+   **30% of the contract is committed to social-traffic acquisition** for
+   that city×brand (decision 0016) — with
    a founding-partner rate (~CA$750–1,000/mo) while traffic is young —
    **month-to-month, no term commitment** (owner decision 2026-06-12): the
    pitch is "founding rate while we grow; increases apply to new contracts",

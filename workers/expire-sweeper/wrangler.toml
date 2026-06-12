@@ -3,6 +3,12 @@
 #
 #   "0 */6 * * *"  expire sweep — flips TTL-expired listings to 'expired'
 #                  (second half of audit #8; public reads already filter).
+#   "0 14 * * 1"   weekly dealer reports (decision 0016) — needs secrets:
+#                    npx wrangler secret put RESEND_API_KEY
+#                    npx wrangler secret put REPORTS_UNSUB_SECRET
+#                  AND the same REPORTS_UNSUB_SECRET on the Pages project
+#                  (set 2026-06-12 on both) — worker mints links, Pages verifies.
+#   "30 14 1 * *"  monthly dealer reports (same secrets)
 #   "45 9 * * *"   market-sync — pulls the scraper project's
 #                  japanauto_market_stats Supabase view into D1 market_stats
 #                  (Feature 1 step 3). URL is a [vars] entry below; auth is a
@@ -22,12 +28,16 @@ compatibility_date = "2026-06-01"
 workers_dev = false
 
 [triggers]
-crons = ["0 */6 * * *", "45 9 * * *"]
+crons = ["0 */6 * * *", "45 9 * * *", "0 14 * * 1", "30 14 1 * *"]
 
 [vars]
 # The scraper project's Supabase URL — public knowledge (it's in every client
 # request), so a var rather than a secret.
 MARKET_SUPABASE_URL = "https://tgqyjuzutdbdqdrywlfv.supabase.co"
+
+# CASL s.6(2) sender identification rendered in every report footer —
+# replace with the exact legal name + MAILING address before first send.
+REPORTS_SENDER_LINE = "japanauto.ca · Calgary, AB, Canada · support@japanauto.ca"
 
 # Make scheduled-run logs visible in the dashboard (Workers → Logs).
 [observability]
