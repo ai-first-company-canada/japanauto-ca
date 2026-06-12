@@ -341,6 +341,16 @@ for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
         maxlength="5000"
         style="height:auto;padding:12px 14px;resize:vertical;min-height:120px"
       ></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <button type="button" id="lf-improve" class="btn btn-secondary btn-sm"
+          style="padding:0 12px;height:32px;font-size:12px">Improve text</button>
+        <button type="button" id="lf-improve-undo" class="btn btn-sm"
+          style="display:none;padding:0 12px;height:32px;font-size:12px;background:#fff;color:var(--color-ink-muted);border:1px solid var(--color-divider)">Undo</button>
+        <span id="lf-improve-status" class="t-body-s ink-muted" style="font-size:12px"></span>
+      </div>
+      <p class="t-body-s ink-muted" style="font-size:11px;margin-top:4px">
+        Rewrites your draft using only the facts entered above. Review before saving — you publish it.
+      </p>
       <div class="auth-form-error" data-field-error="description"></div>
     </div>
   </fieldset>
@@ -900,6 +910,71 @@ for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
           }
         } catch (_) {
           soldBtn.disabled = false;
+        }
+      });
+    }
+
+    // "Improve text" (Feature 2). Sends the structured facts + current draft to
+    // the AI endpoint, swaps the result into the textarea, offers one-step undo.
+    var improveBtn = document.getElementById('lf-improve');
+    var improveUndo = document.getElementById('lf-improve-undo');
+    var improveStatus = document.getElementById('lf-improve-status');
+    var descEl = form.querySelector('[name="description"]');
+    var improvePrev = null;
+    if (improveBtn && descEl) {
+      improveBtn.addEventListener('click', async function () {
+        var makeSlug = makeSel ? makeSel.value : '';
+        var fd = new FormData(form);
+        if (!makeSlug || !fd.get('model_id') || !fd.get('year')) {
+          improveStatus.textContent = 'Fill in year, make, and model first.';
+          return;
+        }
+        var facts = {
+          year: parseInt(fd.get('year'), 10),
+          make: makeSlug,
+          model: (modelSel && modelSel.options[modelSel.selectedIndex])
+            ? modelSel.options[modelSel.selectedIndex].text : String(fd.get('model_id')),
+          trim: (fd.get('trim') || '').trim() || null,
+          mileage_km: fd.get('mileage') ? parseInt(fd.get('mileage'), 10) : null,
+          transmission: fd.get('transmission') || null,
+          drivetrain: fd.get('drivetrain') || null,
+          fuel_type: fd.get('fuel_type') || null,
+          body_type: fd.get('body_type') || null,
+          condition: fd.get('condition') || null,
+          color_exterior: (fd.get('color_exterior') || '').trim() || null,
+          city: fd.get('city') || null,
+        };
+        improveBtn.disabled = true;
+        improveStatus.textContent = 'Improving…';
+        try {
+          var res = await fetch('/api/ai/improve-description', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ facts: facts, draft: descEl.value || '' }),
+          });
+          if (res.status === 401) { window.location.href = '/dealer/login/?next=' + encodeURIComponent(location.pathname + location.search); return; }
+          if (res.status === 429) { improveStatus.textContent = 'Too many requests — wait a bit.'; return; }
+          if (res.status === 503) { improveStatus.textContent = 'Text improver not available yet.'; return; }
+          if (!res.ok) { improveStatus.textContent = 'Could not improve text — try again.'; return; }
+          var data = await res.json();
+          if (data && data.description) {
+            improvePrev = descEl.value;
+            descEl.value = data.description;
+            improveUndo.style.display = '';
+            improveStatus.textContent = 'Draft updated — review before saving.';
+          }
+        } catch (_) {
+          improveStatus.textContent = 'Network error — try again.';
+        } finally {
+          improveBtn.disabled = false;
+        }
+      });
+      improveUndo.addEventListener('click', function () {
+        if (improvePrev !== null) {
+          descEl.value = improvePrev;
+          improvePrev = null;
+          improveUndo.style.display = 'none';
+          improveStatus.textContent = 'Reverted.';
         }
       });
     }

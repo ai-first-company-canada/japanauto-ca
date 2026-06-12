@@ -141,6 +141,11 @@ export const RATE_LIMITS = {
     limit: 100,
     windowSeconds: 3600,    // 100 direct-upload URLs/hour per dealer — caps billable CF Images abuse
   } as RateLimitConfig,
+  AI_IMPROVE_PER_DEALER: {
+    bucket: "ai-improve-dealer",
+    limit: 20,
+    windowSeconds: 3600,    // 20 LLM calls/hour per dealer — caps Anthropic spend (~$0.06/h worst case)
+  } as RateLimitConfig,
   REFRESH_PER_IP: {
     bucket: "refresh-ip",
     limit: 60,

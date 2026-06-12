@@ -896,6 +896,32 @@ export const mediaUploadInputSchema = z.object({
 });
 export type MediaUploadInput = z.infer<typeof mediaUploadInputSchema>;
 
+// ============================================================================
+// AI TEXT IMPROVER (Feature 2 — POST /api/ai/improve-description)
+// ============================================================================
+// The dealer's structured listing fields are the ONLY facts the model may use
+// (no-fabrication rule — misdescribing a vehicle is consumer-protection
+// territory). The dealer reviews and saves the result themselves.
+
+export const improveDescriptionInputSchema = z.object({
+  facts: z.object({
+    year: z.number().int().min(1980).max(2100),
+    make: z.string().trim().min(1).max(40),
+    model: z.string().trim().min(1).max(60),
+    trim: z.string().trim().max(60).nullable().optional(),
+    mileage_km: z.number().int().min(0).max(1_000_000).nullable().optional(),
+    transmission: z.string().trim().max(20).nullable().optional(),
+    drivetrain: z.string().trim().max(10).nullable().optional(),
+    fuel_type: z.string().trim().max(20).nullable().optional(),
+    body_type: z.string().trim().max(20).nullable().optional(),
+    condition: z.string().trim().max(30).nullable().optional(),
+    color_exterior: z.string().trim().max(40).nullable().optional(),
+    city: z.string().trim().max(80).nullable().optional(),
+  }),
+  draft: z.string().trim().max(LIMITS.DESCRIPTION_MAX).default(""),
+});
+export type ImproveDescriptionInput = z.infer<typeof improveDescriptionInputSchema>;
+
 /**
  * Body of POST /api/media/finalize, called after the browser PUTs the file
  * directly to Cloudflare Images. `image_id` is the value returned by the

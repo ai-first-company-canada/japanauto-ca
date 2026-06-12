@@ -111,13 +111,6 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
   const primaryImage = realPhotoUrls[0]?.url ?? null;
   const hasPhotos = realPhotoUrls.length > 0;
 
-  const description = listing.description ?? '';
-  const descParas = description
-    ? description.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
-    : [
-        `${listing.year} ${makeRow.name} ${modelRow.name} listed by ${dealer.name} in ${cityName}, ${cityProvince}.`,
-      ];
-
   const driveConfigSchema =
     drive === 'AWD' ? 'https://schema.org/AllWheelDriveConfiguration' :
     drive === 'FWD' ? 'https://schema.org/FrontWheelDriveConfiguration' :
@@ -130,6 +123,18 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
     listing.body_type === 'suv' || listing.body_type === 'crossover' ? 'SUV' :
     listing.body_type === 'hatchback' ? 'Hatchback' :
     listing.body_type === 'wagon' ? 'Wagon' : 'Sedan';
+
+  const description = listing.description ?? '';
+  // Deterministic spec-sentence fallback (Feature 2): when the dealer wrote no
+  // description, build honest text mass from the structured fields — every
+  // value comes from the listing row, nothing generated.
+  const descParas = description
+    ? description.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+    : [
+        `${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} for sale by ${dealer.name} in ${cityName}, ${cityProvince}.`,
+        `${fmt(listing.mileage)} km · ${transmission} · ${drive} · ${fuelLabel} · ${bodyLabel} · ${conditionLabel}.` +
+          (negotiable ? ' Price is negotiable — contact the dealer directly.' : ' Contact the dealer directly to arrange a viewing.'),
+      ];
 
   const canonical = `https://japanauto.ca/used-cars/listing/${listing.slug}/`;
   const title = `${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} — CA$${fmt(priceDollars)} — ${cityName}, ${cityProvince}`;
