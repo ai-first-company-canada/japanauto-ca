@@ -30,13 +30,15 @@ Two distinct revenue products were designed but had no committed prices:
    slots are a separate audience from Pro subscribers — the products are
    orthogonal.
 3. **Slot pricing: list price anchored at CA$2,995/mo per city×brand**, with
-   a founding-partner rate (~CA$750–1,000/mo, 6–12-month lock) while traffic
-   is young. Rationale: AutoTrader.ca dealer packages run ~$450 (entry) to
-   $2,000+/mo (enterprise) for *non-exclusive* used-listing packages;
+   a founding-partner rate (~CA$750–1,000/mo) while traffic is young —
+   **month-to-month, no term commitment** (owner decision 2026-06-12): the
+   pitch is "founding rate while we grow; increases apply to new contracts",
+   which keeps repricing freedom on our side and lowers the entry barrier.
+   Rationale for the anchor: AutoTrader.ca dealer packages run ~$450 (entry)
+   to $2,000+/mo (enterprise) for *non-exclusive* used-listing packages;
    exclusivity over every model page of a brand in a metro justifies a
-   premium over their top tier — but only once traffic exists, hence the
-   founding rate that converts the discount into an early-commitment story
-   rather than a low anchor. Review quarterly against traffic/lead reports.
+   premium over their top tier — but only once traffic exists. Review
+   quarterly against traffic/lead reports.
 4. **Until a slot is sold, the block runs a house ad**: a link to the brand's
    official Canadian site (e.g. toyota.ca) with no fabricated dealer name and
    no invented MSRP, plus an "Advertise here" CTA. The current demo creative
@@ -46,6 +48,20 @@ Two distinct revenue products were designed but had no committed prices:
    creative) and `rel="sponsored"` on the outbound dealer link** — Google
    treats paid links without it as link-scheme spam, and ad-disclosure is a
    Competition Act expectation.
+6. **Official-dealer cabinet = the regular dealer cabinet plus a
+   capability, not a new role.** The advertiser signs up as a normal dealer
+   account; an "Advertising" tab appears when the account owns any
+   `featured_slots` row (the contract row, inserted manually by us, IS the
+   grant — no role column, no admin UI). In the tab the dealer self-serves
+   **creative only** (promo_title, promo_msrp_cents, promo_image, promo_url
+   — allowlist PATCH, same pattern as `/api/dealers/me`) and sees slot
+   stats (impressions + outbound clicks). Contract terms (city, make,
+   window, status, price) stay admin-only. New creative lands as
+   `status='pending'` and goes live only after our human review — their ad
+   copy renders on our SEO pages, so MSRP/claims are checked before
+   activation (white-glove "VIP onboarding" doubles as the compliance
+   gate). Non-payment fails safe: `active_until` lapses → house ad returns
+   automatically; renewal = one UPDATE extending the window.
 
 ## Alternatives
 
