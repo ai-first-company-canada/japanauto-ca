@@ -146,6 +146,11 @@ export const RATE_LIMITS = {
     limit: 20,
     windowSeconds: 3600,    // 20 LLM calls/hour per dealer — caps Anthropic spend (~$0.06/h worst case)
   } as RateLimitConfig,
+  VIN_DECODE_PER_DEALER: {
+    bucket: "vin-decode-dealer",
+    limit: 30,
+    windowSeconds: 3600,    // 30 decodes/hour per dealer — cache absorbs repeats; keeps vPIC polite
+  } as RateLimitConfig,
   REFRESH_PER_IP: {
     bucket: "refresh-ip",
     limit: 60,

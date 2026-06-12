@@ -164,6 +164,11 @@ const CONDITIONS: Array<[string, string]> = [
       <p class="t-body-s ink-muted" style="font-size:12px;margin-top:4px">
         Donor cars often have damaged VIN plates — leave blank if you can't read it.
       </p>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <button type="button" id="df-vin-decode" class="btn btn-secondary btn-sm"
+          style="padding:0 12px;height:32px;font-size:12px">Decode VIN</button>
+        <span id="df-vin-status" class="t-body-s ink-muted" style="font-size:12px"></span>
+      </div>
       <div class="auth-form-error" data-field-error="vin"></div>
     </div>
   </fieldset>
@@ -928,6 +933,60 @@ const CONDITIONS: Array<[string, string]> = [
         photoInput.value = '';
         if (failed.length && photoErr) {
           photoErr.textContent = 'Some uploads failed: ' + failed.join('; ');
+        }
+      });
+    }
+
+    // "Decode VIN" (Tier-1 VIN enrichment): autofills EMPTY fields from the
+    // NHTSA decode; the incentive for yards to type the optional VIN at all.
+    var vinBtn = document.getElementById('df-vin-decode');
+    var vinStatus = document.getElementById('df-vin-status');
+    var vinEl = form.querySelector('[name="vin"]');
+    if (vinBtn && vinEl) {
+      vinBtn.addEventListener('click', async function () {
+        var vin = (vinEl.value || '').trim().toUpperCase();
+        if (vin.length !== 17) { vinStatus.textContent = 'Enter the full 17-character VIN first.'; return; }
+        vinBtn.disabled = true; vinStatus.textContent = 'Decoding…';
+        try {
+          var res = await fetch('/api/vin/decode', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ vin: vin }),
+          });
+          if (res.status === 422) { vinStatus.textContent = 'VIN failed the checksum — double-check it.'; return; }
+          if (!res.ok) { vinStatus.textContent = 'Decode unavailable — fill the form manually.'; return; }
+          var d = await res.json();
+          var warns = [];
+          function fillIfEmpty(name, val) {
+            if (val == null) return;
+            var el = form.querySelector('[name="' + name + '"]');
+            if (!el) return;
+            if (el.value) { if (String(el.value) !== String(val)) warns.push(name); return; }
+            el.value = String(val);
+          }
+          fillIfEmpty('year', d.year);
+          if (d.make_slug) {
+            if (!makeSel.value) {
+              makeSel.value = d.make_slug;
+              await syncModelOptions(d.model_id || null);
+            } else if (makeSel.value !== d.make_slug) {
+              warns.push('make');
+            } else if (d.model_id && !modelSel.value) {
+              await syncModelOptions(d.model_id);
+            } else if (d.model_id && modelSel.value && String(modelSel.value) !== String(d.model_id)) {
+              warns.push('model');
+            }
+          }
+          fillIfEmpty('transmission', d.transmission);
+          if (d.series) fillIfEmpty('generation_code', d.series);
+          var summary = [d.year, d.make_raw, d.model_raw].filter(Boolean).join(' ');
+          vinStatus.textContent = 'Decoded: ' + (summary || 'unknown vehicle') +
+            (d.engine_label ? ' · ' + d.engine_label : '') +
+            (warns.length ? ' — VIN disagrees with the form on: ' + warns.join(', ') : '');
+        } catch (_) {
+          vinStatus.textContent = 'Network error — fill the form manually.';
+        } finally {
+          vinBtn.disabled = false;
         }
       });
     }

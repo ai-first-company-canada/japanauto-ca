@@ -154,6 +154,23 @@ export function formatPhone(e164: string | null | undefined): { display: string;
   return { display: `(${m[1]}) ${m[2]}-${m[3]}`, tel: e164 };
 }
 
+/**
+ * "Factory equipment & safety" section from a VIN decode (Tier-1 enrichment).
+ * Shared by the listing and donor detail pages. Renders nothing when the
+ * decode produced no equipment — never an empty shell.
+ */
+export function renderFactoryEquipment(equipment: string[], engineLine?: string | null): string {
+  if (equipment.length === 0 && !engineLine) return '';
+  return `<section style="padding:24px 16px 0">
+    <h2 style="font-size:17px;font-weight:600;color:var(--color-ink-strong);margin:0 0 4px">Factory equipment &amp; safety</h2>
+    <p style="margin:0 0 10px;font-size:12px;color:var(--color-ink-muted)">Decoded from the VIN — as built at the factory.</p>
+    ${engineLine ? `<p style="margin:0 0 8px;font-size:14px;color:var(--color-ink-default)"><strong style="font-weight:600">Engine:</strong> ${esc(engineLine)}</p>` : ''}
+    ${equipment.length > 0 ? `<ul style="margin:0;padding-left:18px;font-size:13px;line-height:21px;color:var(--color-ink-default)">
+      ${equipment.map((e) => `<li>${esc(e)}</li>`).join('')}
+    </ul>` : ''}
+  </section>`;
+}
+
 /** Friendly relative-time label from a unix timestamp (seconds). */
 export function relativeTime(ts: number): string {
   const ageSec = Math.floor(Date.now() / 1000) - ts;

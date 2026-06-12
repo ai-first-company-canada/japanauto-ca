@@ -14,10 +14,11 @@
 import type { Env } from "../../../types/env";
 import { isListingExpired } from "../../../lib/schema";
 import {
-  getListingDetailBySlug, getMediaForEntity, recordView,
+  getListingDetailBySlug, getMediaForEntity, recordView, getVinDecode,
 } from "../../api/_lib/db";
 import {
   renderShell, takeCspNonce, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
+  renderFactoryEquipment,
 } from "../../_lib/page-shell";
 
 const TIER_1_CITIES: Record<string, { name: string; province: string }> = {
@@ -51,7 +52,10 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
     waitUntil(recordView(env, 'listing', listing.id));
   }
 
-  const photos = await getMediaForEntity(env, 'listing', listing.id);
+  const [photos, vinDecode] = await Promise.all([
+    getMediaForEntity(env, 'listing', listing.id),
+    listing.vin ? getVinDecode(env, listing.vin) : Promise.resolve(null),
+  ]);
 
   const makeRow = { slug: listing.make_slug, name: listing.make_name };
   const modelRow = { slug: listing.model_slug, name: listing.model_name };
@@ -177,6 +181,15 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
       driveWheelConfiguration: driveConfigSchema,
       fuelType: fuelLabel,
       bodyType: bodyLabel,
+      ...(vinDecode?.engine ? {
+        vehicleEngine: {
+          '@type': 'EngineSpecification',
+          ...(vinDecode.engine.code ? { name: vinDecode.engine.code } : {}),
+          ...(vinDecode.engine.displacement_l ? {
+            engineDisplacement: { '@type': 'QuantitativeValue', value: vinDecode.engine.displacement_l, unitCode: 'LTR' },
+          } : {}),
+        },
+      } : {}),
       ...(primaryImage ? { image: primaryImage } : {}),
       offers: {
         '@type': 'Offer',
@@ -352,6 +365,7 @@ ${photoGalleryHtml}
         ['Drivetrain', drive],
         ['Body', bodyLabel],
         ['Fuel', fuelLabel],
+        ...(vinDecode?.engine_label ? [['Engine', vinDecode.engine_label]] : []),
         ...(listing.vin ? [['VIN', listing.vin]] : []),
         ['Condition', conditionLabel],
         ['Location', `${cityName}, ${cityProvince}`],
@@ -363,6 +377,8 @@ ${photoGalleryHtml}
     </tbody>
   </table>
 </section>
+
+${renderFactoryEquipment(vinDecode?.equipment ?? [])}
 
 <section style="padding:24px 16px 0">
   <h2 class="t-h-s" style="font-size:18px;font-weight:600;margin:0 0 12px;color:var(--color-ink-strong)">About this car</h2>

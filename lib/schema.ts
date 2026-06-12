@@ -922,6 +922,37 @@ export const improveDescriptionInputSchema = z.object({
 });
 export type ImproveDescriptionInput = z.infer<typeof improveDescriptionInputSchema>;
 
+// ============================================================================
+// VIN DECODE (Tier-1 enrichment — POST /api/vin/decode, migration 0014)
+// ============================================================================
+
+export const vinDecodeInputSchema = z.object({ vin: vinSchema });
+export type VinDecodeInput = z.infer<typeof vinDecodeInputSchema>;
+
+/** Normalized decode payload stored in vin_decode_cache and rendered on pages. */
+export interface VinDecodePayload {
+  vin: string;
+  year: number | null;
+  make_raw: string | null;
+  model_raw: string | null;
+  trim_raw: string | null;
+  series: string | null;            // e.g. "ZRE172L" — generation code, donor-fit gold
+  plant_country: string | null;
+  // mapped onto our catalog/enums (null when no confident match)
+  make_id: number | null;
+  make_slug: string | null;
+  model_id: number | null;
+  model_slug: string | null;
+  body_type: BodyType | null;
+  fuel_type: FuelType | null;
+  transmission: Transmission | null;
+  drivetrain: Drivetrain | null;
+  doors: number | null;
+  engine: { cylinders: number | null; displacement_l: number | null; code: string | null; hp: number | null } | null;
+  engine_label: string | null;      // "1.8L 4-cyl 2ZR-FE, 132 hp"
+  equipment: string[];              // friendly labels, only confirmed-Standard items
+}
+
 /**
  * Body of POST /api/media/finalize, called after the browser PUTs the file
  * directly to Cloudflare Images. `image_id` is the value returned by the

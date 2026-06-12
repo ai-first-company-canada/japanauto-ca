@@ -27,9 +27,9 @@
 import type { Env } from "../../../types/env";
 import {
   getDonorCarBySlug, getMediaForEntity, listRelatedDonors, listDonorCountsByCity,
-  recordView,
+  recordView, getVinDecode,
 } from "../../api/_lib/db";
-import { renderShell, takeCspNonce, safeUrl } from "../../_lib/page-shell";
+import { renderShell, takeCspNonce, safeUrl, renderFactoryEquipment } from "../../_lib/page-shell";
 import {
   renderPartsNavBar, renderBreadcrumb, renderDepletedBand, renderPhotoGallery,
   renderTitleBlock, renderPrimaryCta, renderEducationalBlock, renderSpecGrid,
@@ -72,11 +72,12 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env, da
     waitUntil(recordView(env, 'donor_car', donor.id));
   }
 
-  const [photos, sameYard, sameCityModel, otherCities] = await Promise.all([
+  const [photos, sameYard, sameCityModel, otherCities, vinDecode] = await Promise.all([
     getMediaForEntity(env, 'donor_car', donor.id),
     listRelatedDonors(env, { excludeId: donor.id, dealerId: donor.dealer_id, modelId: donor.model_id, limit: 4 }),
     listRelatedDonors(env, { excludeId: donor.id, modelId: donor.model_id, citySlug: donor.city_slug, limit: 4 }),
     listDonorCountsByCity(env, donor.make_id, donor.model_id, donor.city_slug),
+    donor.vin ? getVinDecode(env, donor.vin) : Promise.resolve(null),
   ]);
 
   // ==========================================================================
@@ -279,9 +280,11 @@ ${educationalBlock}
 
 ${renderSpecGrid(donor)}
 
+${renderFactoryEquipment(vinDecode?.equipment ?? [], vinDecode?.engine_label)}
+
 ${renderPartsAvailability(donor)}
 
-${renderPartsLongTail(donor, partsAvail)}
+${renderPartsLongTail(donor, partsAvail, vinDecode?.engine_label)}
 
 ${renderCompatibilityCard(donor)}
 

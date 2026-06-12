@@ -421,16 +421,19 @@ export function renderDonorLead(donor: DonorCarDetailRow, parts: DonorPartSlug[]
  * for dozens of "{part} {model} {year} {city}" queries without per-part
  * pages. Sections exist ONLY for ticked parts — nothing fabricated.
  */
-export function renderPartsLongTail(donor: DonorCarDetailRow, parts: DonorPartSlug[]): string {
+export function renderPartsLongTail(donor: DonorCarDetailRow, parts: DonorPartSlug[], engineLabel?: string | null): string {
   if (parts.length === 0) return '';
   const fit = donorFitLabel(donor);
   const car = `${donor.year} ${donor.make_name} ${donor.model_name}`;
   return DONOR_PART_GROUPS.map((g) => {
     const inGroup = g.parts.filter((p) => parts.includes(p.slug));
     if (inGroup.length === 0) return '';
+    // VIN-decoded engine code in the Engine group intro ("1.8L 4-cyl 2ZR-FE") —
+    // exactly what parts buyers search by.
+    const engineNote = g.label === 'Engine' && engineLabel ? ` (${engineLabel})` : '';
     return `<section style="padding:24px 16px 0">
     <h2 style="font-size:16px;font-weight:600;color:var(--color-ink-strong);margin:0 0 4px">${esc(`${g.label} for ${car}`)}</h2>
-    <p style="margin:0 0 6px;font-size:13px;line-height:19px;color:var(--color-ink-muted)">Pulled from this donor at ${esc(donor.dealer_name)} — typically fits ${esc(fit)} ${esc(donor.model_name)} models. Confirm trim-specific fitment before purchase.</p>
+    <p style="margin:0 0 6px;font-size:13px;line-height:19px;color:var(--color-ink-muted)">Pulled from this donor${esc(engineNote)} at ${esc(donor.dealer_name)} — typically fits ${esc(fit)} ${esc(donor.model_name)} models. Confirm trim-specific fitment before purchase.</p>
     ${inGroup.map((p) => `<h3 style="font-size:14px;font-weight:600;color:var(--color-ink-strong);margin:10px 0 2px">${esc(`${p.label} for ${car}`)}</h3>
     <p style="margin:0;font-size:13px;line-height:19px;color:var(--color-ink-default)">Used ${esc(p.label.toLowerCase())} for the ${esc(car)} — available at ${esc(donor.dealer_name)} in ${esc(donor.city_name)}. Ask for condition photos and pricing when you call.</p>`).join('')}
   </section>`;

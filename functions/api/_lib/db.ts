@@ -17,7 +17,7 @@ import {
   dealerRowSchema, listingRowSchema, citySchema, makeSchema, modelSchema,
   mediaPublicSchema,
   type Dealer, type Listing, type City, type Make,
-  type MediaPublic, type MediaFinalizeInput,
+  type MediaPublic, type MediaFinalizeInput, type VinDecodePayload,
 } from "../../../lib/schema";
 
 // ============================================================================
@@ -835,6 +835,20 @@ export interface DailyStatsRow {
   day: string;
   views: number;
   contacts: number;
+}
+
+/**
+ * Read a cached VIN decode (migration 0014). Written by /api/vin/decode;
+ * detail pages join through here to render factory equipment. NULL = the VIN
+ * was never decoded (the page simply omits the section).
+ */
+export async function getVinDecode(env: Env, vin: string): Promise<VinDecodePayload | null> {
+  const row = await env.DB.prepare(
+    `SELECT payload FROM vin_decode_cache WHERE vin = ? LIMIT 1`,
+  ).bind(vin).first<{ payload: string }>();
+  if (!row) return null;
+  try { return JSON.parse(row.payload) as VinDecodePayload; }
+  catch { return null; }
 }
 
 /** Last-N-days series for one entity (days without traffic have no row). */
