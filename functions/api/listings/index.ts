@@ -225,12 +225,24 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   }
   const input = parsed.data;
 
-  // Generate id + slug. TODO: wire lib/slug.ts when available;
-  // for now build slug from title + 6-char id suffix.
+  // Resolve make/model slugs for the SEO slug ("2018-toyota-camry-…"). Falls
+  // back to "" if an id doesn't resolve — FK violation surfaces at INSERT.
+  // (Same pattern as donors/index.ts; the empty-string TODO here shipped
+  // make/model-less URLs until the 2026-06-12 browser E2E caught it.)
+  const makeRow = await env.DB.prepare(
+    `SELECT slug FROM makes WHERE id = ? LIMIT 1`,
+  ).bind(input.make_id).first<{ slug: string }>();
+  const modelRow = await env.DB.prepare(
+    `SELECT slug FROM models WHERE id = ? LIMIT 1`,
+  ).bind(input.model_id).first<{ slug: string }>();
+
   const id = crypto.randomUUID();
   const slugSuffix = id.replace(/[^a-z0-9]/gi, "").slice(0, 6).toLowerCase();
   const slug = buildListingSlug({
-    year: input.year, makeSlug: "", modelSlug: "", trim: input.trim ?? null,
+    year: input.year,
+    makeSlug: makeRow?.slug ?? "",
+    modelSlug: modelRow?.slug ?? "",
+    trim: input.trim ?? null,
     citySlug: input.city.toLowerCase().replace(/\s+/g, "-"), suffix: slugSuffix,
   });
 
