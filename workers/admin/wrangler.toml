@@ -1,0 +1,45 @@
+# japanauto-admin — the operator panel, a separate Worker on its own hostname
+# (admin.japanauto.ca) so ZERO admin code ships in the public Pages bundle.
+#
+# Security model (ADR pending; discussed 2026-06-12):
+#   1. Cloudflare Access (Zero Trust) sits in FRONT at the edge — unauthenticated
+#      traffic never reaches this Worker. Policy: allow only ADMIN_EMAILS.
+#   2. The Worker independently verifies the Cf-Access-Jwt-Assertion header
+#      against the team's JWKS (src/lib/access.ts) — defense in depth; if the
+#      three vars below are unset or the header is missing, EVERYTHING fails
+#      closed (503/403). Deploying before Access is configured is safe.
+#   3. Every mutation is written to admin_audit_log (migration 0017).
+#
+# Deploy:  cd workers/admin && npx wrangler deploy
+# NOT covered by the Pages `npm run deploy`.
+
+name = "japanauto-admin"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+workers_dev = false
+# Version preview URLs would expose the panel on a hostname OUTSIDE the
+# Access application (in-worker JWT check still denies, but that drops us to
+# one security layer) — keep them off.
+preview_urls = false
+
+routes = [
+  { pattern = "admin.japanauto.ca", custom_domain = true },
+]
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "japanauto-prod"
+database_id = "b0d65b95-2f43-403d-9237-0d4cac6e186a"
+remote = true
+
+[vars]
+# Fill after creating the Zero Trust Access application (see docs/runbook.md):
+#   ACCESS_TEAM_DOMAIN — the <team> in https://<team>.cloudflareaccess.com
+#   ACCESS_AUD         — the Access application's Audience (AUD) tag
+# Empty values = the Worker refuses every request (fail-closed).
+ACCESS_TEAM_DOMAIN = ""
+ACCESS_AUD = ""
+ADMIN_EMAILS = "targetwizard@icloud.com"

@@ -85,6 +85,35 @@ Gotchas (each one cost a debugging session — don't relearn them):
   for direct photo upload). An API path can be 100% green via curl and still
   dead in the browser — test new origins in a real browser.
 
+## Admin panel (workers/admin → admin.japanauto.ca)
+
+Separate Worker behind Cloudflare Access (decision 0014). Deploy:
+`cd workers/admin && npx wrangler deploy` — NOT covered by `npm run deploy`.
+Fail-closed: with the `ACCESS_*` vars unset or no Access JWT, every request
+is denied, so deploying before/without Access is safe (just dark).
+
+One-time Zero Trust setup (owner, ~10 min, free plan):
+
+1. Cloudflare dashboard → **Zero Trust** → pick a team name
+   (`<team>.cloudflareaccess.com`) if not already chosen.
+2. **Access → Applications → Add application → Self-hosted**:
+   - Application domain: `admin.japanauto.ca` (zone is already in the account).
+   - Session duration: 24h.
+   - Policy "Owner only": Action **Allow**, Include → **Emails** →
+     `targetwizard@icloud.com`. Login method: One-time PIN (default) is enough.
+3. From the application's **Overview**, copy the **Application Audience (AUD)
+   tag**; note the team name.
+4. Fill `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD` in `workers/admin/wrangler.toml`
+   [vars] and redeploy the worker.
+
+Verify after setup: open `https://admin.japanauto.ca` in a private window →
+Access OTP page (NOT the panel); after the PIN — the dashboard. `curl -I
+https://admin.japanauto.ca` from anywhere must return Access's 302, never 200.
+
+Every panel mutation lands in `admin_audit_log` (migration 0017). Password
+reset for a locked-out dealer: Dealers → "Reset link" → copy the 1-hour
+single-use URL and send it to the partner yourself (no email service yet).
+
 ## Launch / domain cutover
 
 ⚠️ **Attaching japanauto.ca = instant indexing.** The static `robots.txt` in the

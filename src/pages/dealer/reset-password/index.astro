@@ -49,10 +49,9 @@ import AuthLayout from '../../../layouts/AuthLayout.astro';
     <button class="btn btn-primary auth-submit" type="submit">Set new password</button>
   </form>
 
-  <div class="auth-info-box" data-info-box style="display:none">
-    Reset link not yet active — Phase 6 wires Resend integration.
-    Contact <a href="mailto:support@japanauto.ca" style="color:var(--color-accent);font-weight:500">support@japanauto.ca</a>
-    for password issues.
+  <div class="auth-info-box" data-success-box style="display:none">
+    ✓ Password updated. All previous sessions were signed out.
+    <a href="/dealer/login/" style="color:var(--color-accent);font-weight:600">Sign in with your new password →</a>
   </div>
 
   <p class="auth-link-row">
@@ -64,14 +63,21 @@ import AuthLayout from '../../../layouts/AuthLayout.astro';
       var form = document.getElementById('reset-form');
       if (!form) return;
       var btn = form.querySelector('button[type="submit"]');
-      var info = document.querySelector('[data-info-box]');
+      var success = document.querySelector('[data-success-box]');
+      var formErr = form.querySelector('[data-form-error]');
       var params = new URLSearchParams(window.location.search);
       var token = params.get('token') || '';
+
+      // No usable token in the URL → the form can't succeed; say so upfront.
+      if (token.length < 20) {
+        if (formErr) formErr.textContent =
+          'This reset link is incomplete — request a new one from support@japanauto.ca.';
+        if (btn) btn.disabled = true;
+      }
 
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
         form.querySelectorAll('[data-field-error]').forEach(function (el) { el.textContent = ''; });
-        var formErr = form.querySelector('[data-form-error]');
         if (formErr) formErr.textContent = '';
 
         if (form.password.value !== form.confirm.value) {
@@ -83,13 +89,28 @@ import AuthLayout from '../../../layouts/AuthLayout.astro';
         btn.disabled = true;
         btn.textContent = 'Saving…';
         try {
-          await fetch('/api/auth/password-reset/confirm', {
+          var res = await fetch('/api/auth/password-reset/confirm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: token, new_password: form.password.value }),
           });
-        } catch (_) {}
-        if (info) info.style.display = '';
+          if (res.ok) {
+            form.style.display = 'none';
+            if (success) success.style.display = '';
+            return;
+          }
+          var data = await res.json().catch(function () { return {}; });
+          if (res.status === 422 && data.issues && data.issues.length) {
+            var msg = data.issues[0].message || 'Invalid input';
+            var slot = form.querySelector('[data-field-error="new_password"]');
+            if (slot) slot.textContent = msg;
+          } else if (formErr) {
+            formErr.textContent = data.message ||
+              'This reset link is invalid or has expired — request a new one.';
+          }
+        } catch (_) {
+          if (formErr) formErr.textContent = 'Network error — please try again.';
+        }
         btn.disabled = false;
         btn.textContent = 'Set new password';
       });

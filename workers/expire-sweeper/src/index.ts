@@ -155,15 +155,24 @@ async function sweepExpired(env: Env, cron: string): Promise<void> {
   // ip_address/user_agent — drop them 30 days past expiry (rotated_to FK is
   // ON DELETE SET NULL, so chains are safe); consumed/expired verification
   // tokens and 90-day-old contact reveals have no reason to live longer.
-  const [rt, vt, cr] = await env.DB.batch([
+  // rate_limits keys embed raw IPs/emails — sweep windows older than 2× the
+  // largest window (24h) so one-off visitor keys don't accumulate forever.
+  // Featured slots whose paid window lapsed flip to 'ended' so the (city,
+  // make) exclusivity pair frees up automatically on non-payment (ADR-0013).
+  const [rt, vt, cr, rl, fs] = await env.DB.batch([
     env.DB.prepare(`DELETE FROM refresh_tokens WHERE expires_at < unixepoch() - 2592000`),
     env.DB.prepare(`DELETE FROM verification_tokens WHERE consumed_at IS NOT NULL OR expires_at < unixepoch()`),
     env.DB.prepare(`DELETE FROM contact_reveals WHERE revealed_at < unixepoch() - 7776000`),
+    env.DB.prepare(`DELETE FROM rate_limits WHERE window_start < unixepoch() - 172800`),
+    env.DB.prepare(`UPDATE featured_slots SET status = 'ended', updated_at = unixepoch()
+                    WHERE status IN ('active','paused') AND active_until <= unixepoch()`),
   ]);
-  const cleaned = (rt.meta.changes ?? 0) + (vt.meta.changes ?? 0) + (cr.meta.changes ?? 0);
+  const cleaned = (rt.meta.changes ?? 0) + (vt.meta.changes ?? 0) + (cr.meta.changes ?? 0)
+    + (rl.meta.changes ?? 0) + (fs.meta.changes ?? 0);
   if (cleaned > 0) {
     console.log(
-      `retention: removed ${rt.meta.changes} refresh_tokens, ${vt.meta.changes} verification_tokens, ${cr.meta.changes} contact_reveals`,
+      `retention: removed ${rt.meta.changes} refresh_tokens, ${vt.meta.changes} verification_tokens, ` +
+      `${cr.meta.changes} contact_reveals, ${rl.meta.changes} rate_limits; ended ${fs.meta.changes} lapsed slots`,
     );
   }
 }

@@ -48,18 +48,25 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async ({ request, env, p
   }
 
   const now = Math.floor(Date.now() / 1000);
-  await env.DB.prepare(`
+  // The observed from-state is bound into the WHERE — without it a concurrent
+  // transition (e.g. an admin-panel cancel landing between our SELECT and this
+  // UPDATE) would be silently overwritten, resurrecting a terminal state
+  // (security review 2026-06-12). 0 changes = the state moved under us → 409.
+  const res = await env.DB.prepare(`
     UPDATE social_boost_jobs
     SET status = ?,
         result_links = ?,
         published_at = CASE WHEN ? = 'published' THEN ? ELSE published_at END,
         updated_at = ?
-    WHERE id = ?
+    WHERE id = ? AND status = ?
   `).bind(
     status,
     result_links ? JSON.stringify(result_links) : null,
-    status, now, now, id,
+    status, now, now, id, job.status,
   ).run();
+  if ((res.meta.changes ?? 0) === 0) {
+    return conflict(`Job state changed concurrently — re-fetch and retry`);
+  }
 
   return json({ job: { id, status, result_links: result_links ?? [], updated_at: now } });
 };
