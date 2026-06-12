@@ -40,6 +40,6 @@ remote = true
 #   ACCESS_TEAM_DOMAIN — the <team> in https://<team>.cloudflareaccess.com
 #   ACCESS_AUD         — the Access application's Audience (AUD) tag
 # Empty values = the Worker refuses every request (fail-closed).
-ACCESS_TEAM_DOMAIN = ""
-ACCESS_AUD = ""
+ACCESS_TEAM_DOMAIN = "japanauto"
+ACCESS_AUD = "7a108d96ba0c1ecc74f469867c723d400848216df73b745764f8212556deef8e"
 ADMIN_EMAILS = "targetwizard@icloud.com"
