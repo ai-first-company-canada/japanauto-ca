@@ -402,6 +402,7 @@ const PROVINCES: Array<{ code: string; name: string }> = [
           });
 
           if (res.status === 201) {
+            try { sessionStorage.removeItem('jc_dealer_meta'); } catch (_) {}
             window.location.href = '/dealer/dashboard/';
             return;
           }

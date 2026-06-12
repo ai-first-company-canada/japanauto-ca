@@ -13,6 +13,7 @@ import AuthLayout from '../../layouts/AuthLayout.astro';
       try {
         await fetch('/api/auth/logout', { method: 'POST' });
       } catch (_) { /* ignore */ }
+      try { sessionStorage.removeItem('jc_dealer_meta'); } catch (_) {}
       window.location.href = '/';
     })();
   </script>

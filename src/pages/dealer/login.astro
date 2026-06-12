@@ -99,6 +99,7 @@ import AuthLayout from '../../layouts/AuthLayout.astro';
 
           if (res.ok) {
             var params = new URLSearchParams(window.location.search);
+            try { sessionStorage.removeItem('jc_dealer_meta'); } catch (_) {}
             var next = params.get('next') || '/dealer/dashboard/';
             window.location.href = next;
             return;
