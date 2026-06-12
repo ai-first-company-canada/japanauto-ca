@@ -3,9 +3,12 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import remarkStripFaq from './src/lib/remark-strip-faq.mjs';
 
-// Cloudflare Images delivery hash — inlined at build time. Set in Cloudflare
-// Pages → Build & Deploy → Environment Variables (production scope).
-const CF_ACCOUNT_HASH = process.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '';
+// Cloudflare Images delivery hash — inlined at build time. This is a PUBLIC
+// value (it appears in every imagedelivery.net URL), so the literal default
+// is safe to commit. Deploys run `npm run deploy` (local build + wrangler
+// direct upload), so a dashboard-only env var never reaches the build —
+// caught in browser E2E 2026-06-12 as dead photo previews in the cabinet.
+const CF_ACCOUNT_HASH = process.env.PUBLIC_CLOUDFLARE_ACCOUNT_HASH ?? '_uF_SQXNbIqd9DzNhDYe4A';
 
 // Pure-static build. Phase 2c2b dynamic routes (listing detail, dealer
 // profile) live in Pages Functions (functions/used-cars/listing/[slug].ts and
