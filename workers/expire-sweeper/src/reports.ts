@@ -275,10 +275,12 @@ export async function buildDealerReport(
   const hints: MarketHint[] = [];
   if (tier === "pro") {
     for (const l of lots.filter((x) => x.status === "active").slice(0, 12)) {
+      // Retail benchmark = other DEALERS' asking prices (seller_kind, 0019) —
+      // that's the dealer's actual competitive field.
       const m = await env.DB.prepare(`
         SELECT price_p50_cents, n_active FROM market_stats
         WHERE city_slug = ? AND make_slug = ? AND model_slug = ?
-          AND anchor_year = ? AND mileage_bucket = 'all'
+          AND anchor_year = ? AND mileage_bucket = 'all' AND seller_kind = 'dealer'
         ORDER BY n_active DESC LIMIT 1
       `).bind(l.city.toLowerCase(), l.make_slug, l.model_slug, l.year)
         .first<{ price_p50_cents: number | null; n_active: number }>();
@@ -286,7 +288,7 @@ export async function buildDealerReport(
       const diff = Math.round((l.price - m.price_p50_cents) / m.price_p50_cents * 100);
       const pos = Math.abs(diff) < 2 ? "at the market median"
         : `${Math.abs(diff)}% ${diff > 0 ? "above" : "below"} the market median`;
-      hints.push({ slug: l.slug, line: `${esc(l.title)}: your asking price is <b>${pos}</b> (${m.n_active} similar listed, all mileages, public asking prices)` });
+      hints.push({ slug: l.slug, line: `${esc(l.title)}: your asking price is <b>${pos}</b> (${m.n_active} similar at dealers, all mileages, asking prices)` });
     }
   }
 

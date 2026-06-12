@@ -129,10 +129,23 @@
     }
 
     var SOURCE_LABELS = {
-      marketplace: 'Online marketplaces',
+      marketplace: 'Facebook Marketplace',
       autotrader: 'AutoTrader',
-      dealer_sites: 'Dealer websites',
+      kijiji: 'Kijiji',
+      dealer_sites: 'dealer websites',
     };
+    var KIND_LABELS = {
+      dealer: 'Dealer asking prices',
+      private: 'Private sellers',
+      unknown: 'All sellers',
+    };
+    function segLabel(seg) {
+      var kind = Object.prototype.hasOwnProperty.call(KIND_LABELS, seg.seller_kind)
+        ? KIND_LABELS[seg.seller_kind] : seg.seller_kind;
+      var src = Object.prototype.hasOwnProperty.call(SOURCE_LABELS, seg.source)
+        ? SOURCE_LABELS[seg.source] : seg.source;
+      return kind + ' · ' + src;
+    }
 
     function fmtCad(cents) {
       return 'CA$' + Math.round(Number(cents) / 100).toLocaleString('en-US');
@@ -165,7 +178,8 @@
         return;
       }
 
-      if (!(market.sources || []).length) { // defensive: never show an empty frame
+      var segments = market.segments || market.sources || [];
+      if (!segments.length) { // defensive: never show an empty frame
         show(root, false);
         note.textContent = 'Market context for this model arrives with the next update.';
         show(note, true);
@@ -176,7 +190,16 @@
       var dateEl = q('[data-market-date]');
       if (dateEl) dateEl.textContent = market.computed_on ? 'as of ' + market.computed_on : '';
 
-      (market.sources || []).forEach(function (src) {
+      // Primary segment = the dealer's real competitive field (other dealers'
+      // asks); private/unknown segments render as compact context lines below
+      // — never blended into one median (scraper contract 2026-06-12).
+      var primary = null;
+      for (var i = 0; i < segments.length; i++) {
+        if (segments[i].seller_kind === 'dealer' || segments[i].seller_kind === undefined) { primary = segments[i]; break; }
+      }
+      if (!primary) primary = segments[0];
+
+      [primary].forEach(function (src) {
         var buckets = src.buckets || [];
         var byBucket = {};
         buckets.forEach(function (b) { byBucket[b.bucket] = b; });
@@ -185,13 +208,9 @@
         var own = byBucket[market.listing_bucket];
         var pool = (own && own.n_active > 0) ? own : byBucket['all'];
 
-        if ((market.sources || []).length > 1 || src.source !== 'marketplace') {
-          var srcLabel = Object.prototype.hasOwnProperty.call(SOURCE_LABELS, src.source)
-            ? SOURCE_LABELS[src.source] : src.source;
-          content.appendChild(el('div',
-            'font-size:11px;font-weight:600;color:var(--color-ink-strong);margin:10px 0 6px',
-            srcLabel));
-        }
+        content.appendChild(el('div',
+          'font-size:11px;font-weight:600;color:var(--color-ink-strong);margin:10px 0 6px',
+          src.seller_kind ? segLabel(src) : (Object.prototype.hasOwnProperty.call(SOURCE_LABELS, src.source) ? SOURCE_LABELS[src.source] : src.source)));
 
         if (pool && pool.n_active > 0 && pool.p50_cents != null && pool.p50_cents > 0) {
           var diff = (market.price_cents - pool.p50_cents) / pool.p50_cents * 100;
@@ -249,6 +268,30 @@
           content.appendChild(el('p', 'font-size:11px;line-height:16px;margin:4px 0 0;color:var(--color-ink-muted)',
             'Similar cars leave the market in ~' + daysSrc.median_days_listed + ' days (median).'));
         }
+      });
+
+      // Other segments (private / other platforms): one honest line each,
+      // with the spread vs the primary (dealer) median when both exist.
+      var primAll = null;
+      (primary.buckets || []).forEach(function (b) { if (b.bucket === 'all') primAll = b; });
+      segments.forEach(function (seg) {
+        if (seg === primary) return;
+        if (seg.seller_kind === 'unknown' && segments.length > 1) return; // noise once real kinds exist
+        var all = null, ownB = null;
+        (seg.buckets || []).forEach(function (b) {
+          if (b.bucket === 'all') all = b;
+          if (b.bucket === market.listing_bucket) ownB = b;
+        });
+        var b = (ownB && ownB.n_active > 0 && ownB.p50_cents) ? ownB : all;
+        if (!b || !b.n_active || !b.p50_cents) return;
+        var line = segLabel(seg) + ': median ' + fmtCad(b.p50_cents) + ' · ' +
+          b.n_active + ' listed';
+        if (primAll && primAll.p50_cents > 0) {
+          var d = Math.round((b.p50_cents - primAll.p50_cents) / primAll.p50_cents * 100);
+          if (d !== 0) line += ' — ' + Math.abs(d) + '% ' + (d > 0 ? 'above' : 'below') + ' dealer asks';
+        }
+        content.appendChild(el('p',
+          'font-size:12px;line-height:17px;margin:8px 0 0;color:var(--color-ink-muted)', line));
       });
 
       show(root, true);

@@ -30,6 +30,7 @@ interface ViewRow {
   anchor_year: number;
   mileage_bucket: string;
   source: string;
+  seller_kind: string | null; // 'dealer' | 'private' | 'unknown' (contract 2026-06-12)
   n_active: number;
   price_p25: number | null;
   price_p50: number | null;
@@ -69,7 +70,7 @@ async function syncMarketStats(env: Env): Promise<void> {
   // the rows actually received (a project-level max-rows cap can shrink a
   // "full" page); terminate only on an empty page.
   const PAGE = 1000;
-  const ORDER = "city_slug.asc,make_slug.asc,model_slug.asc,anchor_year.asc,mileage_bucket.asc,source.asc";
+  const ORDER = "city_slug.asc,make_slug.asc,model_slug.asc,anchor_year.asc,mileage_bucket.asc,source.asc,seller_kind.asc";
   const rows: ViewRow[] = [];
   for (let offset = 0; ; ) {
     const url = `${MARKET_SUPABASE_URL.replace(/\/$/, "")}/rest/v1/japanauto_market_stats` +
@@ -95,9 +96,11 @@ async function syncMarketStats(env: Env): Promise<void> {
   // The D1 CHECK on mileage_bucket would abort a whole batch on one drifted
   // label — skip-and-log instead, so an upstream rename degrades gracefully.
   const KNOWN_BUCKETS = new Set(["all", "0-100k", "100-200k", "200k+"]);
-  const usable = rows.filter((r) => KNOWN_BUCKETS.has(r.mileage_bucket));
+  const KNOWN_KINDS = new Set(["dealer", "private", "unknown"]);
+  const usable = rows.filter((r) =>
+    KNOWN_BUCKETS.has(r.mileage_bucket) && KNOWN_KINDS.has(r.seller_kind ?? "unknown"));
   if (usable.length < rows.length) {
-    console.log(`market-sync: skipped ${rows.length - usable.length} rows with unknown mileage_bucket`);
+    console.log(`market-sync: skipped ${rows.length - usable.length} rows with unknown bucket/seller_kind`);
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -105,21 +108,21 @@ async function syncMarketStats(env: Env): Promise<void> {
 
   // D1 hard-caps 100 bound parameters per statement (NOT SQLite's 999 — and
   // local miniflare won't enforce it, so only prod would fail; caught in
-  // adversarial review): 7 rows × 14 cols = 98 params. Upsert in batches of
+  // adversarial review): 6 rows × 15 cols = 90 params. Upsert in batches of
   // ≤40 statements, then drop rows the run didn't touch — readers briefly see
   // a fresh/stale row mix instead of an empty table, which is fine for a
   // daily snapshot and avoids one giant batch hitting per-invocation caps.
-  const ROWS_PER_STMT = 7;
+  const ROWS_PER_STMT = 6;
   const STMTS_PER_BATCH = 40;
   const statements: D1PreparedStatement[] = [];
   for (let i = 0; i < usable.length; i += ROWS_PER_STMT) {
     const chunk = usable.slice(i, i + ROWS_PER_STMT);
-    const placeholders = chunk.map(() => "(?,?,?,?,?,?,?,?,?,?,?,?,?,?)").join(",");
+    const placeholders = chunk.map(() => "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").join(",");
     const binds: unknown[] = [];
     for (const r of chunk) {
       binds.push(
         r.city_slug, r.make_slug, r.model_slug, r.anchor_year, r.mileage_bucket,
-        r.source ?? "marketplace",
+        r.source ?? "marketplace", r.seller_kind ?? "unknown",
         r.n_active ?? 0, cents(r.price_p25), cents(r.price_p50), cents(r.price_p75),
         r.n_delisted ?? 0,
         r.median_days_listed == null ? null : Math.round(r.median_days_listed),
@@ -128,7 +131,7 @@ async function syncMarketStats(env: Env): Promise<void> {
     }
     statements.push(env.DB.prepare(`
       INSERT OR REPLACE INTO market_stats (
-        city_slug, make_slug, model_slug, anchor_year, mileage_bucket, source,
+        city_slug, make_slug, model_slug, anchor_year, mileage_bucket, source, seller_kind,
         n_active, price_p25_cents, price_p50_cents, price_p75_cents,
         n_delisted, median_days_listed, computed_on, synced_at
       ) VALUES ${placeholders}
