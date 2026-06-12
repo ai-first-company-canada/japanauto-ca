@@ -53,7 +53,7 @@ export async function dealersPage(
            (SELECT COUNT(*) FROM listings l WHERE l.dealer_id = d.id AND l.status = 'active') AS listings_active,
            (SELECT COUNT(*) FROM listings l WHERE l.dealer_id = d.id) AS listings_total,
            (SELECT COUNT(*) FROM donor_cars dc WHERE dc.dealer_id = d.id) AS donors_total,
-           (SELECT MAX(rt.created_at) FROM refresh_tokens rt WHERE rt.dealer_id = d.id) AS last_login
+           (SELECT MAX(rt.issued_at) FROM refresh_tokens rt WHERE rt.dealer_id = d.id) AS last_login
     FROM dealers d
     ${q ? "WHERE d.email LIKE ?1 ESCAPE '\\' OR d.name LIKE ?1 ESCAPE '\\' OR d.id LIKE ?1 ESCAPE '\\'" : ""}
     ORDER BY d.created_at DESC
