@@ -50,7 +50,18 @@
       <div data-stats-chart
         style="display:flex;align-items:flex-end;gap:2px;height:56px;margin-bottom:16px;border-bottom:1px solid var(--color-divider);padding-bottom:1px"></div>
 
-      <p data-stat-market class="t-body-s ink-muted" style="font-size:12px;margin:0">
+      <div data-market-root style="display:none;border-top:1px solid var(--color-divider);padding-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+          <span class="t-caption" style="font-size:10px;letter-spacing:0.04em;color:var(--color-ink-muted)">MARKET CONTEXT — ONLY YOU SEE THIS</span>
+          <span data-market-date class="t-body-s ink-muted" style="font-size:10px"></span>
+        </div>
+        <div data-market-content></div>
+        <p class="t-body-s ink-muted" style="font-size:10px;line-height:14px;margin:10px 0 0">
+          Asking prices from public listings on other platforms, same model
+          ±1 year in your city. Never shown to buyers.
+        </p>
+      </div>
+      <p data-market-note class="t-body-s ink-muted" style="font-size:12px;margin:0">
         Market context for this model arrives with the next update.
       </p>
     </div>
@@ -101,7 +112,138 @@
       if (s30) s30.textContent = fmtNum(sum) + ' total';
     }
 
+    var SOURCE_LABELS = {
+      marketplace: 'Online marketplaces',
+      autotrader: 'AutoTrader',
+      dealer_sites: 'Dealer websites',
+    };
+
+    function fmtCad(cents) {
+      return 'CA$' + Math.round(Number(cents) / 100).toLocaleString('en-US');
+    }
+
+    function el(tag, css, text) {
+      var node = document.createElement(tag);
+      if (css) node.style.cssText = css;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    // Renders the private market block (Feature 1 step 3). All data lands via
+    // textContent — nothing from the API is ever parsed as HTML.
+    function renderMarket(market) {
+      var root = q('[data-market-root]');
+      var note = q('[data-market-note]');
+      var content = q('[data-market-content]');
+      if (!root || !note || !content) return;
+      content.innerHTML = '';
+
+      // Donor stats carry no market field; listings may carry an unavailable one.
+      if (!market || market.available !== true) {
+        show(root, false);
+        if (!market) { show(note, false); return; }
+        note.textContent = market.reason === 'pro_feature'
+          ? 'Market price context is part of Pro. Upgrade to see how your price compares.'
+          : 'Market context for this model arrives with the next update.';
+        show(note, true);
+        return;
+      }
+
+      if (!(market.sources || []).length) { // defensive: never show an empty frame
+        show(root, false);
+        note.textContent = 'Market context for this model arrives with the next update.';
+        show(note, true);
+        return;
+      }
+
+      show(note, false);
+      var dateEl = q('[data-market-date]');
+      if (dateEl) dateEl.textContent = market.computed_on ? 'as of ' + market.computed_on : '';
+
+      (market.sources || []).forEach(function (src) {
+        var buckets = src.buckets || [];
+        var byBucket = {};
+        buckets.forEach(function (b) { byBucket[b.bucket] = b; });
+        // The comparison row: the listing's own mileage bucket, falling back
+        // to the all-mileage pool when the bucket is empty.
+        var own = byBucket[market.listing_bucket];
+        var pool = (own && own.n_active > 0) ? own : byBucket['all'];
+
+        if ((market.sources || []).length > 1 || src.source !== 'marketplace') {
+          var srcLabel = Object.prototype.hasOwnProperty.call(SOURCE_LABELS, src.source)
+            ? SOURCE_LABELS[src.source] : src.source;
+          content.appendChild(el('div',
+            'font-size:11px;font-weight:600;color:var(--color-ink-strong);margin:10px 0 6px',
+            srcLabel));
+        }
+
+        if (pool && pool.n_active > 0 && pool.p50_cents != null && pool.p50_cents > 0) {
+          var diff = (market.price_cents - pool.p50_cents) / pool.p50_cents * 100;
+          var phrase = Math.abs(diff) < 2 ? 'right at the market median'
+            : Math.round(Math.abs(diff)) + '% ' + (diff > 0 ? 'above' : 'below') + ' the market median';
+          var poolName = (pool === own)
+            ? 'same mileage (' + market.listing_bucket + ')'
+            : 'all mileages';
+          content.appendChild(el('p', 'font-size:13px;line-height:19px;margin:0 0 8px',
+            'Your price ' + fmtCad(market.price_cents) + ' is ' + phrase +
+            ' of ' + fmtCad(pool.p50_cents) + ' (' + poolName + ', ' +
+            pool.n_active + ' active listing' + (pool.n_active === 1 ? '' : 's') + ').'));
+        }
+
+        // Deficit signal — few or no comparable cars on the market right now.
+        // The view emits no row for an empty bucket, so "row absent while the
+        // model has market rows at all" is the common zero-supply shape.
+        if (!own && byBucket['all']) {
+          content.appendChild(el('p',
+            'font-size:12px;line-height:17px;margin:0 0 8px;color:var(--color-ink-strong);font-weight:600',
+            'No similar cars (' + market.listing_bucket + ') listed in your city right now — demand may meet no supply but yours.'));
+        } else if (own && own.n_active === 0) {
+          content.appendChild(el('p',
+            'font-size:12px;line-height:17px;margin:0 0 8px;color:var(--color-ink-strong);font-weight:600',
+            'No similar cars (' + market.listing_bucket + ') listed in your city right now — demand may meet no supply but yours.'));
+        } else if (own && own.n_active > 0 && own.n_active <= 3) {
+          content.appendChild(el('p',
+            'font-size:12px;line-height:17px;margin:0 0 8px;color:var(--color-ink-strong);font-weight:600',
+            'Only ' + own.n_active + ' similar car' + (own.n_active === 1 ? '' : 's') +
+            ' (' + market.listing_bucket + ') on the market in your city — scarce supply.'));
+        }
+
+        // Compact per-bucket table: bucket | active | p25–p75 (median).
+        var grid = el('div', 'display:flex;flex-direction:column;gap:2px;margin-bottom:4px');
+        buckets.forEach(function (b) {
+          if (b.bucket === 'all' && buckets.length > 1) return; // shown via comparison line
+          var isOwn = b.bucket === market.listing_bucket;
+          var row = el('div',
+            'display:flex;justify-content:space-between;gap:8px;font-size:12px;line-height:18px;padding:3px 8px;border-radius:6px' +
+            (isOwn ? ';background:var(--color-bg-subtle);font-weight:600' : ''));
+          row.appendChild(el('span', 'color:var(--color-ink-muted)' + (isOwn ? ';color:var(--color-ink-strong)' : ''),
+            b.bucket + (isOwn ? ' · yours' : '')));
+          var right = (b.n_active > 0 && b.p25_cents != null && b.p75_cents != null)
+            ? fmtCad(b.p25_cents) + '–' + fmtCad(b.p75_cents) + ' · ' + b.n_active + ' active'
+            : (b.n_active > 0 ? b.n_active + ' active · no price data' : 'no active listings');
+          row.appendChild(el('span', 'font-variant-numeric:tabular-nums', right));
+          grid.appendChild(row);
+        });
+        content.appendChild(grid);
+
+        // Liquidity: median days listed (appears after ~a week of cadence).
+        var daysSrc = (own && own.median_days_listed != null) ? own
+          : (byBucket['all'] && byBucket['all'].median_days_listed != null ? byBucket['all'] : null);
+        if (daysSrc) {
+          content.appendChild(el('p', 'font-size:11px;line-height:16px;margin:4px 0 0;color:var(--color-ink-muted)',
+            'Similar cars leave the market in ~' + daysSrc.median_days_listed + ' days (median).'));
+        }
+      });
+
+      show(root, true);
+    }
+
+    // Guards against a stale response landing after the modal was reopened
+    // for another row (open A → close → open B; A resolves last).
+    var openSeq = 0;
+
     window.jcOpenStats = async function (entityType, id, title) {
+      var seq = ++openSeq;
       var apiBase = entityType === 'listing' ? '/api/listings/' : '/api/donors/';
       q('[data-stats-title]').textContent = title || 'Statistics';
       q('[data-stats-sub]').textContent = '';
@@ -114,6 +256,7 @@
         var res = await fetch(apiBase + encodeURIComponent(id) + '/stats');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var d = await res.json();
+        if (seq !== openSeq) return; // a newer open superseded this request
 
         q('[data-stat-views]').textContent = fmtNum(d.totals.views);
         q('[data-stat-contacts]').textContent = fmtNum(d.totals.contacts);
@@ -133,10 +276,13 @@
         q('[data-stats-sub]').textContent = sub;
 
         renderChart(d.series);
+        renderMarket(d.market);
         show(q('[data-stats-loading]'), false);
         show(q('[data-stats-body]'), true);
       } catch (e) {
+        if (seq !== openSeq) return; // stale failure for a superseded open
         show(q('[data-stats-loading]'), false);
+        show(q('[data-stats-body]'), false);
         var err = q('[data-stats-error]');
         err.textContent = 'Failed to load statistics (' + e.message + ').';
         show(err, true);

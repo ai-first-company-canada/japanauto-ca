@@ -2,19 +2,157 @@
 
 interface Env {
   DB: D1Database;
+  // Market-sync secrets (Feature 1 step 3). All three absent → the sync is a
+  // logged no-op and the sweeper keeps working. Set via `wrangler secret put`.
+  MARKET_SUPABASE_URL?: string;       // https://<project>.supabase.co
+  MARKET_SUPABASE_ANON_KEY?: string;  // anon key (PostgREST apikey header)
+  MARKET_SYNC_JWT?: string;           // JWT with {"role":"japanauto_sync"} — sees ONLY the stats view
 }
+
+const MARKET_SYNC_CRON = "45 9 * * *"; // daily 09:45 UTC ≈ 03:45 Calgary, after the scraper's nightly cadence
+
+interface ViewRow {
+  city_slug: string;
+  make_slug: string;
+  model_slug: string;
+  anchor_year: number;
+  mileage_bucket: string;
+  source: string;
+  n_active: number;
+  price_p25: number | null;
+  price_p50: number | null;
+  price_p75: number | null;
+  n_delisted: number;
+  median_days_listed: number | null;
+  computed_on: string;
+}
+
+/**
+ * Pulls the scraper project's japanauto_market_stats view via PostgREST and
+ * replaces the D1 market_stats snapshot in one transactional batch (D1 batch
+ * = implicit transaction, so readers never observe a half-synced table).
+ * Money: the view emits whole CAD dollars; D1 stores cents (app invariant).
+ */
+async function syncMarketStats(env: Env): Promise<void> {
+  const { MARKET_SUPABASE_URL, MARKET_SUPABASE_ANON_KEY, MARKET_SYNC_JWT } = env;
+  if (!MARKET_SUPABASE_URL || !MARKET_SUPABASE_ANON_KEY || !MARKET_SYNC_JWT) {
+    console.log("market-sync: secrets not configured — skipping");
+    return;
+  }
+
+  // PostgREST limit/offset pagination is only deterministic with an explicit
+  // total order — without it Postgres may duplicate/skip rows across pages
+  // (caught in adversarial review). Order over the full target PK; advance by
+  // the rows actually received (a project-level max-rows cap can shrink a
+  // "full" page); terminate only on an empty page.
+  const PAGE = 1000;
+  const ORDER = "city_slug.asc,make_slug.asc,model_slug.asc,anchor_year.asc,mileage_bucket.asc,source.asc";
+  const rows: ViewRow[] = [];
+  for (let offset = 0; ; ) {
+    const url = `${MARKET_SUPABASE_URL.replace(/\/$/, "")}/rest/v1/japanauto_market_stats` +
+      `?select=*&order=${ORDER}&limit=${PAGE}&offset=${offset}`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: MARKET_SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${MARKET_SYNC_JWT}`,
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`market-sync: PostgREST ${res.status} at offset ${offset}: ${(await res.text()).slice(0, 200)}`);
+    }
+    const page = await res.json<ViewRow[]>();
+    if (page.length === 0) break;
+    rows.push(...page);
+    offset += page.length;
+    if (offset > 100_000) throw new Error("market-sync: runaway pagination — aborting");
+  }
+
+  if (rows.length === 0) {
+    // An empty view almost certainly means an upstream problem (role grant,
+    // empty rescrape). Keep yesterday's snapshot rather than blanking the UI.
+    console.log("market-sync: view returned 0 rows — keeping previous snapshot");
+    return;
+  }
+
+  // The D1 CHECK on mileage_bucket would abort a whole batch on one drifted
+  // label — skip-and-log instead, so an upstream rename degrades gracefully.
+  const KNOWN_BUCKETS = new Set(["all", "0-100k", "100-200k", "200k+"]);
+  const usable = rows.filter((r) => KNOWN_BUCKETS.has(r.mileage_bucket));
+  if (usable.length < rows.length) {
+    console.log(`market-sync: skipped ${rows.length - usable.length} rows with unknown mileage_bucket`);
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const cents = (d: number | null) => (d == null ? null : Math.round(d * 100));
+
+  // D1 hard-caps 100 bound parameters per statement (NOT SQLite's 999 — and
+  // local miniflare won't enforce it, so only prod would fail; caught in
+  // adversarial review): 7 rows × 14 cols = 98 params. Upsert in batches of
+  // ≤40 statements, then drop rows the run didn't touch — readers briefly see
+  // a fresh/stale row mix instead of an empty table, which is fine for a
+  // daily snapshot and avoids one giant batch hitting per-invocation caps.
+  const ROWS_PER_STMT = 7;
+  const STMTS_PER_BATCH = 40;
+  const statements: D1PreparedStatement[] = [];
+  for (let i = 0; i < usable.length; i += ROWS_PER_STMT) {
+    const chunk = usable.slice(i, i + ROWS_PER_STMT);
+    const placeholders = chunk.map(() => "(?,?,?,?,?,?,?,?,?,?,?,?,?,?)").join(",");
+    const binds: unknown[] = [];
+    for (const r of chunk) {
+      binds.push(
+        r.city_slug, r.make_slug, r.model_slug, r.anchor_year, r.mileage_bucket,
+        r.source ?? "marketplace",
+        r.n_active ?? 0, cents(r.price_p25), cents(r.price_p50), cents(r.price_p75),
+        r.n_delisted ?? 0,
+        r.median_days_listed == null ? null : Math.round(r.median_days_listed),
+        r.computed_on ?? null, now,
+      );
+    }
+    statements.push(env.DB.prepare(`
+      INSERT OR REPLACE INTO market_stats (
+        city_slug, make_slug, model_slug, anchor_year, mileage_bucket, source,
+        n_active, price_p25_cents, price_p50_cents, price_p75_cents,
+        n_delisted, median_days_listed, computed_on, synced_at
+      ) VALUES ${placeholders}
+    `).bind(...binds));
+  }
+  for (let i = 0; i < statements.length; i += STMTS_PER_BATCH) {
+    await env.DB.batch(statements.slice(i, i + STMTS_PER_BATCH));
+  }
+  const { meta } = await env.DB.prepare(
+    `DELETE FROM market_stats WHERE synced_at < ?`,
+  ).bind(now).run();
+  console.log(
+    `market-sync: upserted ${usable.length} rows (${statements.length} statements), removed ${meta.changes} stale`,
+  );
+}
+
+async function sweepExpired(env: Env, cron: string): Promise<void> {
+  const { meta } = await env.DB.prepare(
+    `UPDATE listings
+        SET status = 'expired', updated_at = unixepoch()
+      WHERE status = 'active'
+        AND expires_at IS NOT NULL
+        AND expires_at <= unixepoch()`,
+  ).run();
+  console.log(
+    `expire-sweeper: ${meta.changes} listing(s) marked expired (cron "${cron}")`,
+  );
+}
+
+const SWEEP_CRON = "0 */6 * * *";
 
 export default {
   async scheduled(controller, env, _ctx) {
-    const { meta } = await env.DB.prepare(
-      `UPDATE listings
-          SET status = 'expired', updated_at = unixepoch()
-        WHERE status = 'active'
-          AND expires_at IS NOT NULL
-          AND expires_at <= unixepoch()`,
-    ).run();
-    console.log(
-      `expire-sweeper: ${meta.changes} listing(s) marked expired (cron "${controller.cron}")`,
-    );
+    // Exact-match dispatch both ways; an unmatched cron (e.g. a trigger string
+    // reformatted in the dashboard) fails loudly instead of silently running
+    // the wrong job.
+    if (controller.cron === MARKET_SYNC_CRON) {
+      await syncMarketStats(env);
+    } else if (controller.cron === SWEEP_CRON) {
+      await sweepExpired(env, controller.cron);
+    } else {
+      throw new Error(`unknown cron "${controller.cron}" — update the dispatch in src/index.ts`);
+    }
   },
 } satisfies ExportedHandler<Env>;

@@ -1,9 +1,15 @@
-# japanauto-expire-sweeper — cron Worker that retires TTL-expired listings.
+# japanauto-expire-sweeper — the project's cron Worker (the name is historic;
+# it now runs every scheduled job, dispatched by cron expression in src/index.ts):
 #
-# Second half of audit #8: public reads already filter
-# (expires_at IS NULL OR expires_at > unixepoch), but rows past their TTL
-# stayed status='active' forever — dealer dashboards and analytics counted
-# them as live. This Worker flips them to 'expired' every 6 hours.
+#   "0 */6 * * *"  expire sweep — flips TTL-expired listings to 'expired'
+#                  (second half of audit #8; public reads already filter).
+#   "45 9 * * *"   market-sync — pulls the scraper project's
+#                  japanauto_market_stats Supabase view into D1 market_stats
+#                  (Feature 1 step 3). No-op until the three MARKET_* secrets
+#                  are set:
+#                    npx wrangler secret put MARKET_SUPABASE_URL
+#                    npx wrangler secret put MARKET_SUPABASE_ANON_KEY
+#                    npx wrangler secret put MARKET_SYNC_JWT
 #
 # Pages Functions cannot run scheduled() handlers, hence a separate Worker.
 # NOT deployed by the Pages `npm run deploy` — deploy separately:
@@ -16,7 +22,7 @@ compatibility_date = "2026-06-01"
 workers_dev = false
 
 [triggers]
-crons = ["0 */6 * * *"]
+crons = ["0 */6 * * *", "45 9 * * *"]
 
 # Make scheduled-run logs visible in the dashboard (Workers → Logs).
 [observability]
