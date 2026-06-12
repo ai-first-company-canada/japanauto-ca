@@ -101,7 +101,10 @@ function buildCsp(nonce?: string): string {
     `script-src 'self' ${nonce ? `'nonce-${nonce}' ` : ""}${CSP_SCRIPT_EXTRA} https://js.stripe.com; ` +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
-    "connect-src 'self' https://api.stripe.com; " +
+    // upload.imagedelivery.net: the dealer cabinet POSTs photos directly to
+    // Cloudflare Images (direct creator upload) — without it the browser
+    // kills the upload with "Failed to fetch" (caught in browser E2E 2026-06-12).
+    "connect-src 'self' https://api.stripe.com https://upload.imagedelivery.net; " +
     "frame-src https://js.stripe.com https://hooks.stripe.com; " +
     "object-src 'none'; base-uri 'self'; form-action 'self'; " +
     "frame-ancestors 'self';"
