@@ -60,6 +60,8 @@ export interface Env {
   ANTHROPIC_API_KEY?: string;
   /** Bearer token for the external content factory pulling /api/social/jobs (Feature 3). Absent = factory endpoints return 503. */
   SOCIAL_FACTORY_TOKEN?: string;
+  /** Access key for the Meta vehicle-catalog feed /feeds/meta-vehicles.csv (decision 0015). Absent = feed returns 503. */
+  META_FEED_KEY?: string;
   /** Override the improver model (var, not secret). Defaults to claude-haiku-4-5 in the handler. */
   AI_IMPROVER_MODEL?: string;
 }

@@ -52,6 +52,7 @@ export interface Entitlements {
   maxActiveListings: number;   // Number.POSITIVE_INFINITY for Pro
   marketAnalytics: boolean;
   socialBoost: boolean;
+  fbPromotion: boolean;        // listing inclusion in the Meta catalog feed (decision 0015)
   textImprover: boolean;       // both tiers — we want the content
   onTrial: boolean;            // Pro via trial, not a paid plan
   trialDaysLeft: number;       // 0 when not on trial
@@ -65,6 +66,7 @@ export function getEntitlements(d: BillingFields, nowSec = Math.floor(Date.now()
     maxActiveListings: tier === "pro" ? Number.POSITIVE_INFINITY : LIMITS.FREE_MAX_ACTIVE_LISTINGS,
     marketAnalytics: tier === "pro",
     socialBoost: tier === "pro",
+    fbPromotion: tier === "pro",
     textImprover: true,
     onTrial: trial,
     trialDaysLeft: trial ? Math.max(1, Math.ceil((d.trial_ends_at! - nowSec) / 86400)) : 0,
