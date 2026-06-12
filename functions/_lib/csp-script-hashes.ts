@@ -5,7 +5,6 @@
  * without 'unsafe-inline' (audit #18). Regenerated on every `npm run build`.
  */
 export const SCRIPT_HASHES: readonly string[] = [
-  'sha256-+F4OStYZ/8z+EVf7GeSiOcyCV6TzgVmy/X5t7VO4yFk=',
   'sha256-+MpmbNqhVG2jZtQ7ftYNBXqCSWKqtfpVV+d5lW1gcYM=',
   'sha256-+j76kFy8YKDcpIdD725GIwg7hMoy50FPTHH5fwUFyZE=',
   'sha256-03lLsrCw++9lJUll8e1h/IkVYfxzwBW9u+scgN0oPxs=',
@@ -13,6 +12,7 @@ export const SCRIPT_HASHES: readonly string[] = [
   'sha256-1EPknqCJLthP47TyYnLWkr7WgSDKXWe6QpQjFtSVNtY=',
   'sha256-1fufWevoRjgHOx9bB1SrrywJxkDxpx0/UfkIkSgtMrU=',
   'sha256-4bLF2xA/ZUJYWmkbEZvBymQ53uPogmKqygTM2AhXQ8I=',
+  'sha256-7sFbu4VqXBLyJ0PBUme3BFm3XHNxDvr9GOTjrkLMmtw=',
   'sha256-7sQ4Dumq0QpsW3ohac+SbwIcA87AT3hFQllFDqkJN7k=',
   'sha256-I+9bRy3pRBrWDW9JJqK2M2M5aiUn3/r2ZM14u6PQi74=',
   'sha256-TrsoRsJT9MsLHHBBkfWCrs7+z5XGwvz7bfKtD1Cx7eQ=',

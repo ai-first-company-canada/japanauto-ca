@@ -58,6 +58,8 @@ export interface Env {
   CLOUDFLARE_IMAGES_API_TOKEN: string;
   /** Anthropic API key for the listing text improver (Feature 2). Absent = endpoint returns 503 not_configured. */
   ANTHROPIC_API_KEY?: string;
+  /** Bearer token for the external content factory pulling /api/social/jobs (Feature 3). Absent = factory endpoints return 503. */
+  SOCIAL_FACTORY_TOKEN?: string;
   /** Override the improver model (var, not secret). Defaults to claude-haiku-4-5 in the handler. */
   AI_IMPROVER_MODEL?: string;
 }

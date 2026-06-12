@@ -923,6 +923,23 @@ export const improveDescriptionInputSchema = z.object({
 export type ImproveDescriptionInput = z.infer<typeof improveDescriptionInputSchema>;
 
 // ============================================================================
+// SOCIAL BOOST (Feature 3 — /api/social/jobs, migration 0015)
+// ============================================================================
+
+export const SOCIAL_JOB_STATUSES = ["requested", "in_production", "published", "cancelled"] as const;
+export type SocialJobStatus = (typeof SOCIAL_JOB_STATUSES)[number];
+
+/** Body of PATCH /api/social/jobs/:id (content factory, service token). */
+export const socialJobPatchSchema = z.object({
+  status: z.enum(["in_production", "published", "cancelled"]),
+  result_links: z.array(httpUrlSchema).min(1).max(20).optional(),
+}).refine(
+  (d) => d.status !== "published" || (d.result_links?.length ?? 0) > 0,
+  { message: "status='published' requires result_links" },
+);
+export type SocialJobPatch = z.infer<typeof socialJobPatchSchema>;
+
+// ============================================================================
 // VIN DECODE (Tier-1 enrichment — POST /api/vin/decode, migration 0014)
 // ============================================================================
 

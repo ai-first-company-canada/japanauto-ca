@@ -37,3 +37,4 @@ _worker.bundle
 
 # obsidian source-of-truth symlink (cloud-design mockups, ADRs, etc.)
 _archives
+.social-factory-token.local

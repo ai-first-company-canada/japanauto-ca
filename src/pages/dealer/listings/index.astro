@@ -43,6 +43,13 @@ import StatsModal from '../../../components/sections/StatsModal.astro';
     (function () {
       var allListings = [];
       var activeStatus = 'active';
+      var socialJobs = {}; // listing_id -> latest job (Feature 3)
+
+      var CONSENT_TEXT =
+        'Promote this listing on japanauto.ca social channels?\n\n' +
+        'You allow japanauto.ca to use this listing’s photos and details to ' +
+        'create promotional posts (Instagram, TikTok, etc.). Published links ' +
+        'will appear here. Promotion is free during the launch period.';
 
       function escapeHtml(s) {
         return String(s)
@@ -70,6 +77,21 @@ import StatsModal from '../../../components/sections/StatsModal.astro';
           var dollars = (Number(l.price || 0) / 100).toLocaleString('en-US');
           var km = Number(l.mileage || 0).toLocaleString('en-US');
           var id = encodeURIComponent(l.id);
+          var job = socialJobs[l.id];
+          var socialLine = '';
+          if (job && job.status === 'published' && job.result_links.length) {
+            socialLine = '<div class="t-body-s" style="font-size:12px;line-height:16px;margin-top:2px;color:var(--color-ink-muted)">Social: published — ' +
+              job.result_links.map(function (u, i) {
+                return '<a href="' + escapeHtml(u) + '" target="_blank" rel="noreferrer" style="color:var(--color-ink-strong)">post ' + (i + 1) + '</a>';
+              }).join(', ') + '</div>';
+          } else if (job && (job.status === 'requested' || job.status === 'in_production')) {
+            socialLine = '<div class="t-body-s ink-muted" style="font-size:12px;line-height:16px;margin-top:2px">Social: ' +
+              (job.status === 'requested' ? 'queued for promotion' : 'post in production') + '</div>';
+          }
+          var promoteBtn = (l.status === 'active' && (!job || job.status === 'cancelled'))
+            ? '<button type="button" class="btn btn-sm" data-promote-id="' + escapeHtml(l.id) +
+              '" style="padding:0 12px;height:36px;font-size:12px;background:#fff;color:var(--color-ink-strong);border:1px solid var(--color-divider)">Promote</button>'
+            : '';
           return (
             '<div class="card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px">' +
             '<div style="flex:1;min-width:0">' +
@@ -79,8 +101,10 @@ import StatsModal from '../../../components/sections/StatsModal.astro';
             'CA$<span class="num">' + dollars + '</span> · ' +
             '<span class="num">' + km + '</span> km' +
             '</div>' +
+            socialLine +
             '</div>' +
             '<div style="display:flex;gap:6px;flex-shrink:0">' +
+            promoteBtn +
             '<button type="button" class="btn btn-sm" data-stats-id="' + escapeHtml(l.id) +
             '" data-stats-title="' + escapeHtml(l.year + ' ' + make + ' ' + model + trim) +
             '" style="padding:0 12px;height:36px;font-size:12px;background:#fff;color:var(--color-ink-strong);border:1px solid var(--color-divider)">Stats</button>' +
@@ -97,6 +121,35 @@ import StatsModal from '../../../components/sections/StatsModal.astro';
           btn.addEventListener('click', function () {
             window.jcOpenStats('listing', btn.getAttribute('data-stats-id'),
               btn.getAttribute('data-stats-title'));
+          });
+        });
+
+        container.querySelectorAll('[data-promote-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var id = btn.getAttribute('data-promote-id');
+            if (!confirm(CONSENT_TEXT)) return;
+            btn.disabled = true;
+            try {
+              var res = await fetch('/api/listings/' + encodeURIComponent(id) + '/boost-social', { method: 'POST' });
+              if (res.status === 403) {
+                var err = await res.json().catch(function () { return {}; });
+                alert(err.message || 'Social promotion is a Pro feature.');
+                btn.disabled = false;
+                return;
+              }
+              if (res.status === 409) {
+                alert('This listing is already queued for promotion.');
+                btn.disabled = false;
+                return;
+              }
+              if (!res.ok) { alert('Failed to queue promotion — try again.'); btn.disabled = false; return; }
+              var data = await res.json();
+              socialJobs[id] = { status: 'requested', result_links: [], requested_at: data.job.requested_at };
+              render();
+            } catch (_) {
+              alert('Network error — try again.');
+              btn.disabled = false;
+            }
           });
         });
 
@@ -160,6 +213,16 @@ import StatsModal from '../../../components/sections/StatsModal.astro';
           if (!res.ok) throw new Error('listings fetch failed: ' + res.status);
           var data = await res.json();
           allListings = data.listings || data.items || [];
+          // Social-boost statuses (Feature 3) — jobs come newest-first, so the
+          // first one seen per listing is the latest. Failure is non-fatal.
+          try {
+            var jr = await fetch('/api/social/jobs/mine');
+            if (jr.ok) {
+              (await jr.json()).jobs.forEach(function (j) {
+                if (!socialJobs[j.listing_id]) socialJobs[j.listing_id] = j;
+              });
+            }
+          } catch (_) { /* render without social statuses */ }
           updateCounts();
           render();
         } catch (e) {

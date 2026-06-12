@@ -151,6 +151,11 @@ export const RATE_LIMITS = {
     limit: 30,
     windowSeconds: 3600,    // 30 decodes/hour per dealer — cache absorbs repeats; keeps vPIC polite
   } as RateLimitConfig,
+  SOCIAL_BOOST_PER_DEALER: {
+    bucket: "social-boost-dealer",
+    limit: 10,
+    windowSeconds: 86400,   // 10 boost requests/day per dealer — the factory's capacity is finite
+  } as RateLimitConfig,
   REFRESH_PER_IP: {
     bucket: "refresh-ip",
     limit: 60,
