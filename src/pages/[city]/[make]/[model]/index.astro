@@ -58,7 +58,11 @@ const modelFaqs = [
 ];
 
 const title = `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
-const description = `${catalog.totalCount} used ${brand.name} ${modelInfo.name} listings in ${cityInfo.name}. AMVIC-verified dealers, VIN-checked vehicles, prices in CA$.`;
+// Real counts only — zero inventory gets honest "onboarding" copy, never an
+// invented number (LAUNCH-CHECKLIST §1).
+const description = catalog.totalCount > 0
+  ? `${catalog.totalCount} used ${brand.name} ${modelInfo.name} listing${catalog.totalCount === 1 ? '' : 's'} in ${cityInfo.name}. AMVIC-verified dealers, VIN-checked vehicles, prices in CA$.`
+  : `Used ${brand.name} ${modelInfo.name} for sale in ${cityInfo.name} from AMVIC-licensed dealers — VIN-checked listings appear here as local dealers onboard.`;
 const canonical = `https://japanauto.ca/${city}/${make}/${model}/`;
 
 const allListings = [...catalog.boosted, ...catalog.organic];
@@ -72,11 +76,9 @@ const schemaLD = [
       { '@type': 'ListItem', position: 4, name: modelInfo.name, item: canonical },
     ],
   },
-  // Vehicle/Offer markup is only honest when listings are real D1 rows whose
-  // URLs resolve. Emitting it for the demo stub = structured data for
-  // nonexistent offers (Google manual-action territory), so it is gated until
-  // getCatalogForModelCity() is wired to the database.
-  ...(catalog.isDemo ? [] : [{
+  // Vehicle/Offer markup only when real rows exist — catalog data is live D1
+  // (catalog-live.json) since 2026-06-12; an empty combo emits no ItemList.
+  ...(allListings.length === 0 ? [] : [{
     '@type': 'ItemList',
     name: `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}`,
     numberOfItems: catalog.totalCount,
@@ -85,11 +87,11 @@ const schemaLD = [
       position: i + 1,
       item: {
         '@type': 'Vehicle',
-        name: `${l.year} ${l.make} ${l.model} ${l.trim}`,
+        name: `${l.year} ${l.make} ${l.model} ${l.trim}`.trim(),
         vehicleModelDate: String(l.year),
         mileageFromOdometer: { '@type': 'QuantitativeValue', value: l.km, unitCode: 'KMT' },
-        vehicleTransmission: l.transmission,
-        driveWheelConfiguration: l.drive,
+        ...(l.transmission ? { vehicleTransmission: l.transmission } : {}),
+        ...(l.drive ? { driveWheelConfiguration: l.drive } : {}),
         url: `https://japanauto.ca/used-cars/listing/${l.slug}/`,
         offers: {
           '@type': 'Offer',
@@ -124,7 +126,9 @@ const schemaLD = [
   },
 ];
 
-const subtitleHtml = `<span class="num">${catalog.totalCount}</span> listings from <span class="num">${catalog.dealerCount}</span> dealers · Updated today`;
+const subtitleHtml = catalog.totalCount > 0
+  ? `<span class="num">${catalog.totalCount}</span> listing${catalog.totalCount === 1 ? '' : 's'} from <span class="num">${catalog.dealerCount}</span> dealer${catalog.dealerCount === 1 ? '' : 's'} · Updated with every listing`
+  : `Local dealers are onboarding — live listings appear here first`;
 const visibleCount = catalog.boosted.length + catalog.organic.length;
 ---
 <BaseLayout
@@ -156,24 +160,14 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
 
   <FilterPillBar />
 
-  <p
-    id="catalog-counter"
-    class="t-body-s ink-muted"
-    style="padding:12px 16px 0;font-size:12px"
-  >
-    Showing <span class="num">{visibleCount}</span> of <span class="num">{catalog.totalCount}</span> listings
-  </p>
-
-  {catalog.isDemo && (
-    <div
-      id="catalog-preview-banner"
-      data-demo-content="true"
-      class="t-body-s"
-      style="margin:8px 16px 0;padding:10px 14px;border-radius:8px;background:var(--color-bg-subtle);border:1px solid var(--color-divider);font-size:13px;line-height:19px;color:var(--color-ink-muted)"
+  {visibleCount > 0 && (
+    <p
+      id="catalog-counter"
+      class="t-body-s ink-muted"
+      style="padding:12px 16px 0;font-size:12px"
     >
-      Sample preview — live listings open as {cityInfo.name} dealers onboard.
-      <a href="/dealer/signup/" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
-    </div>
+      Showing <span class="num">{visibleCount}</span> of <span class="num">{catalog.totalCount}</span> listings
+    </p>
   )}
 
   <CatalogList
@@ -181,6 +175,7 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
     boosted={catalog.boosted}
     organic={catalog.organic}
     citySlug={city!}
+    emptyContext={{ modelLabel: `${brand.name} ${modelInfo.name}`, cityName: cityInfo.name, brandSlug: make!, brandName: brand.name }}
   />
 
   <CatalogPagination initialShown={10} />

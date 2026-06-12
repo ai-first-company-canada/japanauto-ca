@@ -10,7 +10,8 @@ import CityDirectoryGrid from '../../../../components/sections/CityDirectoryGrid
 import AboutBrandSection from '../../../../components/sections/AboutBrandSection.astro';
 import FaqSection from '../../../../components/sections/FaqSection.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
-import { MODELS_BY_BRAND, CITY_FACTORS } from '../../../../data/models-stubs';
+import { MODELS_BY_BRAND } from '../../../../data/models-stubs';
+import { liveCounts } from '../../../../data/live-counts';
 
 export function getStaticPaths() {
   const paths: Array<{ params: { make: string; model: string } }> = [];
@@ -26,40 +27,41 @@ const { make, model } = Astro.params;
 const brand = BRAND_CONTENT[make!]!;
 const modelInfo = MODELS_BY_BRAND[make!]!.find((m) => m.slug === model)!;
 
-const cityCards = TIER_1_CITIES.map((c) => {
-  const factor = CITY_FACTORS[c.slug] ?? 0.5;
-  return {
-    slug: c.slug,
-    name: c.name,
-    province: c.province,
-    count: Math.max(2, Math.round(modelInfo.baseCount * factor)),
-  };
-});
+const cityCards = TIER_1_CITIES.map((c) => ({
+  slug: c.slug,
+  name: c.name,
+  province: c.province,
+  count: liveCounts.cityModel(c.slug, make!, model!),
+}));
 
-const totalListings = cityCards.reduce((s, c) => s + c.count, 0);
+const totalListings = liveCounts.brandModel(make!, model!);
+const citiesLive = cityCards.filter((c) => c.count > 0);
+const citiesOnboarding = cityCards.filter((c) => c.count === 0);
 
 const title = `Used ${brand.name} ${modelInfo.name} across Canada — japanauto.ca`;
-const description = `Used ${brand.name} ${modelInfo.name} listings in ${TIER_1_CITIES.length} major Canadian cities. ${totalListings} total listings. AMVIC-verified, VIN-checked.`;
+const description = totalListings > 0
+  ? `Used ${brand.name} ${modelInfo.name} for sale across Canada — ${totalListings} live listing${totalListings === 1 ? '' : 's'} from AMVIC-licensed, VIN-checked local dealers.`
+  : `Used ${brand.name} ${modelInfo.name} across Canada — live listings from AMVIC-licensed dealers, added as local sellers onboard. Every listing is a real car.`;
 const canonical = `https://japanauto.ca/used-cars/${make}/${model}/`;
 
 const aboutTitle = `About the ${brand.name} ${modelInfo.name}`;
 const aboutParagraphs = [
-  `The ${brand.name} ${modelInfo.name} is one of ${brand.name}'s most-listed models on japanauto.ca. Buyers across Canada filter by year, mileage, and trim to compare listings against city-local pricing.`,
-  `Used ${modelInfo.name} listings cover the rolling 10-year window. Pricing varies by city — Toronto and Vancouver markets typically run ~5-10% above smaller-CMA averages due to demand and AMVIC dealer density.`,
+  `japanauto.ca tracks used ${brand.name} ${modelInfo.name} listings from licensed Canadian dealers. Every listing is a real car — buyers compare by year, mileage, and trim against city-local pricing.`,
+  `Used ${modelInfo.name} listings cover the site's rolling 10-year eligibility window. Inventory is live and growing as AMVIC-licensed dealers onboard — pick a city below to browse local availability.`,
 ];
 
 const modelFaqs = [
   {
     q: `Is the ${brand.name} ${modelInfo.name} a good used buy?`,
-    a: `${brand.name} consistently leads its segment for resale value and long-term reliability. The ${modelInfo.name} is one of the more popular trims among Canadian used buyers — supply tends to be solid in larger CMAs.`,
+    a: `${brand.name} consistently leads its segment for resale value and long-term reliability. Inventory is live and growing as AMVIC-licensed dealers onboard — every ${modelInfo.name} listing is a real car from a licensed local seller.`,
   },
   {
     q: `Which Canadian city has the most used ${brand.name} ${modelInfo.name}?`,
-    a: `Toronto leads volume followed by Montreal and Vancouver. Smaller CMAs (Edmonton, Ottawa) have lower volume but often more competitive pricing per km.`,
+    a: `That shifts as dealers onboard. Each city page below shows live ${modelInfo.name} availability for that market — every listing comes from a licensed local seller.`,
   },
   {
     q: `What's the average price for a used ${brand.name} ${modelInfo.name}?`,
-    a: `Pricing depends on year, mileage, trim, and city. Pick a city below to see live listing ranges. Phase 2 will surface median price per generation.`,
+    a: `Pricing depends on year, mileage, trim, and city. Pick a city below to see real asking prices from licensed dealers as live listings arrive.`,
   },
 ];
 
@@ -92,7 +94,9 @@ const schemaLD = [
   },
 ];
 
-const subtitleHtml = `<span class="num">${totalListings}</span> ${modelInfo.name} listings across <span class="num">${TIER_1_CITIES.length}</span> Canadian cities · Updated today`;
+const subtitleHtml = totalListings > 0
+  ? `<span class="num">${totalListings}</span> ${modelInfo.name} listing${totalListings === 1 ? '' : 's'} across <span class="num">${citiesLive.length}</span> Canadian ${citiesLive.length === 1 ? 'city' : 'cities'} · Updated today`
+  : `Live ${modelInfo.name} listings appear here as local dealers onboard`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" />
@@ -113,11 +117,41 @@ const subtitleHtml = `<span class="num">${totalListings}</span> ${modelInfo.name
     subtitle={subtitleHtml}
   />
 
-  <CityDirectoryGrid
-    brandSlug={`${make}/${model}`}
-    brandName={`${brand.name} ${modelInfo.name}`}
-    cities={cityCards}
-  />
+  {citiesLive.length > 0 && (
+    <CityDirectoryGrid
+      brandSlug={`${make}/${model}`}
+      brandName={`${brand.name} ${modelInfo.name}`}
+      cities={citiesLive}
+    />
+  )}
+
+  {citiesOnboarding.length > 0 && (
+    <section style="padding:0 16px 32px">
+      <h2 class="sr-only">{`${brand.name} ${modelInfo.name} — cities where dealers are onboarding`}</h2>
+      {citiesLive.length === 0 && (
+        <div class="card" style="padding:20px;margin-bottom:12px;text-align:left">
+          <h3 class="t-h-m" style="font-size:17px">New inventory is arriving</h3>
+          <p class="t-caption" style="margin-top:8px">Local dealers are onboarding — live listings appear here first.</p>
+          <a href="/dealer/signup/" class="t-caption" style="display:inline-block;margin-top:12px">List your inventory →</a>
+        </div>
+      )}
+      <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+        {citiesOnboarding.map((c) => (
+          <a
+            href={`/${c.slug}/${make}/${model}/`}
+            class="card"
+            style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left"
+          >
+            <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;gap:8px">
+              <span class="t-caption" style="font-size:10px">Dealers onboarding</span>
+              <span class="t-caption t-mono" style="font-size:10px">{c.province}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
 
   <AboutBrandSection title={aboutTitle} paragraphs={aboutParagraphs} />
 

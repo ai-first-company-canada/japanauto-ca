@@ -1,13 +1,19 @@
 /**
- * src/data/catalog-stubs.ts — Phase 1.3 placeholder catalog data.
+ * src/data/catalog-stubs.ts — LIVE catalog data (the name is historic).
  *
- * Pseudo-random listing generator per (make, model, city) combo.
- * Featured slot is sparse: only on 5 hot combos. Boosted count scales with
- * city size. Phase 2 replaces with D1 query (cached in KV per page key).
+ * Phase-1.3 shipped a pseudo-random demo generator here; the LAUNCH-CHECKLIST
+ * §1 replacement (2026-06-12) wired it to real inventory: listings come from
+ * src/data/catalog-live.json, a build-time snapshot of prod D1 produced by
+ * scripts/export-catalog-data.mjs (refreshed on every `npm run predeploy`).
+ *
+ * Honesty rules: nothing here is invented — a combo with no live rows renders
+ * an empty state, never sample cars. The featured slot stays a house ad
+ * (real brand site, ADR-0013). Listing detail pages are Pages Functions and
+ * always live; only this grid refreshes per-deploy.
  */
 
-import { CITY_FACTORS } from './models-stubs';
 import { BRAND_CONTENT } from './brand-content';
+import catalogLive from './catalog-live.json';
 
 export type ListingVariant = 'sedan' | 'suv' | 'hatch' | 'wagon';
 export type ListingTone =
@@ -21,9 +27,9 @@ export interface CatalogListing {
   model: string;
   trim: string;
   km: number;
-  drive: 'AWD' | 'FWD' | 'RWD';
-  transmission: 'CVT' | 'Auto' | 'Manual';
-  price: number;
+  drive: string;          // 'AWD' | 'FWD' | 'RWD' | '' when the dealer left it out
+  transmission: string;   // 'Auto' | 'CVT' | 'Manual' | 'DCT' | ''
+  price: number;          // whole CAD dollars (D1 stores cents)
   listed: string;
   dealer: string;
   badge?: string;
@@ -32,12 +38,6 @@ export interface CatalogListing {
   tone: ListingTone;
 }
 
-/**
- * House ad for the featured slot (ADR-0013): every city/make/model page leads
- * with an honest new-vehicle block linking to the brand's official Canadian
- * site. Paid exclusive slots (featured_slots rows) replace this when the D1
- * catalog wiring lands — this stub never fabricates dealers or MSRPs.
- */
 export interface FeaturedData {
   kind: 'house';
   make: string;
@@ -54,18 +54,29 @@ export interface CatalogPageData {
   totalCount: number;
   dealerCount: number;
   remaining: number;
-  /**
-   * True while listings come from this pseudo-random stub. Gates Vehicle/Offer
-   * JSON-LD and the "Sample preview" banner in the city-model template, and
-   * stamps `data-demo-content` into the HTML so the LAUNCH=1 seo-audit gate
-   * can refuse to ship fabricated inventory. Must become false (or derived
-   * per-row) when this is replaced with the real D1 query.
-   */
-  isDemo: boolean;
+  /** Always false since the live-data wiring — kept for template guards. */
+  isDemo: false;
 }
 
-const FEATURED_TONES: ReadonlyArray<FeaturedData['tone']> =
-  ['pearl', 'midnight', 'crimson', 'silver', 'graphite'];
+interface LiveRow {
+  slug: string;
+  year: number;
+  trim: string | null;
+  mileage: number;
+  price: number;            // cents
+  drivetrain: string | null;
+  transmission: string | null;
+  city: string;             // city slug (listings.city stores slugs)
+  created_at: number;
+  color_exterior: string | null;
+  is_boosted: number;
+  make_slug: string;
+  model_slug: string;
+  model_name: string;
+  dealer_name: string;
+}
+
+export const LIVE_LISTINGS: LiveRow[] = (catalogLive as { listings: LiveRow[] }).listings;
 
 const MODEL_VARIANTS: Record<string, { variant: ListingVariant; tones: ListingTone[] }> = {
   'camry':         { variant: 'sedan', tones: ['pearl','silver','midnight','graphite'] },
@@ -120,24 +131,25 @@ const MODEL_VARIANTS: Record<string, { variant: ListingVariant; tones: ListingTo
   'wrx':           { variant: 'sedan', tones: ['silver','crimson','midnight','pearl'] },
 };
 
-const TRIMS_BY_BRAND: Record<string, string[]> = {
-  toyota:     ['LE', 'XLE', 'SE', 'XSE', 'Limited'],
-  honda:      ['LX', 'EX', 'EX-L', 'Touring', 'Sport'],
-  nissan:     ['S', 'SV', 'SL', 'SR', 'Platinum'],
-  mazda:      ['GX', 'GS', 'GT', 'Signature'],
-  subaru:     ['Convenience', 'Touring', 'Sport', 'Limited', 'Premier'],
-  lexus:      ['Premium', 'Luxury', 'F-Sport', 'Executive'],
-  acura:      ['Tech', 'A-Spec', 'Platinum Elite'],
-  infiniti:   ['Pure', 'Luxe', 'Essential', 'Sensory'],
-  mitsubishi: ['ES', 'SE', 'GT', 'SEL'],
-};
+const FEATURED_TONES: ReadonlyArray<FeaturedData['tone']> =
+  ['pearl', 'midnight', 'crimson', 'silver', 'graphite'];
 
-const DEALERS = [
-  'Maple Auto Group', 'North Star Motors', 'Cypress Imports',
-  'Eastside Pre-Owned', 'Summit Japanese Auto', 'Westview Cars',
-  'Granite Motors', 'Riverbend Auto', 'Pacific Heights Auto',
-  'Crescent Imports', 'Northgate Pre-Owned', 'Highland Motors',
+/** Real exterior color → illustration tone; falls back to the model palette. */
+const TONE_BY_COLOR: Array<[RegExp, ListingTone]> = [
+  [/white|pearl|ivory/i, 'pearl'],
+  [/black|midnight/i, 'midnight'],
+  [/red|crimson|ruby|burgundy/i, 'crimson'],
+  [/silver|gr[ae]y/i, 'silver'],
+  [/charcoal|graphite|gunmetal/i, 'graphite'],
+  [/beige|tan|sand|gold|champagne/i, 'sand'],
+  [/green|emerald/i, 'forest'],
+  [/brown|bronze|copper/i, 'bronze'],
 ];
+
+const DRIVE_LABEL: Record<string, string> = { fwd: 'FWD', rwd: 'RWD', awd: 'AWD', '4wd': '4WD' };
+const TRANSMISSION_LABEL: Record<string, string> = {
+  automatic: 'Auto', cvt: 'CVT', manual: 'Manual', dct: 'DCT',
+};
 
 function pseudoRandom(seed: string, max: number): number {
   let h = 0;
@@ -148,58 +160,63 @@ function pseudoRandom(seed: string, max: number): number {
   return Math.abs(h) % max;
 }
 
-function generateListing(
-  seed: string,
-  idx: number,
-  make: string,
-  model: string,
-  modelName: string,
-  currentYear: number,
-  citySlug: string,
-): CatalogListing {
-  const yearOffset = pseudoRandom(`${seed}-${idx}-year`, 8);
-  const year = currentYear - yearOffset;
-  const kmBase = (yearOffset + 1) * 12000 + pseudoRandom(`${seed}-${idx}-km`, 25000);
-  const km = Math.round(kmBase / 100) * 100;
-  const trims = TRIMS_BY_BRAND[make] ?? ['Base'];
-  const trim = trims[pseudoRandom(`${seed}-${idx}-trim`, trims.length)]!;
-  const variants = MODEL_VARIANTS[model] ?? {
+function listedLabel(createdAt: number): string {
+  const days = Math.max(0, Math.floor((Date.now() / 1000 - createdAt) / 86400));
+  if (days === 0) return 'Listed today';
+  if (days === 1) return 'Listed yesterday';
+  return `Listed ${days} days ago`;
+}
+
+function toCatalogListing(r: LiveRow, makeName: string): CatalogListing {
+  const mv = MODEL_VARIANTS[r.model_slug] ?? {
     variant: 'sedan' as ListingVariant,
     tones: ['silver', 'pearl', 'midnight'] as ListingTone[],
   };
-  const tone = variants.tones[pseudoRandom(`${seed}-${idx}-tone`, variants.tones.length)]!;
-  const transmission: 'CVT' | 'Auto' | 'Manual' =
-    pseudoRandom(`${seed}-${idx}-trans`, 10) > 6 ? 'Auto' : 'CVT';
-  const drive: 'AWD' | 'FWD' | 'RWD' = ['camry', 'corolla', 'civic', 'sentra'].includes(model)
-    ? (pseudoRandom(`${seed}-${idx}-drive`, 10) > 5 ? 'AWD' : 'FWD')
-    : 'AWD';
-  const priceBase = 18000 + (currentYear - year) * -1500 + pseudoRandom(`${seed}-${idx}-price`, 8000);
-  const price = Math.max(8000, Math.round(priceBase / 100) * 100);
-  const dealer = DEALERS[pseudoRandom(`${seed}-${idx}-dealer`, DEALERS.length)]!;
-  const daysAgo = pseudoRandom(`${seed}-${idx}-days`, 30);
-  const listed =
-    daysAgo === 0 ? 'Listed today' :
-    daysAgo === 1 ? 'Listed yesterday' :
-    `Listed ${daysAgo} days ago`;
-  const trimSlug = trim.toLowerCase().replace(/\s+/g, '');
-  const slug = `${year}-${make}-${model}-${trimSlug}-${citySlug}-${seed.slice(0, 4)}${idx}`;
-
+  let tone: ListingTone | undefined;
+  if (r.color_exterior) {
+    tone = TONE_BY_COLOR.find(([re]) => re.test(r.color_exterior!))?.[1];
+  }
   return {
-    slug,
-    year,
-    make: make.charAt(0).toUpperCase() + make.slice(1),
-    model: modelName,
-    trim,
-    km,
-    drive,
-    transmission,
-    price,
-    listed,
-    dealer,
-    badge: idx < 1 ? 'New today' : undefined,
-    variant: variants.variant,
-    tone,
+    slug: r.slug,
+    year: r.year,
+    make: makeName,
+    model: r.model_name,
+    trim: r.trim ?? '',
+    km: r.mileage,
+    drive: r.drivetrain ? (DRIVE_LABEL[r.drivetrain] ?? r.drivetrain.toUpperCase()) : '',
+    transmission: r.transmission ? (TRANSMISSION_LABEL[r.transmission] ?? r.transmission) : '',
+    price: Math.round(r.price / 100),
+    listed: listedLabel(r.created_at),
+    dealer: r.dealer_name,
+    variant: mv.variant,
+    tone: tone ?? mv.tones[0]!,
   };
+}
+
+/** Latest live listings for a city feed (rows arrive boosted-first, then newest). */
+export function getRecentListingsForCity(city: string, limit = 8): CatalogListing[] {
+  return LIVE_LISTINGS
+    .filter((r) => r.city === city)
+    .slice(0, limit)
+    .map((r) => toCatalogListing(r, BRAND_CONTENT[r.make_slug]?.name ?? r.make_slug));
+}
+
+/** Latest live listings nationally (homepage feed). */
+export function getRecentListingsNational(limit = 8): CatalogListing[] {
+  return LIVE_LISTINGS
+    .slice(0, limit)
+    .map((r) => toCatalogListing(r, BRAND_CONTENT[r.make_slug]?.name ?? r.make_slug));
+}
+
+/** Real "from CA$X" floor for a (city, make, model) — null when no inventory. */
+export function minPriceForCityModel(city: string, make: string, model: string): number | null {
+  let min: number | null = null;
+  for (const r of LIVE_LISTINGS) {
+    if (r.city !== city || r.make_slug !== make || r.model_slug !== model) continue;
+    const dollars = Math.round(r.price / 100);
+    if (min === null || dollars < min) min = dollars;
+  }
+  return min;
 }
 
 export function getCatalogForModelCity(
@@ -208,19 +225,19 @@ export function getCatalogForModelCity(
   modelName: string,
   city: string,
 ): CatalogPageData {
-  const factor = CITY_FACTORS[city] ?? 0.5;
-  const baseTotal = 8;
-  const totalCount = Math.max(
-    4,
-    Math.round(baseTotal * factor * 1.5) + pseudoRandom(`${make}-${model}-${city}-total`, 6),
+  const brand = BRAND_CONTENT[make];
+  const rows = LIVE_LISTINGS.filter(
+    (r) => r.make_slug === make && r.model_slug === model && r.city === city,
   );
-  const dealerCount = Math.max(2, Math.round(totalCount * 0.6));
 
-  const seed = `${make}-${model}-${city}`;
+  const cards = rows.map((r) => toCatalogListing(r, brand?.name ?? make));
+  const boosted = cards.filter((_, i) => rows[i]!.is_boosted === 1);
+  const organic = cards.filter((_, i) => rows[i]!.is_boosted !== 1);
+  const dealerCount = new Set(rows.map((r) => r.dealer_name)).size;
 
   // House ad on every page: real brand, real official site, nothing invented.
-  const brand = BRAND_CONTENT[make];
   const mv = MODEL_VARIANTS[model];
+  const seed = `${make}-${model}-${city}`;
   const featured: FeaturedData | null = brand ? {
     kind: 'house',
     make: brand.name,
@@ -230,16 +247,13 @@ export function getCatalogForModelCity(
     tone: FEATURED_TONES[pseudoRandom(`${seed}-featured`, FEATURED_TONES.length)]!,
   } : null;
 
-  const boostedCount = factor > 0.7 ? 2 : factor > 0.4 ? 1 : 0;
-
-  const allListings: CatalogListing[] = [];
-  const visibleCount = Math.min(totalCount, 14);
-  for (let i = 0; i < visibleCount; i++) {
-    allListings.push(generateListing(seed, i, make, model, modelName, 2026, city));
-  }
-  const boosted = allListings.slice(0, boostedCount);
-  const organic = allListings.slice(boostedCount);
-  const remaining = Math.max(0, totalCount - allListings.length);
-
-  return { featured, boosted, organic, totalCount, dealerCount, remaining, isDemo: true };
+  return {
+    featured,
+    boosted,
+    organic,
+    totalCount: rows.length,
+    dealerCount,
+    remaining: 0,
+    isDemo: false,
+  };
 }

@@ -41,3 +41,7 @@
 /parts/:make/:model/calgary/   /calgary/parts/:make/:model/   301
 /parts/:make/:model/edmonton/  /edmonton/parts/:make/:model/  301
 /parts/:make/:model/ottawa/    /ottawa/parts/:make/:model/    301
+
+# /dealers/list/ was a dead marketing link (launch dry-run 2026-06-12) — dealer signup is the real action.
+/dealers/list/ /dealer/signup/ 301
+/dealers/list /dealer/signup/ 301

@@ -1,17 +1,18 @@
 /**
- * src/data/models-stubs.ts — Phase 1.2 placeholder model catalog.
+ * src/data/models-stubs.ts — the model catalog (slugs + display names).
  *
- * Counts are baseline-Toronto; getModelsForCity() scales them by CITY_FACTORS
- * (city.count / 1284 — Toronto reference) so a smaller CMA shows proportionally
- * fewer listings without per-city stub data duplication.
- *
- * Phase 2 replaces this file with a D1 query against the listings table
- * (cached in KV per (brand, city) key, 15-min TTL).
+ * Since the live-data wiring (LAUNCH-CHECKLIST §1, 2026-06-12) counts come
+ * from real inventory (live-counts.ts over catalog-live.json); the historic
+ * baseCount/CITY_FACTORS scaling is gone. MODELS_BY_BRAND remains the source
+ * of truth for which model pages exist (getStaticPaths).
  */
+
+import { liveCounts } from './live-counts';
 
 export interface ModelStub {
   slug: string;
   name: string;
+  /** Historic demo field — no longer rendered anywhere. */
   baseCount: number;
 }
 
@@ -85,24 +86,14 @@ export const MODELS_BY_BRAND: Record<string, ModelStub[]> = {
   ],
 };
 
-export const CITY_FACTORS: Record<string, number> = {
-  toronto:   1.000,
-  montreal:  0.731,
-  vancouver: 0.678,
-  calgary:   0.477,
-  edmonton:  0.379,
-  ottawa:    0.321,
-};
-
 export interface ModelWithCount extends ModelStub {
   count: number;
 }
 
 export function getModelsForCity(brandSlug: string, citySlug: string): ModelWithCount[] {
   const models = MODELS_BY_BRAND[brandSlug] ?? [];
-  const factor = CITY_FACTORS[citySlug] ?? 0.5;
   return models.map((m) => ({
     ...m,
-    count: Math.max(2, Math.round(m.baseCount * factor)),
+    count: liveCounts.cityModel(citySlug, brandSlug, m.slug),
   }));
 }

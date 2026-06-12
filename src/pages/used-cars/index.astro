@@ -6,24 +6,26 @@ import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
 import Footer from '../../components/sections/Footer.astro';
 import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
 import PageHeading from '../../components/sections/PageHeading.astro';
-import BrandDirectoryGrid from '../../components/sections/BrandDirectoryGrid.astro';
 import AboutBrandSection from '../../components/sections/AboutBrandSection.astro';
 import FaqSection, { type FaqItem } from '../../components/sections/FaqSection.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../data/brand-content';
+import { liveCounts } from '../../data/live-counts';
 import { faqPage } from '../../lib/schema-graph';
 
 const brandRows = Object.entries(BRAND_CONTENT).map(([slug, b]) => ({
   slug,
   name: b.name,
-  count: b.totalCount,
+  count: liveCounts.brand(slug),
 }));
 
-const totalListings = TIER_1_CITIES.reduce((s, c) => s + c.count, 0);
+const totalListings = liveCounts.national;
 const brandCount = brandRows.length;
 const cityCount = TIER_1_CITIES.length;
 
 const title = 'Used Japanese cars in Canada — japanauto.ca';
-const description = `Used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi cars from local Canadian dealers. ${totalListings.toLocaleString('en-US')} listings across ${cityCount} cities.`;
+const description = totalListings > 0
+  ? `Used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi cars from local Canadian dealers. ${totalListings.toLocaleString('en-US')} listings across ${cityCount} cities.`
+  : 'Used Japanese cars — Toyota, Honda, Nissan, Mazda, Subaru and more — from licensed Canadian dealers. Live listings appear as local dealers onboard.';
 const canonical = 'https://japanauto.ca/used-cars/';
 
 const aboutParagraphs = [
@@ -72,7 +74,9 @@ const schemaLD = [
   },
 ];
 
-const subtitleHtml = `<span class="num">${totalListings.toLocaleString('en-US')}</span> listings across <span class="num">${brandCount}</span> brands and <span class="num">${cityCount}</span> Canadian cities · Updated today`;
+const subtitleHtml = totalListings > 0
+  ? `<span class="num">${totalListings.toLocaleString('en-US')}</span> listings across <span class="num">${brandCount}</span> brands and <span class="num">${cityCount}</span> Canadian cities · Updated today`
+  : `<span class="num">${brandCount}</span> brands across <span class="num">${cityCount}</span> Canadian cities · Live listings appear here as local dealers onboard`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" />
@@ -92,7 +96,22 @@ const subtitleHtml = `<span class="num">${totalListings.toLocaleString('en-US')}
     subtitle={subtitleHtml}
   />
 
-  <BrandDirectoryGrid brands={brandRows} />
+  <section style="padding:0 16px 32px">
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+      {brandRows.map((b) => (
+        <a
+          href={`/used-cars/${b.slug}/`}
+          class="card"
+          style="display:flex;flex-direction:column;justify-content:center;padding:16px;min-height:80px;gap:4px"
+        >
+          <div class="t-h-s" style="font-size:14px;line-height:20px">{b.name}</div>
+          <div class="t-caption" style="font-size:9px;color:var(--color-ink-muted)">
+            {b.count > 0 ? <><span class="num">{b.count}</span> listed</> : 'Dealers onboarding'}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
 
   <AboutBrandSection title="Why a Japanese-only marketplace?" paragraphs={aboutParagraphs} />
 

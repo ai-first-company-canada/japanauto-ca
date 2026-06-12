@@ -45,6 +45,12 @@ jobs:
       - name: SEO audit gate
         run: npm run audit:seo
 
+      # Launch gate (checklist №19 second half): attaching japanauto.ca opens
+      # indexing — CI must refuse to ship fabricated content or a closed
+      # robots.txt, exactly like a local `npm run deploy` would.
+      - name: Launch audit gate
+        run: npm run audit:launch
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
         # Pass the branch name via env, not by interpolating ${{ github.ref_name }}

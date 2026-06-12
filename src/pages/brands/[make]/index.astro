@@ -8,6 +8,7 @@ import Footer from '../../../components/sections/Footer.astro';
 import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
 import FaqAccordion from '../../../components/atoms/FaqAccordion.astro';
 import { MODELS_BY_BRAND } from '../../../data/models-stubs.ts';
+import { liveCounts } from '../../../data/live-counts';
 import {
   breadcrumbList, faqPage, faqFromBody, itemList, capitalize,
 } from '../../../lib/schema-graph';
@@ -104,7 +105,11 @@ const schemaLD = [
             style="display:flex;flex-direction:column;justify-content:center;padding:16px;min-height:80px;gap:4px"
           >
             <div class="t-h-s" style="font-size:14px;line-height:20px">{m.name}</div>
-            <div class="t-caption" style="font-size:9px;color:var(--color-ink-muted)">~{m.baseCount} listed</div>
+            <div class="t-caption" style="font-size:9px;color:var(--color-ink-muted)">
+              {liveCounts.brandModel(d.make, m.slug) > 0
+                ? `${liveCounts.brandModel(d.make, m.slug)} listed`
+                : 'Dealers onboarding'}
+            </div>
           </a>
         ))}
       </div>

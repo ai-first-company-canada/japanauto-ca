@@ -4,11 +4,9 @@ import Navbar from '../components/sections/Navbar.astro';
 import MenuDrawer from '../components/sections/MenuDrawer.astro';
 import CityPickerDialog from '../components/sections/CityPickerDialog.astro';
 import Footer from '../components/sections/Footer.astro';
-import BrandGrid from '../components/atoms/BrandGrid.astro';
-import OtherCitiesCollapse from '../components/atoms/OtherCitiesCollapse.astro';
 import Icon from '../components/atoms/Icon.astro';
-import ListingFeed, { type FeedListing } from '../components/sections/ListingFeed.astro';
-import PopularModels, { type PopularModel } from '../components/sections/PopularModels.astro';
+import CarSilhouette from '../components/atoms/CarSilhouette.astro';
+import ListingFeed from '../components/sections/ListingFeed.astro';
 import TrustStrip from '../components/sections/TrustStrip.astro';
 import PartsEntryPoint from '../components/sections/PartsEntryPoint.astro';
 import BlogExcerpt, { type BlogArticle } from '../components/sections/BlogExcerpt.astro';
@@ -16,65 +14,78 @@ import GlossaryHighlights, { type GlossaryTerm } from '../components/sections/Gl
 import FaqSection, { type FaqItem } from '../components/sections/FaqSection.astro';
 import SellCta from '../components/sections/SellCta.astro';
 import { TIER_1_CITIES } from '../data/brand-content';
+import { liveCounts } from '../data/live-counts';
+import {
+  getRecentListingsNational,
+  minPriceForCityModel,
+  type ListingVariant,
+  type ListingTone,
+} from '../data/catalog-stubs';
 import { faqPage, itemList } from '../lib/schema-graph';
 
-// National brand totals = Toronto baseline × (sum of city counts / 1284).
-// CITY_FACTOR_SUM is the cumulative scaling factor across the 6 Tier-1 CMAs.
-const CITY_FACTOR_SUM = TIER_1_CITIES.reduce((s, c) => s + c.count / 1284, 0);
+// LAUNCH-CHECKLIST §1: every number on this page comes from the live inventory
+// aggregates (liveCounts / catalog-stubs over the prod-D1 snapshot). Nothing is
+// invented; zero inventory renders honest "dealers onboarding" copy instead of
+// a count.
+const nationalCount = liveCounts.national;
+const nationalDealers = liveCounts.nationalDealers;
 
 const BRANDS = [
-  { slug: 'toyota',     name: 'Toyota',     baseCount: 78 },
-  { slug: 'honda',      name: 'Honda',      baseCount: 64 },
-  { slug: 'nissan',     name: 'Nissan',     baseCount: 52 },
-  { slug: 'mazda',      name: 'Mazda',      baseCount: 41 },
-  { slug: 'subaru',     name: 'Subaru',     baseCount: 36 },
-  { slug: 'lexus',      name: 'Lexus',      baseCount: 28 },
-  { slug: 'acura',      name: 'Acura',      baseCount: 22 },
-  { slug: 'infiniti',   name: 'Infiniti',   baseCount: 17 },
-  { slug: 'mitsubishi', name: 'Mitsubishi', baseCount: 14 },
-].map((b) => ({ slug: b.slug, name: b.name, count: Math.round(b.baseCount * CITY_FACTOR_SUM) }));
+  { slug: 'toyota',     name: 'Toyota' },
+  { slug: 'honda',      name: 'Honda' },
+  { slug: 'nissan',     name: 'Nissan' },
+  { slug: 'mazda',      name: 'Mazda' },
+  { slug: 'subaru',     name: 'Subaru' },
+  { slug: 'lexus',      name: 'Lexus' },
+  { slug: 'acura',      name: 'Acura' },
+  { slug: 'infiniti',   name: 'Infiniti' },
+  { slug: 'mitsubishi', name: 'Mitsubishi' },
+].map((b) => ({ ...b, count: liveCounts.brand(b.slug) }));
 
-const NATIONAL_TOTAL = BRANDS.reduce((s, b) => s + b.count, 0);
-const NATIONAL_DEALERS = Math.round(40 * CITY_FACTOR_SUM);
+// Latest real listings nationally; empty until partner dealers onboard.
+const RECENT_LISTINGS = getRecentListingsNational(8);
 
-const DEALER_NAMES = [
-  'Maple Auto Group', 'North Star Motors', 'Cypress Imports', 'Eastside Pre-Owned',
-  'Summit Japanese Auto', 'Westview Cars', 'Granite Motors', 'Riverbend Auto',
+/** Real national "from CA$X" floor — lowest live price across the Tier-1 CMAs. */
+function nationalMinPrice(make: string, model: string): number | null {
+  let min: number | null = null;
+  for (const c of TIER_1_CITIES) {
+    const p = minPriceForCityModel(c.slug, make, model);
+    if (p !== null && (min === null || p < min)) min = p;
+  }
+  return min;
+}
+
+interface HomePopularModel {
+  make: string;
+  model: string;
+  makeSlug: string;
+  modelSlug: string;
+  body: string;
+  variant: ListingVariant;
+  tone: ListingTone;
+  href: string;
+}
+
+const MODEL_SEEDS: HomePopularModel[] = [
+  { make: 'Toyota', model: 'Camry',   makeSlug: 'toyota', modelSlug: 'camry',   body: 'Sedan', variant: 'sedan', tone: 'pearl',    href: '/used-cars/toyota/camry/' },
+  { make: 'Honda',  model: 'Civic',   makeSlug: 'honda',  modelSlug: 'civic',   body: 'Sedan', variant: 'sedan', tone: 'silver',   href: '/used-cars/honda/civic/' },
+  { make: 'Toyota', model: 'RAV4',    makeSlug: 'toyota', modelSlug: 'rav4',    body: 'SUV',   variant: 'suv',   tone: 'graphite', href: '/used-cars/toyota/rav4/' },
+  { make: 'Honda',  model: 'CR-V',    makeSlug: 'honda',  modelSlug: 'cr-v',    body: 'SUV',   variant: 'suv',   tone: 'midnight', href: '/used-cars/honda/cr-v/' },
+  { make: 'Mazda',  model: 'Mazda3',  makeSlug: 'mazda',  modelSlug: 'mazda3',  body: 'Hatch', variant: 'hatch', tone: 'crimson',  href: '/used-cars/mazda/mazda3/' },
+  { make: 'Subaru', model: 'Outback', makeSlug: 'subaru', modelSlug: 'outback', body: 'Wagon', variant: 'wagon', tone: 'forest',   href: '/used-cars/subaru/outback/' },
 ];
 
-const LISTINGS_SEED: Array<Omit<FeedListing, 'dealer'>> = [
-  { year: 2021, make: 'Toyota', model: 'Camry',   trim: 'LE',       km: 58400,  drive: 'AWD', transmission: 'CVT',  price: 24900, listed: 'Listed today',       variant: 'sedan', tone: 'pearl',    badge: 'New today', slug: '2021-toyota-camry-le-toronto-ab1234' },
-  { year: 2019, make: 'Honda',  model: 'CR-V',    trim: 'EX',       km: 71200,  drive: 'AWD', transmission: 'CVT',  price: 26450, listed: 'Listed 2 days ago',  variant: 'suv',   tone: 'midnight', badge: 'New today', slug: '2019-honda-crv-ex-toronto-cd5678' },
-  { year: 2020, make: 'Mazda',  model: 'CX-5',    trim: 'GS',       km: 64800,  drive: 'AWD', transmission: 'Auto', price: 23900, listed: 'Listed 3 days ago',  variant: 'suv',   tone: 'crimson',  slug: '2020-mazda-cx5-gs-toronto-ef9012' },
-  { year: 2018, make: 'Subaru', model: 'Outback', trim: '2.5i',     km: 92500,  drive: 'AWD', transmission: 'CVT',  price: 19800, listed: 'Listed 4 days ago',  variant: 'wagon', tone: 'forest',   reduced: 1500, slug: '2018-subaru-outback-25i-toronto-gh3456' },
-  { year: 2022, make: 'Lexus',  model: 'NX 350',  trim: 'F-Sport',  km: 38900,  drive: 'AWD', transmission: 'Auto', price: 48900, listed: 'Listed 5 days ago',  variant: 'suv',   tone: 'graphite', slug: '2022-lexus-nx350-fsport-toronto-ij7890' },
-  { year: 2017, make: 'Honda',  model: 'Civic',   trim: 'LX',       km: 108200, drive: 'FWD', transmission: 'CVT',  price: 14900, listed: 'Listed 6 days ago',  variant: 'sedan', tone: 'silver',   slug: '2017-honda-civic-lx-toronto-kl2345' },
-  { year: 2020, make: 'Toyota', model: 'RAV4',    trim: 'XLE',      km: 67400,  drive: 'AWD', transmission: 'Auto', price: 32400, listed: 'Listed 1 week ago',  variant: 'suv',   tone: 'sand',     slug: '2020-toyota-rav4-xle-toronto-mn6789' },
-  { year: 2019, make: 'Nissan', model: 'Rogue',   trim: 'SV',       km: 81200,  drive: 'AWD', transmission: 'CVT',  price: 21300, listed: 'Listed 1 week ago',  variant: 'suv',   tone: 'pearl',    slug: '2019-nissan-rogue-sv-toronto-op0123' },
-];
-
-const LISTINGS: FeedListing[] = LISTINGS_SEED.map((l, i) => ({
-  ...l,
-  dealer: DEALER_NAMES[i % DEALER_NAMES.length]!,
+const POPULAR_MODELS = MODEL_SEEDS.map((m) => ({
+  ...m,
+  from: nationalMinPrice(m.makeSlug, m.modelSlug),
 }));
 
-const POPULAR_MODELS: PopularModel[] = [
-  { make: 'Toyota', model: 'Camry',   body: 'Sedan', years: '2018–2024', from: 17900, variant: 'sedan', tone: 'pearl',    href: '/used-cars/toyota/camry/' },
-  { make: 'Honda',  model: 'Civic',   body: 'Sedan', years: '2017–2024', from: 14400, variant: 'sedan', tone: 'silver',   href: '/used-cars/honda/civic/' },
-  { make: 'Toyota', model: 'RAV4',    body: 'SUV',   years: '2018–2024', from: 21900, variant: 'suv',   tone: 'graphite', href: '/used-cars/toyota/rav4/' },
-  { make: 'Honda',  model: 'CR-V',    body: 'SUV',   years: '2018–2024', from: 19800, variant: 'suv',   tone: 'midnight', href: '/used-cars/honda/cr-v/' },
-  { make: 'Mazda',  model: 'Mazda3',  body: 'Hatch', years: '2017–2024', from: 13900, variant: 'hatch', tone: 'crimson',  href: '/used-cars/mazda/mazda3/' },
-  { make: 'Subaru', model: 'Outback', body: 'Wagon', years: '2017–2024', from: 16400, variant: 'wagon', tone: 'forest',   href: '/used-cars/subaru/outback/' },
-];
-
-const OTHER_CITIES = [
-  { slug: 'toronto',   name: 'Toronto',   province: 'ON', count: 1284 },
-  { slug: 'montreal',  name: 'Montreal',  province: 'QC', count: 938 },
-  { slug: 'vancouver', name: 'Vancouver', province: 'BC', count: 871 },
-  { slug: 'calgary',   name: 'Calgary',   province: 'AB', count: 612 },
-  { slug: 'edmonton',  name: 'Edmonton',  province: 'AB', count: 487 },
-  { slug: 'ottawa',    name: 'Ottawa',    province: 'ON', count: 412 },
-];
+const CITY_LINKS = TIER_1_CITIES.map((c) => ({
+  slug: c.slug,
+  name: c.name,
+  province: c.province,
+  count: liveCounts.city(c.slug),
+}));
 
 const FAQ_ITEMS: FaqItem[] = [
   {
@@ -155,12 +166,12 @@ const homeFaq = faqPage(
 const modelsList = itemList(
   POPULAR_MODELS.map((m) => ({
     name: `${m.make} ${m.model}`,
-    url: `${SITE}${m.href ?? `/used-cars/${m.make.toLowerCase()}/${m.model.toLowerCase().replace(/\s+/g, '-')}/`}`,
+    url: `${SITE}${m.href}`,
   })),
   'Popular used Japanese models in Canada',
 );
 const citiesList = itemList(
-  OTHER_CITIES.map((c) => ({
+  CITY_LINKS.map((c) => ({
     name: `Used Japanese cars in ${c.name}`,
     url: `${SITE}/${c.slug}/`,
   })),
@@ -190,14 +201,33 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
       Montreal, Vancouver, Calgary, Edmonton and Ottawa.
     </p>
     <p class="t-body-s ink-muted" style="font-size:13px;margin-top:10px">
-      <span class="num">{NATIONAL_TOTAL.toLocaleString('en-US')}</span> used Japanese cars
-      from <span class="num">{NATIONAL_DEALERS}</span> dealers across {TIER_1_CITIES.length} Canadian cities · Updated today ·
+      {nationalCount > 0 ? (
+        <>
+          <span class="num">{nationalCount.toLocaleString('en-US')}</span> used Japanese cars
+          from <span class="num">{nationalDealers}</span> {nationalDealers === 1 ? 'dealer' : 'dealers'} across {TIER_1_CITIES.length} Canadian cities · Updated today ·
+        </>
+      ) : (
+        <>Live listings appear here as local dealers onboard ·</>
+      )}
       <a href="/editorial-policy/" style="color:var(--color-ink-default);text-decoration:underline">every regulatory claim is fact-checked by a licensed advisor</a>
     </p>
   </section>
 
   <section class="section" style="padding-top:8px">
-    <BrandGrid brands={BRANDS} />
+    <div class="brand-grid-home" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px">
+      {BRANDS.map((b) => (
+        <a
+          href={`/used-cars/${b.slug}/`}
+          class="card"
+          style="display:flex;flex-direction:column;justify-content:center;padding:16px;min-height:80px;gap:4px"
+        >
+          <div class="t-h-s" style="font-size:14px;line-height:20px">{b.name}</div>
+          <div class="t-caption" style="font-size:9px;color:var(--color-ink-muted)">
+            {b.count > 0 ? `${b.count} listed` : 'Dealers onboarding'}
+          </div>
+        </a>
+      ))}
+    </div>
     <div style="display:flex;justify-content:flex-end;margin-top:16px">
       <a
         class="t-body-s"
@@ -210,19 +240,95 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
     </div>
   </section>
 
-  <ListingFeed
-    heading="Latest Japanese cars across Canada"
-    listings={LISTINGS}
-    ctaText="View all listings"
-    ctaHref="/used-cars/"
-  />
+  {RECENT_LISTINGS.length > 0 ? (
+    <ListingFeed
+      heading="Latest Japanese cars across Canada"
+      listings={RECENT_LISTINGS}
+      ctaText="View all listings"
+      ctaHref="/used-cars/"
+    />
+  ) : (
+    <section class="section">
+      <header style="margin-bottom:16px">
+        <h2 class="t-h-l">Latest Japanese cars across Canada</h2>
+      </header>
+      <div class="card" style="padding:28px 24px;text-align:center">
+        <p class="t-h-s" style="font-size:15px;line-height:21px;margin:0 0 6px">
+          New inventory is arriving
+        </p>
+        <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px;margin:0 0 14px">
+          Local dealers are onboarding — live listings appear here first.
+        </p>
+        <a href="/dealer/signup/" class="btn btn-secondary btn-sm" style="display:inline-flex">
+          List your inventory →
+        </a>
+      </div>
+    </section>
+  )}
 
-  <PopularModels heading="Popular Japanese models in" cityName="Canada" models={POPULAR_MODELS} />
+  <section class="section">
+    <header style="margin-bottom:16px">
+      <h2 class="t-h-l">Popular Japanese models in Canada</h2>
+    </header>
+    <div class="popular-models-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+      {POPULAR_MODELS.map((m) => (
+        <a
+          href={m.href}
+          class="card"
+          style="overflow:hidden;display:flex;flex-direction:column;padding:14px;gap:8px;position:relative"
+        >
+          <div style="height:56px;width:100%;display:grid;place-items:center;background:var(--color-bg-muted);border-radius:6px">
+            <div style="width:96px;height:48px">
+              <CarSilhouette variant={m.variant} tone={m.tone} />
+            </div>
+          </div>
+          <div>
+            <h3 class="t-h-s" style="font-size:14px;line-height:20px">{m.make} {m.model}</h3>
+            <p class="t-body-s ink-muted" style="font-size:12px;line-height:16px;margin-top:2px">
+              {m.body}
+            </p>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:6px">
+              <p class="t-body-s" style="font-size:12px;color:var(--color-ink-muted)">
+                {m.from !== null ? (
+                  <>from <span class="num ink-strong" style="font-weight:600;font-size:13px;letter-spacing:-0.005em">CA${m.from.toLocaleString('en-US')}</span></>
+                ) : (
+                  <>Browse listings</>
+                )}
+              </p>
+              <Icon name="chevronRight" size={14} />
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
 
   <TrustStrip />
 
   <section class="section">
-    <OtherCitiesCollapse cities={OTHER_CITIES} label="Browse by city" />
+    <details>
+      <summary style="display:flex;justify-content:space-between;align-items:center;list-style:none;cursor:pointer;padding:8px 0">
+        <h2 class="t-h-l" style="font-size:20px">Browse by city</h2>
+        <Icon name="chevronDown" size={20} />
+      </summary>
+      <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px">
+        {CITY_LINKS.map((c) => (
+          <a
+            href={`/${c.slug}/`}
+            class="card"
+            style="display:flex;align-items:center;justify-content:space-between;padding:20px;min-height:72px"
+          >
+            <div>
+              <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
+              <span class="t-caption" style="font-size:10px;margin-top:4px;display:block">
+                {c.count > 0 ? `${c.count.toLocaleString('en-US')} cars` : 'Dealers onboarding'}
+              </span>
+            </div>
+            <span class="t-caption t-mono" style="font-size:11px">{c.province}</span>
+          </a>
+        ))}
+      </div>
+    </details>
   </section>
 
   <PartsEntryPoint />

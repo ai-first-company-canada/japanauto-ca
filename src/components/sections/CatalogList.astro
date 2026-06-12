@@ -9,8 +9,11 @@ interface Props {
   boosted: CatalogListing[];
   organic: CatalogListing[];
   citySlug: string;
+  /** Renders the honest zero-inventory state (LAUNCH-CHECKLIST §1). */
+  emptyContext?: { modelLabel: string; cityName: string; brandSlug: string; brandName: string };
 }
-const { featured, boosted, organic } = Astro.props;
+const { featured, boosted, organic, citySlug, emptyContext } = Astro.props;
+const isEmpty = boosted.length === 0 && organic.length === 0;
 ---
 <section style="padding:16px 16px 32px">
   {featured && (
@@ -23,9 +26,26 @@ const { featured, boosted, organic } = Astro.props;
       tone={featured.tone}
     />
   )}
+  {isEmpty && emptyContext && (
+    <div
+      class="card"
+      style={`padding:28px 24px;text-align:center;${featured ? 'margin-top:16px' : ''}`}
+    >
+      <p class="t-h-s" style="font-size:15px;line-height:21px;margin:0 0 6px">
+        No live {emptyContext.modelLabel} listings in {emptyContext.cityName} yet
+      </p>
+      <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px;margin:0 0 14px">
+        Local dealers are onboarding — new inventory appears here the moment it's listed.
+        Meanwhile, browse other {emptyContext.brandName} models below.
+      </p>
+      <a href="/dealer/signup/" class="btn btn-secondary btn-sm" style="display:inline-flex">
+        Are you a dealer? List your inventory →
+      </a>
+    </div>
+  )}
   <div
     id="catalog-grid"
-    style={`display:grid;grid-template-columns:1fr 1fr;gap:16px;${featured ? 'margin-top:16px' : ''}`}
+    style={`display:grid;grid-template-columns:1fr 1fr;gap:16px;${featured || isEmpty ? 'margin-top:16px' : ''}`}
   >
     {boosted.map((l) => (
       <BoostedListingCard
@@ -41,11 +61,12 @@ const { featured, boosted, organic } = Astro.props;
         dealer={l.dealer}
         variant={l.variant}
         tone={l.tone}
-        href="#"
+        href={`/used-cars/listing/${l.slug}/`}
       />
     ))}
     {organic.map((l) => (
       <ListingCard
+        slug={l.slug}
         year={l.year}
         make={l.make}
         model={l.model}

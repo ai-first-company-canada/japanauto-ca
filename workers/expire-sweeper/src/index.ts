@@ -150,6 +150,22 @@ async function sweepExpired(env: Env, cron: string): Promise<void> {
   console.log(
     `expire-sweeper: ${meta.changes} listing(s) marked expired (cron "${cron}")`,
   );
+
+  // PII retention (LAUNCH-CHECKLIST §3b): expired refresh tokens carry raw
+  // ip_address/user_agent — drop them 30 days past expiry (rotated_to FK is
+  // ON DELETE SET NULL, so chains are safe); consumed/expired verification
+  // tokens and 90-day-old contact reveals have no reason to live longer.
+  const [rt, vt, cr] = await env.DB.batch([
+    env.DB.prepare(`DELETE FROM refresh_tokens WHERE expires_at < unixepoch() - 2592000`),
+    env.DB.prepare(`DELETE FROM verification_tokens WHERE consumed_at IS NOT NULL OR expires_at < unixepoch()`),
+    env.DB.prepare(`DELETE FROM contact_reveals WHERE revealed_at < unixepoch() - 7776000`),
+  ]);
+  const cleaned = (rt.meta.changes ?? 0) + (vt.meta.changes ?? 0) + (cr.meta.changes ?? 0);
+  if (cleaned > 0) {
+    console.log(
+      `retention: removed ${rt.meta.changes} refresh_tokens, ${vt.meta.changes} verification_tokens, ${cr.meta.changes} contact_reveals`,
+    );
+  }
 }
 
 const SWEEP_CRON = "0 */6 * * *";

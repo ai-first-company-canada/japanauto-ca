@@ -195,6 +195,38 @@ def main():
         if not os.path.isfile(os.path.join(dist, 'sitemap.xml')):
             errors.append(('sitemap.xml', 'LAUNCH: missing'))
 
+        # Fabricated-literal blocklist (dry-run 2026-06-12): the demo era left
+        # invented dealers/junkyards and counts that carried NO data-demo-content
+        # marker — this regression net catches them if they ever render again.
+        FABRICATED = [
+            'Maple Auto Group', 'North Star Motors', 'Cypress Imports',
+            'Eastside Pre-Owned', 'Summit Japanese Auto', 'Westview Cars',
+            'Granite Motors', 'Riverbend Auto', 'Pacific Heights Auto',
+            'Crescent Imports', 'Northgate Pre-Owned', 'Highland Motors',
+            'Lakeshore Auto Recyclers', 'Don Valley Salvage', 'Scarborough JDM Imports',
+            'Saint-Laurent Pieces Auto', 'Laval Auto Recycle',
+            'Pacific JDM Recyclers', 'Burrard Auto Salvage', 'Lower Mainland Auto Wreckers',
+            'Foothills Auto Wreckers', 'North Star Salvage',
+            'North Saskatchewan Salvage', 'Sherwood Park Auto Recyclers', 'Capital Region JDM',
+            'Rideau Auto Salvage', 'Gatineau Pieces Auto', 'Capital Wreckers',
+            'Country Hills Toyota', 'Toyota Downtown Toronto', 'Honda Downtown Toronto',
+            'Mazda Centre-Ville', 'Pacific Honda',
+            '1,284 cars', '1,261 used Japanese cars', '4,604 listings',
+        ]
+        fab_hits = {}
+        for pg in pages:
+            html_path = os.path.join(dist, pg['rel'])
+            try:
+                body = open(html_path, encoding='utf-8', errors='ignore').read()
+            except OSError:
+                continue
+            for lit in FABRICATED:
+                if lit in body:
+                    fab_hits.setdefault(lit, []).append(pg['rel'])
+        for lit, where in sorted(fab_hits.items()):
+            errors.append((where[0] + (f' (+{len(where)-1} more)' if len(where) > 1 else ''),
+                           f'LAUNCH: fabricated literal "{lit}" rendered'))
+
     # ---- report ----
     idxn = sum(1 for p in pages if not p['noindex'] and p['grp'] != '404')
     mode = ' · LAUNCH mode (demo-content & robots gates active)' if LAUNCH else ''

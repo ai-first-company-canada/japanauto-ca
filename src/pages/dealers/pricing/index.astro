@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Navbar from '../../../components/sections/Navbar.astro';
+import MenuDrawer from '../../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../../components/sections/CityPickerDialog.astro';
+import Footer from '../../../components/sections/Footer.astro';
+import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
+
+// Prices per docs/decisions/0013 (owner-fixed 2026-06-12).
+const url = Astro.url.toString();
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Dealers', item: 'https://japanauto.ca/dealers/' },
+      { '@type': 'ListItem', position: 3, name: 'Pricing', item: url },
+    ],
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What happens after the trial?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Your account moves to Free automatically — no charge, no card on file. If you have more than 5 active listings, you choose which 5 stay live.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Do salvage yards pay the same?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Yes — the same plans apply to donor-car listings from salvage yards.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'How do I pay?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Online billing is rolling out; during the launch period we invoice directly. Email support@japanauto.ca with any billing question.' },
+      },
+    ],
+  },
+];
+---
+<BaseLayout
+  title="Dealer pricing — japanauto.ca"
+  description="Free plan with 5 active listings, Pro at CA$99/month or CA$990/year — unlimited listings, private market analytics, social promotion. 30-day free trial, no card."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb items={[
+    { label: 'Home', href: '/' },
+    { label: 'Dealers', href: '/dealers/' },
+    { label: 'Pricing' },
+  ]} />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:8px">Dealer pricing</h1>
+    <p class="t-body-m ink-muted" style="font-size:15px;line-height:23px;margin-bottom:24px">
+      Every new account starts with <strong style="color:var(--color-ink-strong)">30 days of Pro, free, no card required</strong>.
+      Prices in CAD; taxes extra where applicable.
+    </p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+      <div class="card" style="padding:20px">
+        <h2 class="t-h-s" style="font-size:16px;line-height:22px;margin:0 0 4px">Free</h2>
+        <p class="num" style="font-size:26px;font-weight:600;margin:0 0 12px">CA$0</p>
+        <ul style="margin:0;padding-left:18px;font-size:13px;line-height:20px;color:var(--color-ink-default)">
+          <li>Up to 5 active listings</li>
+          <li>Listing statistics (views, contacts)</li>
+          <li>AI listing-text improver</li>
+          <li>VIN decode &amp; factory equipment</li>
+        </ul>
+      </div>
+      <div class="card" style="padding:20px;border:1.5px solid var(--color-ink-strong)">
+        <h2 class="t-h-s" style="font-size:16px;line-height:22px;margin:0 0 4px">Pro</h2>
+        <p style="margin:0 0 12px"><span class="num" style="font-size:26px;font-weight:600">CA$99</span><span class="t-body-s ink-muted">/month</span><br/>
+        <span class="t-body-s ink-muted">or <span class="num">CA$990</span>/year — 2 months free</span></p>
+        <ul style="margin:0;padding-left:18px;font-size:13px;line-height:20px;color:var(--color-ink-default)">
+          <li>Everything in Free</li>
+          <li>Unlimited active listings</li>
+          <li>Private market analytics — see how your price compares to the live market in your city</li>
+          <li>Social promotion of your listings on japanauto.ca channels</li>
+        </ul>
+      </div>
+    </div>
+
+    <a href="/dealer/signup/" class="btn btn-primary btn-block" style="margin-bottom:28px">
+      Start your free 30-day Pro trial
+    </a>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">For official brand dealers</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      One official dealer per brand per city can sponsor the new-vehicle slot across all of
+      that brand's model pages — exclusively, clearly labelled as sponsored. Sold by direct
+      agreement, invoiced monthly, no long-term commitment. Email
+      <a href="mailto:support@japanauto.ca?subject=Featured%20slot%20on%20japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>
+      with the subject "Featured slot".
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Common questions</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:10px">
+      <strong style="color:var(--color-ink-strong)">What happens after the trial?</strong><br/>
+      Your account moves to Free automatically — no charge, no card on file. If you have more
+      than 5 active listings, you choose which 5 stay live.
+    </p>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:10px">
+      <strong style="color:var(--color-ink-strong)">Do salvage yards pay the same?</strong><br/>
+      Yes — the same plans apply to donor-car listings from salvage yards.
+    </p>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:10px">
+      <strong style="color:var(--color-ink-strong)">How do I pay?</strong><br/>
+      Online billing is rolling out; during the launch period we invoice directly. Email
+      <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a> with any billing question.
+    </p>
+  </article>
+</BaseLayout>

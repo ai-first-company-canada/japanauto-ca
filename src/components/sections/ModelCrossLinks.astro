@@ -29,9 +29,11 @@ const others = crossLinks.filter((m) => m.slug !== currentModelSlug);
         style="flex:0 0 auto;min-width:120px;padding:14px;display:flex;flex-direction:column;justify-content:center;min-height:76px;gap:4px"
       >
         <div class="t-h-s" style="font-size:14px;line-height:20px;font-weight:600">{m.name}</div>
-        <div class="t-caption" style="font-size:9px;letter-spacing:0.06em">
-          <span class="num">{m.count}</span> LISTED
-        </div>
+        {m.count > 0 && (
+          <div class="t-caption" style="font-size:9px;letter-spacing:0.06em">
+            <span class="num">{m.count}</span> LISTED
+          </div>
+        )}
       </a>
     ))}
   </div>

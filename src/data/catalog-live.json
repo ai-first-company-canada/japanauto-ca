@@ -1,0 +1,76 @@
+{
+ "exported_at": "2026-06-12T07:11:02.625Z",
+ "listings": [],
+ "dealers": [
+  {
+   "slug": "diag-final",
+   "name": "Diag Final",
+   "city": "calgary",
+   "province": "AB",
+   "type": "dealer",
+   "specializes_in": null,
+   "listing_count": 0,
+   "donor_count": 0
+  },
+  {
+   "slug": "hgasfgasfgasfg",
+   "name": "Hgasfgasfgasfg",
+   "city": "calgary",
+   "province": "AB",
+   "type": "dealer",
+   "specializes_in": null,
+   "listing_count": 0,
+   "donor_count": 0
+  },
+  {
+   "slug": "wgedrgweg",
+   "name": "Wgedrgweg",
+   "city": "calgary",
+   "province": "AB",
+   "type": "dealer",
+   "specializes_in": null,
+   "listing_count": 0,
+   "donor_count": 0
+  },
+  {
+   "slug": "diag-five",
+   "name": "Diag Five",
+   "city": "calgary",
+   "province": "AB",
+   "type": "dealer",
+   "specializes_in": null,
+   "listing_count": 0,
+   "donor_count": 0
+  },
+  {
+   "slug": "svavdas",
+   "name": "Svavdas",
+   "city": "calgary",
+   "province": "AB",
+   "type": "dealer",
+   "specializes_in": null,
+   "listing_count": 0,
+   "donor_count": 0
+  },
+  {
+   "slug": "phase2c1-test-1778196648",
+   "name": "Phase2c1 Test Dealer",
+   "city": "calgary",
+   "province": "AB",
+   "type": "dealer",
+   "specializes_in": null,
+   "listing_count": 0,
+   "donor_count": 0
+  },
+  {
+   "slug": "e2e-test-1778199779",
+   "name": "E2E Test 1778199779",
+   "city": "calgary",
+   "province": "AB",
+   "type": "dealer",
+   "specializes_in": null,
+   "listing_count": 0,
+   "donor_count": 0
+  }
+ ]
+}

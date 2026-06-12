@@ -12,6 +12,7 @@ import FaqSection from '../../../components/sections/FaqSection.astro';
 import CrossLinksBand from '../../../components/sections/CrossLinksBand.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../../data/brand-content';
 import { getModelsForCity } from '../../../data/models-stubs';
+import { liveCounts } from '../../../data/live-counts';
 import { faqPage } from '../../../lib/schema-graph';
 
 export function getStaticPaths() {
@@ -26,12 +27,12 @@ const { make, city } = Astro.params;
 const brand = BRAND_CONTENT[make!]!;
 const cityInfo = TIER_1_CITIES.find((c) => c.slug === city)!;
 const models = getModelsForCity(make!, city!);
-const cityFactor = cityInfo.count / 1284;
-const totalCount = Math.max(3, Math.round(brand.totalCount * cityFactor));
-const dealerCount = Math.max(3, Math.round(brand.dealerCount * cityFactor));
+const liveCount = liveCounts.cityBrand(city!, make!);
 
 const title = `Used ${brand.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
-const description = `Find used ${brand.name} cars in ${cityInfo.name}. ${totalCount} ${brand.name} listings from ${dealerCount} local dealers. AMVIC-verified, VIN-checked.`;
+const description = liveCount > 0
+  ? `Find used ${brand.name} cars in ${cityInfo.name}. ${liveCount} live ${brand.name} listing${liveCount === 1 ? '' : 's'} from AMVIC-licensed local dealers. VIN-checked.`
+  : `Find used ${brand.name} cars in ${cityInfo.name}. Inventory is live and growing as AMVIC-licensed local dealers onboard. Every listing is VIN-checked.`;
 const canonical = `https://japanauto.ca/${city}/${make}/`;
 
 const faqLd = faqPage(brand.faqs.map((f) => f.q), brand.faqs.map((f) => f.a));
@@ -67,7 +68,9 @@ const schemaLD = [
   },
 ];
 
-const subtitleHtml = `<span class="num">${totalCount}</span> used ${brand.name} cars from <span class="num">${dealerCount}</span> dealers · Updated today`;
+const subtitleHtml = liveCount > 0
+  ? `<span class="num">${liveCount}</span> used ${brand.name} ${liveCount === 1 ? 'car' : 'cars'} live from local dealers`
+  : 'Live listings appear here as local dealers onboard';
 ---
 <BaseLayout
   {title}

@@ -1,69 +1,65 @@
 /**
- * src/data/featured-yards-seed.ts — Phase 3.1 placeholder featured-junkyard data.
+ * src/data/featured-yards-seed.ts — REAL featured junkyards (name is historic).
  *
- * Junkyards self-onboard via /dealer/signup?type=salvage_yard (Phase 3.3).
- * Until they do, the parts hub still has to render *something* for the
- * "Featured junkyards" carousel and for Schema.org `AutoPartsStore` markup.
- * These placeholder names are clearly Calgary-flavoured Cloud-Design picks
- * (parts-data.jsx) extended to the other 5 Tier-1 CMAs with neutral
- * geographic-feature names so they read as illustrative, not real.
- *
- * Andrew should replace each entry with a real onboarded salvage_yard once
- * 3.3 ships. The seed is intentionally narrow (3 per CMA) — featured slot
- * monetization is NOT in MVP per ADR-0008; this is just to populate the UI.
+ * The Phase-3.1 placeholder yards ("Foothills Auto Wreckers" etc.) were
+ * fabricated local businesses rendered into cards AND AutoPartsStore JSON-LD —
+ * asserting nonexistent entities to search engines. LAUNCH-CHECKLIST §1
+ * replaced them (2026-06-12) with real salvage_yard accounts from the
+ * build-time prod-D1 snapshot (catalog-live.json). Yards appear here once
+ * they have at least one active donor car; until then the carousels render
+ * an honest onboarding state and no AutoPartsStore markup is emitted.
  */
 
-import { TIER_1_CITY_SLUGS, type Tier1CitySlug } from '../../lib/schema';
+import catalogLive from './catalog-live.json';
 
 export interface FeaturedYardSeed {
+  slug: string;
   name: string;
-  city: string;
+  city: string;        // display name
+  citySlug: string;
   province: string;
-  count: number;       // donor count (placeholder)
-  brands: string;      // comma-separated brand names
+  count: number;       // real active donor count
+  brands: string;      // comma-separated specialization, may be ''
 }
 
-const SEEDS: Record<Tier1CitySlug, FeaturedYardSeed[]> = {
-  toronto: [
-    { name: 'Lakeshore Auto Recyclers', city: 'Toronto', province: 'ON', count: 162, brands: 'Toyota, Honda, Lexus' },
-    { name: 'Don Valley Salvage',       city: 'Toronto', province: 'ON', count: 138, brands: 'Honda, Acura, Mazda' },
-    { name: 'Scarborough JDM Imports',  city: 'Toronto', province: 'ON', count: 91,  brands: 'Toyota, Nissan, Subaru' },
-  ],
-  montreal: [
-    { name: 'Saint-Laurent Pieces Auto', city: 'Montreal', province: 'QC', count: 124, brands: 'Toyota, Honda' },
-    { name: 'Laval Auto Recycle',        city: 'Montreal', province: 'QC', count: 96,  brands: 'Mazda, Subaru, Mitsubishi' },
-    { name: 'Riviere des Prairies Salvage', city: 'Montreal', province: 'QC', count: 72, brands: 'Nissan, Infiniti' },
-  ],
-  vancouver: [
-    { name: 'Pacific JDM Recyclers',    city: 'Vancouver', province: 'BC', count: 145, brands: 'Toyota, Honda, Subaru' },
-    { name: 'Burrard Auto Salvage',     city: 'Vancouver', province: 'BC', count: 108, brands: 'Lexus, Acura' },
-    { name: 'Lower Mainland Auto Wreckers', city: 'Vancouver', province: 'BC', count: 87, brands: 'Mazda, Nissan' },
-  ],
-  calgary: [
-    { name: 'Foothills Auto Wreckers',  city: 'Calgary', province: 'AB', count: 183, brands: 'Toyota, Honda, Subaru' },
-    { name: 'Riverbend Auto Recyclers', city: 'Calgary', province: 'AB', count: 124, brands: 'Toyota, Mazda' },
-    { name: 'North Star Salvage',       city: 'Calgary', province: 'AB', count: 98,  brands: 'Honda, Nissan, Subaru' },
-  ],
-  edmonton: [
-    { name: 'North Saskatchewan Salvage', city: 'Edmonton', province: 'AB', count: 132, brands: 'Toyota, Honda' },
-    { name: 'Sherwood Park Auto Recyclers', city: 'Edmonton', province: 'AB', count: 89, brands: 'Subaru, Mazda' },
-    { name: 'Capital Region JDM',         city: 'Edmonton', province: 'AB', count: 76, brands: 'Nissan, Infiniti, Lexus' },
-  ],
-  ottawa: [
-    { name: 'Rideau Auto Salvage',     city: 'Ottawa', province: 'ON', count: 104, brands: 'Toyota, Honda' },
-    { name: 'Gatineau Pieces Auto',    city: 'Ottawa', province: 'ON', count: 71,  brands: 'Mazda, Subaru' },
-    { name: 'Capital Wreckers',        city: 'Ottawa', province: 'ON', count: 58,  brands: 'Nissan, Lexus, Acura' },
-  ],
-};
+interface LiveDealer {
+  slug: string; name: string; city: string; province: string; type: string;
+  listing_count: number; donor_count: number; specializes_in?: string | null;
+}
+
+function displayCity(slug: string): string {
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+
+const YARDS: FeaturedYardSeed[] = ((catalogLive as { dealers?: LiveDealer[] }).dealers ?? [])
+  .filter((d) => d.type === 'salvage_yard' && d.donor_count > 0)
+  .map((d) => ({
+    slug: d.slug,
+    name: d.name,
+    city: displayCity(d.city),
+    citySlug: d.city,
+    province: d.province,
+    count: d.donor_count,
+    brands: (d.specializes_in ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(', '),
+  }));
 
 export function featuredYardsForCity(citySlug: string): FeaturedYardSeed[] {
-  return SEEDS[citySlug as Tier1CitySlug] ?? [];
+  return YARDS.filter((y) => y.citySlug === citySlug);
 }
 
-/**
- * National hub: pick the top yard from each CMA so the carousel always renders
- * a national mix without overlapping with the city-specific carousel.
- */
+/** National hub: top yards by donor volume, at most one per CMA. */
 export function featuredYardsNational(): FeaturedYardSeed[] {
-  return TIER_1_CITY_SLUGS.map((slug) => SEEDS[slug][0]!);
+  const seen = new Set<string>();
+  const picks: FeaturedYardSeed[] = [];
+  for (const y of [...YARDS].sort((a, b) => b.count - a.count)) {
+    if (seen.has(y.citySlug)) continue;
+    seen.add(y.citySlug);
+    picks.push(y);
+  }
+  return picks;
 }

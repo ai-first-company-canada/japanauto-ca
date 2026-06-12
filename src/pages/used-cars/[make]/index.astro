@@ -6,10 +6,10 @@ import CityPickerDialog from '../../../components/sections/CityPickerDialog.astr
 import Footer from '../../../components/sections/Footer.astro';
 import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
 import PageHeading from '../../../components/sections/PageHeading.astro';
-import CityDirectoryGrid from '../../../components/sections/CityDirectoryGrid.astro';
 import AboutBrandSection from '../../../components/sections/AboutBrandSection.astro';
 import FaqSection from '../../../components/sections/FaqSection.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../../data/brand-content';
+import { liveCounts } from '../../../data/live-counts';
 import { faqPage } from '../../../lib/schema-graph';
 
 export function getStaticPaths() {
@@ -19,23 +19,20 @@ export function getStaticPaths() {
 const { make } = Astro.params;
 const brand = BRAND_CONTENT[make!]!;
 
-const cityCards = TIER_1_CITIES.map((c) => {
-  const factor = c.count / 1284;
-  return {
-    slug: c.slug,
-    name: c.name,
-    province: c.province,
-    count: Math.max(3, Math.round(brand.totalCount * factor)),
-  };
-});
+const brandListings = liveCounts.brand(make!);
+const brandDealers = liveCounts.brandDealers(make!);
 
-const totalDealers = cityCards.reduce((s, c) => {
-  const factor = c.count / 1284;
-  return s + Math.max(3, Math.round(brand.dealerCount * factor));
-}, 0);
+const cityCards = TIER_1_CITIES.map((c) => ({
+  slug: c.slug,
+  name: c.name,
+  province: c.province,
+  count: liveCounts.cityBrand(c.slug, make!),
+}));
 
 const title = `Used ${brand.name} cars across Canada — japanauto.ca`;
-const description = `Used ${brand.name} cars in ${TIER_1_CITIES.length} major Canadian cities. ${totalDealers} ${brand.name} dealers nationwide. AMVIC-verified, VIN-checked.`;
+const description = brandListings > 0
+  ? `Used ${brand.name} cars in ${TIER_1_CITIES.length} major Canadian cities. ${brandListings} live listing${brandListings === 1 ? '' : 's'} from AMVIC-licensed dealers, every VIN checked.`
+  : `Used ${brand.name} cars across Canada's major cities. Live listings from AMVIC-licensed dealers appear as partners onboard — every VIN checked.`;
 const canonical = `https://japanauto.ca/used-cars/${make}/`;
 
 const faqLd = faqPage(brand.faqs.map((f) => f.q), brand.faqs.map((f) => f.a));
@@ -65,7 +62,9 @@ const schemaLD = [
   },
 ];
 
-const subtitleHtml = `<span class="num">${totalDealers}</span> ${brand.name} dealers across <span class="num">${TIER_1_CITIES.length}</span> Canadian cities · Updated today`;
+const subtitleHtml = brandListings > 0
+  ? `<span class="num">${brandListings}</span> live ${brand.name} listing${brandListings === 1 ? '' : 's'} from <span class="num">${brandDealers}</span> AMVIC-licensed dealer${brandDealers === 1 ? '' : 's'}`
+  : `Live ${brand.name} listings appear here as AMVIC-licensed dealers onboard across <span class="num">${TIER_1_CITIES.length}</span> Canadian cities`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" />
@@ -85,7 +84,32 @@ const subtitleHtml = `<span class="num">${totalDealers}</span> ${brand.name} dea
     subtitle={subtitleHtml}
   />
 
-  <CityDirectoryGrid brandSlug={make!} brandName={brand.name} cities={cityCards} />
+  {/* Inlined city directory (was CityDirectoryGrid): identical markup, but a
+      zero count renders honest onboarding copy instead of "0 cars". */}
+  <section style="padding:0 16px 32px">
+    <h2 class="sr-only">{`${brand.name} availability across Canadian cities`}</h2>
+    <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px">
+      {cityCards.map((c) => (
+        <a
+          href={`/${c.slug}/${make}/`}
+          class="card"
+          style="display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:96px;text-align:left"
+        >
+          <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;gap:8px">
+            {c.count > 0 ? (
+              <span class="t-caption" style="font-size:10px">
+                <span class="num">{c.count.toLocaleString('en-US')}</span> cars
+              </span>
+            ) : (
+              <span class="t-caption" style="font-size:10px">Dealers onboarding</span>
+            )}
+            <span class="t-caption t-mono" style="font-size:10px">{c.province}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
 
   <AboutBrandSection title={brand.aboutTitle} paragraphs={brand.aboutParagraphs} />
 
