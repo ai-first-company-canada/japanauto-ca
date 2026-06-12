@@ -1,6 +1,9 @@
 /**
- * POST /api/auth/password-reset/request   — request reset email (still 501)
- * POST /api/auth/password-reset/confirm   — confirm with token, set new password
+ * POST /api/auth/password-reset/confirm — consume a token, set a new password.
+ *
+ * Lives in its own file because Pages routes strictly by path: the original
+ * single-file password-reset.ts answered ONLY /api/auth/password-reset, and
+ * /confirm 405'd in prod (caught by the 2026-06-12 doc-pass prod probe).
  *
  * The REQUEST path stays a skeleton until an email service exists (post-launch
  * Resend). Until then reset tokens are minted by the ADMIN panel
@@ -17,14 +20,14 @@
  * session: refresh tokens revoked + token_epoch bumped (audit #11).
  */
 
-import type { Env } from "../../../types/env";
+import type { Env } from "../../../../types/env";
 import {
-  passwordResetRequestSchema, passwordResetConfirmSchema, zodErrorToApiError,
-} from "../../../lib/schema";
-import { json, jsonError, badRequest, notImplemented } from "../_lib/response";
-import { hashPassword } from "../_lib/auth";
-import { bumpTokenEpoch, revokeAllRefreshTokensForDealer } from "../_lib/db";
-import { rateLimit } from "../_lib/rate-limit";
+  passwordResetConfirmSchema, zodErrorToApiError,
+} from "../../../../lib/schema";
+import { json, jsonError, badRequest } from "../../_lib/response";
+import { hashPassword } from "../../_lib/auth";
+import { bumpTokenEpoch, revokeAllRefreshTokensForDealer } from "../../_lib/db";
+import { rateLimit } from "../../_lib/rate-limit";
 
 async function sha256Hex(s: string): Promise<string> {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
@@ -32,24 +35,10 @@ async function sha256Hex(s: string): Promise<string> {
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const url = new URL(request.url);
-  const action = url.pathname.endsWith("/confirm") ? "confirm" : "request";
-
   let body: unknown;
   try { body = await request.json(); }
   catch { return badRequest("Invalid JSON"); }
 
-  if (action === "request") {
-    const parsed = passwordResetRequestSchema.safeParse(body);
-    if (!parsed.success) {
-      const err = zodErrorToApiError(parsed.error);
-      return jsonError(422, err.error, err.message, err.issues);
-    }
-    // No email service yet — the admin panel mints reset links instead.
-    return notImplemented("Password reset by email is not available yet — contact support@japanauto.ca");
-  }
-
-  // ---- confirm ----
   const parsed = passwordResetConfirmSchema.safeParse(body);
   if (!parsed.success) {
     const err = zodErrorToApiError(parsed.error);
