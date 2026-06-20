@@ -49,6 +49,7 @@ export const MODELS_BY_BRAND: Record<string, ModelStub[]> = {
     { slug: 'cx-5',   name: 'CX-5',       baseCount: 14 },
     { slug: 'cx-30',  name: 'CX-30',      baseCount: 8 },
     { slug: 'cx-9',   name: 'CX-9',       baseCount: 5 },
+    { slug: 'cx-7',   name: 'CX-7',       baseCount: 6 },
     { slug: 'mx-5',   name: 'MX-5 Miata', baseCount: 3 },
   ],
   subaru: [

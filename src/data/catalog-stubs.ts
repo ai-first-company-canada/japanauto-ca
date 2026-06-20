@@ -93,6 +93,7 @@ const MODEL_VARIANTS: Record<string, { variant: ListingVariant; tones: ListingTo
   'cx-5':          { variant: 'suv',   tones: ['crimson','midnight','pearl','silver'] },
   'cx-30':         { variant: 'suv',   tones: ['crimson','silver','pearl'] },
   'cx-9':          { variant: 'suv',   tones: ['midnight','silver','pearl'] },
+  'cx-7':          { variant: 'suv',   tones: ['silver','midnight','pearl','crimson'] },
   'rogue':         { variant: 'suv',   tones: ['pearl','midnight','silver','graphite'] },
   'pathfinder':    { variant: 'suv',   tones: ['midnight','silver','graphite','pearl'] },
   'murano':        { variant: 'suv',   tones: ['midnight','pearl','silver'] },
