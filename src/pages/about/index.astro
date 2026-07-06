@@ -1,0 +1,131 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+
+const url = Astro.url.toString();
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'About', item: url },
+    ],
+  },
+  {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name: 'About japanauto.ca',
+    description: 'What japanauto.ca is, who runs it, and how it makes money.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+];
+---
+<BaseLayout
+  title="About japanauto.ca"
+  description="What japanauto.ca is, who runs it, and how it makes money — an independent Calgary-based marketplace for used Japanese cars and salvage-yard parts."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'About' },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:16px">About japanauto.ca</h1>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is a focused Canadian marketplace for used Japanese vehicles and salvage-yard donor
+      parts. We bring together listings from licensed dealers and salvage yards across six metros —
+      Toronto, Montreal, Vancouver, Calgary, Edmonton and Ottawa — and put them in one place that is
+      easy to search. We are an aggregator, not the seller. Every car and every part belongs to the
+      dealer or yard named on the listing, and the sale happens directly between you and them.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Why Japanese-only</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      A narrow marketplace is a more useful one. By covering only Japanese makes and the yards that
+      part them out, we can organize inventory the way an owner actually thinks — by model, generation,
+      engine code and the specific donor part you need. A generalist listings site cannot do that well
+      across every brand. It also lets us build reference material — model histories, common-fault
+      notes, parts-fitment context — that stays accurate because the scope is contained. If you are
+      shopping a Japanese car or hunting a part for one, this site is built around your search rather
+      than trying to serve everyone at once.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">How we help buyers</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Listings carry the vehicle&#39;s VIN so you can run your own history check before you contact a
+      seller, and we validate VIN format on the way in rather than accepting whatever is typed. Where
+      it matters, we explain the rules that govern a purchase — the difference between buying from an
+      AMVIC-licensed dealer in Alberta or an OMVIC-licensed dealer in Ontario versus a private seller,
+      and what a salvage or rebuilt title means for a car or a part. We show honest empty states: if a
+      city or model has no matching inventory today, the page says so plainly. We do not pad results
+      with fake or expired listings to look busier than we are.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">How we make money</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Buyers pay nothing to search or contact a seller. Our revenue comes from dealers and salvage
+      yards who list with us. There is a Free tier and a paid <strong style="color:var(--color-ink-strong);font-weight:600">Pro</strong>
+      subscription with higher listing limits and more tools; every new seller account starts with a
+      30-day Pro trial, no card required. Separately, official-brand dealers can buy a featured
+      new-vehicle placement on their brand&#39;s model pages in a city — one dealer per brand per city.
+      Those placements are always disclosed as sponsored and kept out of the ranked listing results.
+      See <a href="/dealers/pricing/" style="color:var(--color-ink-strong);text-decoration:underline">dealer pricing</a>
+      for the full breakdown.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Editorial integrity</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Our guides and explainers are kept separate from what advertisers pay for. Manufacturers and
+      dealers cannot buy editorial coverage or a better review, and sponsored placements never appear
+      inside editorial content without a clear label. How we research, fact-check and update that
+      content is documented in our
+      <a href="/editorial-policy/" style="color:var(--color-ink-strong);text-decoration:underline">editorial policy</a>,
+      and the people who write and review it are named on the
+      <a href="/editorial-team/" style="color:var(--color-ink-strong);text-decoration:underline">editorial team page</a>.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Who runs it</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is built and operated by an independent Canadian IT company based in Calgary,
+      Alberta. We are not owned by a manufacturer, a dealer group or a listings conglomerate. We do
+      plan to add an AMVIC-licensed dealership arm in the future, but it will be run as a separate
+      business and kept at arm&#39;s length from the marketplace. The reason is simple: a marketplace
+      that also sells cars has an incentive to favour its own inventory, and we would rather remove
+      that temptation by structure than ask you to trust that we resist it. If and when the dealership
+      lists on the site, it will appear under a neutral brand and follow exactly the same rules as any
+      other seller.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Where to go next</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Browse <a href="/used-cars/" style="color:var(--color-ink-strong);text-decoration:underline">used cars</a>,
+      search <a href="/parts/" style="color:var(--color-ink-strong);text-decoration:underline">salvage-yard parts</a>,
+      or if you sell vehicles or part them out, see
+      <a href="/dealers/pricing/" style="color:var(--color-ink-strong);text-decoration:underline">dealer pricing</a>.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Contact</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Questions, feedback or corrections — email
+      <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>
+      or call <a href="tel:+18335272622" style="color:var(--color-ink-strong);text-decoration:underline">1-833-527-2622</a>.
+      For a specific car or part, contact the seller directly through the listing page.
+    </p>
+  </article>
+</BaseLayout>

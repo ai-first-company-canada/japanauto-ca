@@ -1,13 +1,12 @@
 ---
 import Wordmark from '../atoms/Wordmark.astro';
-import Icon, { type IconName } from '../atoms/Icon.astro';
+import Icon from '../atoms/Icon.astro';
 
 interface FooterCol {
   title: string;
   items: Array<{ label: string; href: string }>;
 }
 
-const socialIcons: IconName[] = ['x', 'instagram', 'facebook', 'youtube'];
 
 const cols: FooterCol[] = [
   {
@@ -59,19 +58,6 @@ const cols: FooterCol[] = [
   <p class="t-body-s ink-muted" style="margin-top:12px;font-size:13px;max-width:280px;line-height:19px">
     Canada's marketplace for used Japanese cars and parts.
   </p>
-  <div style="margin-top:20px;display:flex;gap:8px">
-    {socialIcons.map((s) => (
-      <a
-        href={`/social/${s}/`}
-        class="icon-btn"
-        style="width:40px;height:40px;border:1px solid var(--color-divider)"
-        aria-label={s}
-      >
-        <Icon name={s} size={20} />
-      </a>
-    ))}
-  </div>
-
   <div style="margin-top:28px;display:grid;grid-template-columns:1fr;gap:0">
     {cols.map((col) => (
       <details style="border-top:1px solid var(--color-divider)">
@@ -104,13 +90,6 @@ const cols: FooterCol[] = [
     <div class="footer-desktop__brand">
       <Wordmark size={22} />
       <p>Canada's marketplace for used Japanese cars and parts.</p>
-      <div class="footer-desktop__socials">
-        {socialIcons.map((s) => (
-          <a href={`/social/${s}/`} aria-label={s}>
-            <Icon name={s} size={18} />
-          </a>
-        ))}
-      </div>
     </div>
     {cols.map((col) => (
       <div class="footer-desktop__col">

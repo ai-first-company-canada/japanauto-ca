@@ -1,0 +1,170 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+
+const url = Astro.url.toString();
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Terms of Use', item: url },
+    ],
+  },
+  {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name: 'Terms of Use — japanauto.ca',
+    description: 'The terms governing use of japanauto.ca by visitors and dealers.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+];
+---
+<BaseLayout
+  title="Terms of Use — japanauto.ca"
+  description="The terms governing use of japanauto.ca by visitors and dealers — a Calgary-based marketplace for used Japanese cars and salvage-yard parts."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Terms of Use' },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:16px">Terms of Use</h1>
+
+    <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;margin-bottom:14px">
+      Effective 5 July 2026.
+    </p>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      These Terms of Use govern your access to and use of japanauto.ca (the &#39;Site&#39;), a Canadian
+      online marketplace for used Japanese vehicles and salvage-yard parts based in Calgary, Alberta
+      and operated by NeuroDealer (the &#39;Company&#39;, &#39;we&#39;, &#39;us&#39;). By accessing the Site, browsing
+      listings, or creating an account, you agree to be bound by these Terms. If you do not agree,
+      please do not use the Site.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">1. Who we are</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is a marketplace and listings aggregator. We provide a platform where dealers,
+      salvage yards, and private sellers can advertise vehicles and parts to buyers in Toronto,
+      Montreal, Vancouver, Calgary, Edmonton, and Ottawa. We are not the seller of any vehicle or
+      part listed on the Site, we do not take title to any item, and we are not a party to any
+      transaction between a buyer and a seller. Each seller is solely responsible for its own
+      listings, the accuracy of the information in them, the condition and legality of the items it
+      advertises, and the completion of any sale.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">2. Eligibility</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      You must be at least 18 years of age and resident in Canada to create an account or transact
+      through sellers found on the Site. By using the Site you represent that you meet these
+      requirements and that any information you provide is accurate and current.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">3. Dealer and seller accounts</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Sellers may create Free or Pro accounts; new accounts begin with a 30-day trial. If you post
+      listings, you agree that every listing will be accurate, complete, and not misleading, and
+      that you hold the right to sell the items you advertise. Compliance with all applicable
+      dealer-licensing and consumer-protection law — including AMVIC registration in Alberta, OMVIC
+      registration in Ontario, and the equivalent regime in any other province — is your
+      responsibility, not ours. You must not misrepresent a vehicle&#39;s history, title status,
+      mileage, damage, or condition. We may, at our discretion and without notice, decline, edit,
+      suspend, or remove any listing or account that we believe violates these Terms, applicable
+      law, or the integrity of the marketplace.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">4. Acceptable use</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      You agree not to: scrape, crawl, harvest, or bulk-copy content or data from the Site by any
+      automated means without our prior written consent; post fraudulent, deceptive, or unlawful
+      listings or content; impersonate any person or entity; interfere with or attempt to gain
+      unauthorized access to the Site, its accounts, or its infrastructure; or use the Site for any
+      purpose that is illegal or that infringes the rights of others. We may investigate and take
+      appropriate action, including account termination and referral to authorities, against
+      conduct we consider a violation.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">5. Intellectual property</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      The Site, including its design, text, editorial content, logos, and software, is owned by the
+      Company or its licensors and is protected by Canadian and international intellectual-property
+      law. You may view and use the Site for your own personal or internal business purposes but may
+      not reproduce, distribute, or create derivative works from it without permission. Sellers
+      retain ownership of the listing content and images they submit but grant us a non-exclusive,
+      royalty-free licence to host, display, and promote that content on and in connection with the
+      Site.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">6. Listings are informational</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Listings, prices, specifications, and any editorial guides on the Site are provided for
+      information only. Nothing on the Site is an offer, a promise, or a warranty by us that any
+      vehicle or part is available, accurately described, roadworthy, or fit for a particular
+      purpose. Availability and terms are set by the seller and may change without notice.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">7. Disclaimers and limitation of liability</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      The Site is provided on an &#39;as is&#39; and &#39;as available&#39; basis. To the fullest extent permitted
+      by law, we disclaim all warranties, express or implied, including warranties of
+      merchantability, fitness for a particular purpose, and non-infringement. Vehicles and parts
+      are sold by third parties; before you buy, you are responsible for independently verifying the
+      VIN, ownership, lien status, accident and title history, and mechanical condition of any item,
+      and we strongly recommend an independent inspection and a title/lien search. To the fullest
+      extent permitted by law, the Company is not liable for any indirect, incidental, special, or
+      consequential damages, or for any loss arising out of a transaction between you and a seller,
+      the condition of any vehicle or part, or your use of or inability to use the Site.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">8. Indemnity</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      You agree to indemnify and hold harmless the Company and its officers, employees, and agents
+      from any claim, loss, liability, or expense (including reasonable legal fees) arising out of
+      your listings, your use of the Site, your breach of these Terms, or your violation of any law
+      or third-party right.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">9. Governing law</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      These Terms are governed by the laws of the Province of Alberta and the federal laws of Canada
+      applicable there, without regard to conflict-of-laws principles. You agree to the exclusive
+      jurisdiction of the courts of Alberta for any dispute arising out of these Terms or your use
+      of the Site.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">10. Changes to these Terms</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      We may update these Terms from time to time. When we do, we will revise the effective date at
+      the top of this page. Your continued use of the Site after a change takes effect constitutes
+      acceptance of the revised Terms.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">11. Contact</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Questions about these Terms — <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>
+      or 1-833-527-2622.
+    </p>
+
+    <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;margin-top:24px">
+      Note: this is a standard template and is pending review by Canadian legal counsel before we
+      onboard paying customers. It does not constitute legal advice.
+    </p>
+  </article>
+</BaseLayout>

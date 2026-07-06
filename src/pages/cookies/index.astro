@@ -1,0 +1,92 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+
+const url = Astro.url.toString();
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Cookie notice', item: url },
+    ],
+  },
+  {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name: 'Cookie Notice — japanauto.ca',
+    description: 'The cookies and local storage japanauto.ca uses and why.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+];
+---
+<BaseLayout
+  title="Cookie Notice — japanauto.ca"
+  description="The cookies and local storage japanauto.ca uses and why: strictly necessary sign-in, security and city-preference only. No advertising or tracking cookies."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Cookie notice' },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:16px">Cookie Notice</h1>
+
+    <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;margin-bottom:14px">
+      Effective 5 July 2026.
+    </p>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca keeps this simple. We use only strictly-necessary, first-party cookies and browser local storage — the small pieces of data a site needs to sign you in, keep you secure, and remember which city you&#39;re browsing. We do not use third-party advertising cookies, retargeting pixels, or analytics-tracking cookies. Nothing on this site is set to follow you around the web.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">What we set</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">Sign-in session &amp; refresh tokens.</strong>
+      When a dealer signs in, we store a short-lived session token and a refresh token so you stay logged in across pages without re-entering your password on every click. These are first-party, set by japanauto.ca, and cleared when you sign out.
+    </p>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">Security &amp; CSRF.</strong>
+      We set a security token to protect forms and account actions against cross-site request forgery. This guards your account and cannot be turned off while you&#39;re signed in.
+    </p>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">City preference (<code style="font-family:var(--font-mono);font-size:13px;background:var(--color-bg-muted);padding:1px 6px;border-radius:3px">jc_city</code>).</strong>
+      A small hint that remembers whether you last browsed Toronto, Montreal, Vancouver, Calgary, Edmonton, or Ottawa, so the navigation can point you back to your city. It holds a city name and nothing else — no identifier, no profile.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">No advertising or analytics tracking</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      At this time we run no third-party advertising, retargeting, or analytics-tracking cookies. The view counts and aggregate figures dealers see are calculated first-party on our own servers — they don&#39;t rely on a cookie in your browser and don&#39;t identify you individually.
+    </p>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      If we ever add a tool that does track — for example a Meta Pixel or an ad-retargeting tag — we will disclose it on this page and place it behind a clear consent choice, so it will not run unless you opt in.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">How to control cookies</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      You can view, block, or delete cookies from your browser settings — the controls live under Privacy or Site Settings in Chrome, Safari, Firefox, and Edge. Most browsers also let you clear stored site data for a single site. Because the cookies we set are strictly necessary, blocking or deleting them breaks sign-in: signed-in dealers will be logged out and unable to log back in until cookies are allowed again. Browsing listings without an account works fine either way.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Questions</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is operated from Calgary, AB. If you have a question about this notice, email
+      <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>
+      or call <a href="tel:+18335272622" style="color:var(--color-ink-strong);text-decoration:underline">1-833-527-2622</a>.
+    </p>
+  </article>
+</BaseLayout>

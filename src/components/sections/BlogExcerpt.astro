@@ -26,15 +26,17 @@ const { heading = 'Read before you buy', articles } = Astro.props;
     {articles.map((a) => (
       <a href={a.href ?? `/blog/${a.slug ?? ''}/`} class="card" style="overflow:hidden;display:flex;flex-direction:column">
         <div class="thumb thumb-16x9" style={`background:${a.tone};position:relative`}>
-          <span class="t-caption" style="position:absolute;left:12px;bottom:12px;color:#fff;font-size:10px">[draft photo]</span>
+          <span class="t-caption" style="position:absolute;left:12px;bottom:12px;color:rgba(255,255,255,0.85);font-size:10px;letter-spacing:0.04em;text-transform:uppercase">{a.cat}</span>
         </div>
         <div style="padding:16px">
           <span class="t-caption" style="color:var(--color-accent);font-size:10px">{a.cat}</span>
           <h3 class="t-h-m" style="font-size:16px;margin-top:8px;line-height:22px">{a.title}</h3>
           <p class="t-body-s ink-muted" style="margin-top:8px;font-size:13px;line-height:19px">{a.excerpt}</p>
-          <p class="t-caption" style="margin-top:12px;font-size:10px">
-            {a.read} · <span class="t-mono">{a.date}</span>
-          </p>
+          {(a.read || a.date) && (
+            <p class="t-caption" style="margin-top:12px;font-size:10px">
+              {a.read}{a.read && a.date ? ' · ' : ''}{a.date && <span class="t-mono">{a.date}</span>}
+            </p>
+          )}
         </div>
       </a>
     ))}

@@ -1,0 +1,109 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+
+const url = Astro.url.toString();
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Accessibility', item: url },
+    ],
+  },
+  {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name: 'Accessibility — japanauto.ca',
+    description: 'japanauto.ca accessibility commitment and how to report barriers.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+];
+---
+<BaseLayout
+  title="Accessibility — japanauto.ca"
+  description="japanauto.ca's accessibility commitment: we target WCAG 2.1 AA, treat it as ongoing work, and explain how to report a barrier so we can fix it."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Accessibility' },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:16px">Accessibility</h1>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is a Canadian marketplace for used Japanese cars and salvage-yard parts, based
+      in Calgary, AB, and used by buyers and sellers across Toronto, Montreal, Vancouver, Calgary,
+      Edmonton, and Ottawa. We want the site to work for everyone who visits it, including people
+      who use screen readers, keyboard navigation, screen magnification, or other assistive
+      technology. This page explains what we aim for and how to tell us when something gets in
+      your way.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Our target</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      We design and build against the Web Content Accessibility Guidelines (WCAG) 2.1 at Level AA
+      as our reference standard. That is the target we hold ourselves to as we add features and
+      revise existing pages.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">What we do</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      In practice, this means we work toward the following on every page:
+    </p>
+    <ul class="t-body-m" style="font-size:15px;line-height:23px;margin:0 0 14px;padding-left:22px">
+      <li style="margin-bottom:8px">Semantic HTML &mdash; headings, landmarks, lists, and buttons marked up for their actual role, so assistive technology can announce the structure correctly.</li>
+      <li style="margin-bottom:8px">Full keyboard navigation &mdash; you can reach and operate menus, filters, forms, and listing controls without a mouse, with a visible focus indicator.</li>
+      <li style="margin-bottom:8px">Alt text on listing photos, so vehicle and parts images are described rather than skipped.</li>
+      <li style="margin-bottom:8px">Colour contrast between text and its background that meets the AA thresholds, and information that never relies on colour alone.</li>
+    </ul>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">A work in progress</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Accessibility is ongoing work, not a finished state. We do not claim full conformance with
+      WCAG 2.1 AA across the whole site. Some pages, third-party components, and seller-supplied
+      content will fall short of our target, and new features can introduce issues we have not yet
+      caught. We treat reported barriers as bugs and prioritise them alongside our other work.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Report a barrier</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      If any part of japanauto.ca is hard or impossible to use, please tell us. Email
+      <a href="mailto:support@japanauto.ca?subject=Accessibility" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>
+      with the page URL, what you were trying to do, and the assistive technology, browser, or
+      device you were using if you know it. You can also reach us by phone at
+      <a href="tel:+18335272622" style="color:var(--color-ink-strong);text-decoration:underline">1-833-527-2622</a>.
+      We aim to acknowledge accessibility reports within a few business days and will work with you
+      on the information or transaction you were trying to complete.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Ontario (AODA)</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Because we operate in Ontario, we are aware of the Accessibility for Ontarians with
+      Disabilities Act (AODA) and its Integrated Accessibility Standards for information and
+      communications. Our WCAG 2.1 AA target and our reporting process are how we work toward
+      those expectations. If you need information from this site in an alternative format, contact
+      us using the details above and we will do our best to provide it.
+    </p>
+
+    <p class="t-body-m ink-muted" style="font-size:13px;line-height:20px;margin-top:24px">
+      Effective date: 5 July 2026. We review this statement as the site changes.
+    </p>
+  </article>
+</BaseLayout>

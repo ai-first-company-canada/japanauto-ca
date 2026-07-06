@@ -1,0 +1,144 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+
+const url = Astro.url.toString();
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Privacy Policy', item: url },
+    ],
+  },
+  {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name: 'Privacy Policy — japanauto.ca',
+    description: 'How japanauto.ca collects, uses, and protects personal information under PIPEDA.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+];
+---
+<BaseLayout
+  title="Privacy Policy — japanauto.ca"
+  description="How japanauto.ca collects, uses, and protects personal information under PIPEDA, with Quebec Law 25 rights for QC users. We do not sell your data."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Privacy Policy' },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:720px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:16px">Privacy Policy</h1>
+
+    <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;margin-bottom:14px">
+      Effective 5 July 2026
+    </p>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is an independent Canadian marketplace for used Japanese vehicles and salvage-yard parts, operated from Calgary, Alberta by an information-technology company (working name NeuroDealer). This policy explains what personal information we collect, why, how we protect it, and the choices you have. It is written to align with Canada&#39;s Personal Information Protection and Electronic Documents Act (PIPEDA). If you are in Quebec, additional rights under An Act to modernize legislative provisions as regards the protection of personal information (Law 25) also apply, and we note them below.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">What we collect</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">Account information.</strong> When you create a buyer or seller account we collect your name, email address, and phone number. Dealers and salvage yards also provide dealership details — business name, city, and the contact information shown on their listings across our six cities (Toronto, Montreal, Vancouver, Calgary, Edmonton, and Ottawa).
+    </p>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">Usage information.</strong> We record which pages are viewed so we can keep first-party aggregate counts — for example, how many people looked at a given listing. IP addresses are hashed at rest and never stored raw; we use them only for security and abuse prevention. We do not build advertising profiles from your browsing.
+    </p>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">Contact reveals.</strong> When you choose to reveal a seller&#39;s contact details on a listing, we log that action so we can rate-limit abuse and give dealers an accurate count of interest in their inventory.
+    </p>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      <strong style="color:var(--color-ink-strong);font-weight:600">Cookies.</strong> We use a small number of first-party cookies to keep you signed in, remember your selected city, and protect against automated abuse. We do not set advertising or cross-site tracking cookies today.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Why we collect it</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      We use personal information to provide the marketplace, to authenticate you when you sign in, and to prevent fraud and abuse. Dealers on a paid or trial plan receive periodic reports summarizing activity on their listings; every such email includes a one-click unsubscribe link, and unsubscribing does not affect your account or listings. We do not use your information for any purpose that is incompatible with the one for which it was collected without asking you first.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Consent</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      By creating an account and using japanauto.ca you consent to the collection and use of your information as described here. You can withdraw consent at any time by closing your account or by emailing us; where withdrawal means we can no longer provide part of the service, we will tell you. Some information — for example a hashed record that a listing was reported — may be kept where the law requires or permits it.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">We do not sell your personal information</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca does not sell, rent, or trade your personal information to anyone. We do not run ad-tracking cookies, and we do not share your identity with advertisers.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">When we share information</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      We share information only with service providers who help us run the site, and only as much as they need:
+    </p>
+    <ul class="t-body-m" style="font-size:15px;line-height:23px;margin:0 0 14px 20px;list-style:disc">
+      <li style="margin-bottom:8px"><strong style="color:var(--color-ink-strong);font-weight:600">Cloudflare</strong> hosts the site and its database on its global network and provides security and content delivery.</li>
+      <li style="margin-bottom:8px"><strong style="color:var(--color-ink-strong);font-weight:600">Resend</strong> delivers transactional and report emails on our behalf.</li>
+      <li style="margin-bottom:8px">Our external content and syndication pipeline receives only <strong style="color:var(--color-ink-strong);font-weight:600">listing snapshots that the dealer has consented to publish</strong> — vehicle and parts details, not buyer identities. No ad-tracking cookies are involved.</li>
+    </ul>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      We may also disclose information where required by Canadian law, to respond to a valid legal request, or to protect the rights and safety of our users and the public.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Retention</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      We keep personal information only as long as it is needed. Expired sign-in tokens, contact-reveal records, and rate-limit entries are swept on a rolling basis. IP addresses are stored only in hashed form and are not retained in a way that identifies you. When you close your account we delete or de-identify your personal information, except where we are required or permitted to retain a limited record.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Security</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      All traffic to and from japanauto.ca is encrypted in transit with TLS. Passwords are never stored in plain text — they are hashed with PBKDF2. IP addresses are hashed at rest. No method of storage or transmission is perfectly secure, but we design our systems to minimize the amount of identifying data we hold in the first place.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Your rights under PIPEDA</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      You have the right to access the personal information we hold about you, to ask us to correct it if it is inaccurate, and to withdraw your consent to its use. To exercise any of these rights, email <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>. If you are not satisfied with how we handle your request, you may file a complaint with the Office of the Privacy Commissioner of Canada (OPC) at priv.gc.ca.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Quebec Law 25</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      If you are a Quebec resident, Law 25 gives you additional rights, including the right to be informed when your information is collected, the right to data portability (to receive the information you provided in a structured, commonly used technological format), and the right to request that inaccurate information be corrected or that outdated information be deleted. You may also complain to the Commission d&#39;acc&egrave;s &agrave; l&#39;information du Qu&eacute;bec. To exercise these rights, contact our privacy officer at <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a>.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Children</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is a marketplace for vehicle and parts transactions and is not directed at anyone under 18. We do not knowingly collect personal information from minors. If you believe a minor has provided us information, contact us and we will delete it.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Where your data is held</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Our site and database run on Cloudflare&#39;s global network, which may store and process data at locations outside your province or outside Canada. Wherever it is processed, your information remains subject to this policy and to appropriate contractual and security safeguards.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Changes to this policy</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      We may update this policy as the service and the law evolve. When we make a material change we will update the effective date at the top of this page, and, where appropriate, notify account holders by email.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 10px">Contact</h2>
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Questions, requests, or complaints about privacy can be sent to our privacy officer at <a href="mailto:support@japanauto.ca" style="color:var(--color-ink-strong);text-decoration:underline">support@japanauto.ca</a> or by phone at 1-833-527-2622.
+    </p>
+
+    <p class="t-body-m ink-muted" style="font-size:13px;line-height:21px;margin-top:20px">
+      This policy is provided for information and is pending review by legal counsel. It does not constitute legal advice.
+    </p>
+  </article>
+</BaseLayout>

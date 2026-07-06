@@ -45,3 +45,14 @@
 # /dealers/list/ was a dead marketing link (launch dry-run 2026-06-12) — dealer signup is the real action.
 /dealers/list/ /dealer/signup/ 301
 /dealers/list /dealer/signup/ 301
+
+# Salvage yards are the Parts surface (deep-audit WEB-1) — footer/menu "Salvage yards" resolve here.
+/salvage-yards/          /parts/            301
+/toronto/salvage-yards/   /toronto/parts/    301
+/montreal/salvage-yards/  /montreal/parts/   301
+/vancouver/salvage-yards/ /vancouver/parts/  301
+/calgary/salvage-yards/   /calgary/parts/    301
+/edmonton/salvage-yards/  /edmonton/parts/   301
+/ottawa/salvage-yards/    /ottawa/parts/     301
+# "AMVIC verified" / "About AMVIC" → the published explainer (deep-audit WEB-1).
+/about/amvic/            /blog/amvic-vs-omvic-explained/  301

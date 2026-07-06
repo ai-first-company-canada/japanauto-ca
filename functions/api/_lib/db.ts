@@ -19,6 +19,7 @@ import {
   type Dealer, type Listing, type City, type Make,
   type MediaPublic, type MediaFinalizeInput, type VinDecodePayload,
 } from "../../../lib/schema";
+import { rateLimit, hashIp } from "./rate-limit";
 
 // ============================================================================
 // DEALERS
@@ -855,6 +856,37 @@ export async function recordView(
         views_paid = views_paid + ?5
     `).bind(entityType, entityId, statsDay(), social, paid),
   ]);
+}
+
+/**
+ * View counting with per-(client, entity, day) idempotency (deep-audit
+ * PERF-1). recordView is 2 unthrottled D1 writes/call and the middleware bot
+ * gate is a spoofable UA regex, so a single client looping a detail URL with
+ * a cache-busting query string could drive unbounded writes AND inflate the
+ * dealer-visible view_count. This gate counts each client at most once per
+ * entity per day: the first view of the day passes the 1/day limiter and is
+ * counted; repeats are a no-op for counting (they cost only the limiter's one
+ * upsert, never the 2-write recordView batch). Runs entirely off the render
+ * path via ctx.waitUntil; failures are swallowed (a dropped view must never
+ * surface an error to the page). Raw write-amplification under a distributed
+ * flood is an edge concern (Cloudflare WAF rate-limit / a cache rule that
+ * ignores unknown query strings on the listing detail routes — see runbook),
+ * not closable in code.
+ */
+export async function recordViewThrottled(
+  env: Env, request: Request, entityType: StatsEntityType, entityId: string, source: ViewSource,
+): Promise<void> {
+  try {
+    const ip = request.headers.get("cf-connecting-ip") ?? "0.0.0.0";
+    const ipHash = await hashIp(env, ip); // daily-rotating salt → stable within a day
+    const gate = await rateLimit(env, `${ipHash}:${entityType}:${entityId}`, {
+      bucket: "view-dedupe", limit: 1, windowSeconds: 86400,
+    });
+    if (!gate.allowed) return; // already counted this client for this entity today
+    await recordView(env, entityType, entityId, source);
+  } catch (e) {
+    console.error("recordViewThrottled: dropped view:", e instanceof Error ? e.message : e);
+  }
 }
 
 export interface DailyStatsRow {

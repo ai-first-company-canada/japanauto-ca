@@ -1,0 +1,177 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/sections/Navbar.astro';
+import MenuDrawer from '../../components/sections/MenuDrawer.astro';
+import CityPickerDialog from '../../components/sections/CityPickerDialog.astro';
+import Footer from '../../components/sections/Footer.astro';
+import Breadcrumb from '../../components/atoms/Breadcrumb.astro';
+import { TIER_1_CITIES } from '../../data/brand-content';
+
+const url = Astro.url.toString();
+
+const PROVINCE_NAMES: Record<string, string> = {
+  ON: 'Ontario',
+  QC: 'Quebec',
+  BC: 'British Columbia',
+  AB: 'Alberta',
+};
+
+// Cards are derived from the canonical city list. We deliberately do NOT
+// surface the stub `count` field here — the honest signal is a link, not a number.
+const CITIES = TIER_1_CITIES.map((c) => ({
+  slug: c.slug,
+  name: c.name,
+  province: c.province,
+  provinceName: PROVINCE_NAMES[c.province] ?? c.province,
+  descriptor: `${c.name} metro, ${PROVINCE_NAMES[c.province] ?? c.province}`,
+}));
+
+const schemaLD = [
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://japanauto.ca/' },
+      { '@type': 'ListItem', position: 2, name: 'Cities', item: url },
+    ],
+  },
+  {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name: 'Cities — japanauto.ca',
+    description: 'Browse used Japanese cars and parts by Canadian metro.',
+    url,
+    inLanguage: 'en-CA',
+    publisher: { '@id': 'https://japanauto.ca/#organization' },
+  },
+  {
+    '@type': 'ItemList',
+    '@id': `${url}#city-list`,
+    name: 'Canadian metros on japanauto.ca',
+    numberOfItems: CITIES.length,
+    itemListElement: CITIES.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: `${c.name}, ${c.province}`,
+      url: `https://japanauto.ca/${c.slug}/`,
+    })),
+  },
+];
+---
+<BaseLayout
+  title="Cities — japanauto.ca"
+  description="Browse used Japanese cars and parts by Canadian metro — Toronto, Montreal, Vancouver, Calgary, Edmonton and Ottawa, each with local pricing, taxes and rules."
+  canonical={url}
+  schemaLD={schemaLD}
+>
+  <Navbar slot="navbar" />
+  <MenuDrawer slot="menu-drawer" />
+  <CityPickerDialog slot="city-picker" />
+  <Footer slot="footer" />
+
+  <Breadcrumb
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Cities' },
+    ]}
+  />
+
+  <article class="section" style="padding-top:8px;max-width:900px">
+    <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:16px">Cities</h1>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      japanauto.ca is built city-first: every listing, price and search on the site is scoped to one
+      of six Canadian metros. Pick your city and you see cars and parts near you, priced the way your
+      local market actually prices them — not a national average that ignores where you live. It also
+      means less driving to see a car in person and lower shipping on a salvage-yard part, since the
+      seller is usually in the same region as you.
+    </p>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Local matters more than it looks. Sales tax on a used vehicle runs differently in every
+      province: Alberta charges GST only, while Ontario, Quebec and British Columbia each add a
+      provincial component on top, so the same sticker price lands at a different out-the-door cost
+      depending on the city. Dealers are licensed provincially too — AMVIC in Alberta, OMVIC in
+      Ontario, the OPC in Quebec, the VSA in British Columbia — and each regulator sets its own rules
+      for disclosure, cooling-off and complaint handling. Scoping the site to your metro keeps those
+      details correct by default instead of leaving you to guess which rules apply.
+    </p>
+
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin-bottom:14px">
+      Climate shifts the picture as well. A winter in Edmonton or Ottawa asks more of a used Japanese
+      car — block heaters, winter tires, and the slow toll of road salt on brake lines and rocker
+      panels — than a mild season in Vancouver, and that changes both what a car needs and what a
+      buyer should look for. For parts, geography is just as practical: a donor car in your own city
+      is a short drive to inspect and cheaper to move than one shipped across the country. A local
+      view keeps all of this in front of you rather than buried under listings from provinces you
+      will never buy in.
+    </p>
+
+    <h2 class="t-h-l" style="font-size:20px;line-height:28px;margin:24px 0 14px">Browse by metro</h2>
+
+    <ul class="city-grid" role="list">
+      {CITIES.map((c) => (
+        <li class="city-card">
+          <a href={`/${c.slug}/`} class="city-card__link">
+            <span class="city-card__name t-h-l">{c.name}</span>
+            <span class="city-card__meta t-body-m ink-muted">{c.descriptor}</span>
+            <span class="city-card__cta">Browse listings &rarr;</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;margin-top:20px">
+      More metros will follow as seller coverage grows. If you sell used Japanese cars or run a
+      salvage yard outside these six cities and want your area added,
+      <a href="mailto:support@japanauto.ca?subject=City%20coverage" style="color:var(--color-ink-strong);text-decoration:underline">let us know</a>.
+    </p>
+  </article>
+</BaseLayout>
+
+<style>
+  .city-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .city-card {
+    display: flex;
+  }
+  .city-card__link {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding: 16px 18px;
+    border: 1px solid var(--color-border, #e2e2e2);
+    border-radius: 10px;
+    background: var(--color-bg-surface, #fff);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .city-card__link:hover {
+    border-color: var(--color-ink-strong, #111);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+  .city-card__name {
+    font-size: 18px;
+    line-height: 24px;
+    color: var(--color-ink-strong, #111);
+    font-weight: 600;
+  }
+  .city-card__meta {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .city-card__cta {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--color-ink-strong, #111);
+    font-weight: 500;
+  }
+</style>

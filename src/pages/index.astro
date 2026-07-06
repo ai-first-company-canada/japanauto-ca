@@ -1,4 +1,5 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Navbar from '../components/sections/Navbar.astro';
 import MenuDrawer from '../components/sections/MenuDrawer.astro';
@@ -114,35 +115,40 @@ const FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
-const BLOG_ARTICLES: BlogArticle[] = [
-  {
-    cat: 'Buying guide',
-    title: 'How to verify an AMVIC dealer in Alberta',
-    excerpt: "A 3-minute walkthrough of the public registry — what the licence number tells you and what it doesn't.",
-    read: '5 min read',
-    date: '2026-04-22',
-    tone: '#1F2530',
-    slug: 'how-to-verify-amvic-dealer-alberta',
-  },
-  {
-    cat: 'Maintenance',
-    title: 'CVT vs. conventional automatic on a used Camry',
-    excerpt: 'Long-term reliability, what to listen for on a test drive, and when to walk away.',
-    read: '7 min read',
-    date: '2026-04-15',
-    tone: '#3A3A3D',
-    slug: 'cvt-vs-automatic-used-camry',
-  },
-  {
-    cat: 'Market',
-    title: 'JDM imports in Canada: the 15-year rule, explained',
-    excerpt: 'A plain-English summary of what you can legally import and what to budget for compliance.',
-    read: '6 min read',
-    date: '2026-04-08',
-    tone: '#2F3D2F',
-    slug: 'jdm-imports-canada-15-year-rule',
-  },
+// Homepage editorial module — driven by the REAL, published blog collection
+// (deep-audit WEB-3). The prior hardcoded list linked 3 never-authored slugs
+// with fabricated read-times/dates; this pulls title/excerpt/date from the
+// collection and computes read-time from the actual body, so it can never
+// drift into 404s or invented metadata. A curated slug that is missing or
+// unpublished is dropped and back-filled from the newest published posts.
+const CURATED = [
+  { slug: 'how-to-buy-used-toyota-camry-calgary', cat: 'Buying guide', tone: '#1F2530' },
+  { slug: 'mazda-cx5-vs-crv-vs-rav4',             cat: 'Comparison',   tone: '#2F3D2F' },
+  { slug: 'used-jdm-import-riv-process',          cat: 'Import & regs', tone: '#3A3A3D' },
 ];
+const publishedPosts = (await getCollection('blog'))
+  .filter((p) => p.data.body_status === 'published');
+const byId = new Map(publishedPosts.map((p) => [p.data.slug, p]));
+const TONES = ['#1F2530', '#2F3D2F', '#3A3A3D'];
+const readMins = (body: string) => `${Math.max(1, Math.round((body.trim().split(/\s+/).length) / 200))} min read`;
+const chosen = [
+  ...CURATED.filter((c) => byId.has(c.slug)),
+  ...publishedPosts
+    .filter((p) => !CURATED.some((c) => c.slug === p.data.slug))
+    .map((p, i) => ({ slug: p.data.slug, cat: 'From the blog', tone: TONES[i % TONES.length]! })),
+].slice(0, 3);
+const BLOG_ARTICLES: BlogArticle[] = chosen.map((c) => {
+  const post = byId.get(c.slug)!;
+  return {
+    cat: c.cat,
+    title: post.data.title,
+    excerpt: post.data.tldr_draft,
+    read: readMins(post.body ?? ''),
+    date: post.data.pub_date ? String(post.data.pub_date).slice(0, 10) : '',
+    tone: c.tone,
+    slug: c.slug,
+  };
+});
 
 const GLOSSARY_TERMS: GlossaryTerm[] = [
   { term: 'AMVIC', def: "Alberta's dealer licensing body." },

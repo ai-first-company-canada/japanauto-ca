@@ -14,7 +14,7 @@
 import type { Env } from "../../../types/env";
 import { isListingExpired } from "../../../lib/schema";
 import {
-  getListingDetailBySlug, getMediaForEntity, recordView, classifyViewSource, getVinDecode,
+  getListingDetailBySlug, getMediaForEntity, recordViewThrottled, classifyViewSource, getVinDecode,
 } from "../../api/_lib/db";
 import {
   renderShell, takeCspNonce, esc, fmt, cfImageUrl, formatPhone, relativeTime, safeUrl,
@@ -49,7 +49,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ request, params
   // people, not crawlers. s-maxage=60 means cached hits go uncounted — the
   // numbers are a floor, which is the honest direction to err.
   if (!(data as { isBot?: boolean }).isBot) {
-    waitUntil(recordView(env, 'listing', listing.id, classifyViewSource(new URL(request.url))));
+    waitUntil(recordViewThrottled(env, request, 'listing', listing.id, classifyViewSource(new URL(request.url))));
   }
 
   const [photos, vinDecode] = await Promise.all([

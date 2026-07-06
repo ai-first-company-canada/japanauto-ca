@@ -27,7 +27,7 @@
 import type { Env } from "../../../types/env";
 import {
   getDonorCarBySlug, getMediaForEntity, listRelatedDonors, listDonorCountsByCity,
-  recordView, classifyViewSource, getVinDecode,
+  recordViewThrottled, classifyViewSource, getVinDecode,
 } from "../../api/_lib/db";
 import { renderShell, takeCspNonce, safeUrl, renderFactoryEquipment } from "../../_lib/page-shell";
 import {
@@ -69,7 +69,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ request, params
   // excluded via the middleware UA tag; cached hits (s-maxage=60) go
   // uncounted, so the numbers are a floor.
   if (!(data as { isBot?: boolean }).isBot) {
-    waitUntil(recordView(env, 'donor_car', donor.id, classifyViewSource(new URL(request.url))));
+    waitUntil(recordViewThrottled(env, request, 'donor_car', donor.id, classifyViewSource(new URL(request.url))));
   }
 
   const [photos, sameYard, sameCityModel, otherCities, vinDecode] = await Promise.all([

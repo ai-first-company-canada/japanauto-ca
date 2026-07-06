@@ -227,6 +227,48 @@ def main():
             errors.append((where[0] + (f' (+{len(where)-1} more)' if len(where) > 1 else ''),
                            f'LAUNCH: fabricated literal "{lit}" rendered'))
 
+        # Internal-link integrity (deep-audit WEB-5): a static link to a page
+        # that was never built is a hard 404 the instant indexing opens. Catch
+        # dead footer/nav/body links before the domain attaches. Resolves
+        # against built pages, top-level static assets, and _redirects rules.
+        import re as _re
+        valid = {'/', ''}
+        for pg in pages:
+            u = '/' + pg['rel'][:-len('index.html')] if pg['rel'].endswith('index.html') else '/' + pg['rel']
+            valid.add(u.rstrip('/')); valid.add(u.rstrip('/') + '/')
+        for asset in os.listdir(dist):
+            if os.path.isfile(os.path.join(dist, asset)):
+                valid.add('/' + asset)
+        redirect_res = []
+        rpath = os.path.join(dist, '_redirects')
+        rpath = rpath if os.path.isfile(rpath) else 'public/_redirects'
+        if os.path.isfile(rpath):
+            for line in open(rpath, encoding='utf-8', errors='ignore'):
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    src = line.split()[0]
+                    redirect_res.append(_re.compile('^' + _re.sub(r':[a-z]+', r'[^/]+', src.rstrip('/')) + '/?$'))
+        def _resolves(h):
+            hh = h.rstrip('/') or '/'
+            if hh in valid or (hh + '/') in valid or h in valid:
+                return True
+            return any(r.match(hh) or r.match(h) for r in redirect_res)
+        HREF = _re.compile(r'href="(/[^"#?]*)"')
+        dead_links = {}
+        for pg in pages:
+            try:
+                body = open(os.path.join(dist, pg['rel']), encoding='utf-8', errors='ignore').read()
+            except OSError:
+                continue
+            for h in set(HREF.findall(body)):
+                if h.startswith(('/api/', '/dealer/', '/dashboard')):
+                    continue  # runtime Functions / auth-gated, not static pages
+                if not _resolves(h):
+                    dead_links.setdefault(h, []).append(pg['rel'])
+        for h, where in sorted(dead_links.items()):
+            errors.append((where[0] + (f' (+{len(where)-1} more)' if len(where) > 1 else ''),
+                           f'LAUNCH: dead internal link "{h}" (404 on {len(where)} page(s))'))
+
     # ---- report ----
     idxn = sum(1 for p in pages if not p['noindex'] and p['grp'] != '404')
     mode = ' · LAUNCH mode (demo-content & robots gates active)' if LAUNCH else ''

@@ -122,7 +122,7 @@ Used EV prices in Canada have softened through 2024-2026 as new-vehicle iZEV-reb
 
 The federal Incentives for Zero-Emission Vehicles programme (iZEV) is a national point-of-sale rebate available to qualifying new-vehicle purchases anywhere in Canada. The maximum federal rebate is $5,000 for long-range PHEVs and BEVs, $2,500 for shorter-range PHEVs. Provincial rebates are separate programmes operated by individual provinces — Quebec's Roulez vert (up to $7,000), British Columbia's CleanBC Go Electric (up to $4,000). Provincial rebates stack on top of federal iZEV in Quebec and BC. Alberta and Ontario do not currently offer provincial EV rebates. Used vehicles do not qualify for the federal iZEV but Quebec and BC have piloted used-EV incentive programmes with separate eligibility rules.
 
-If you are tracking specific Japanese EV or PHEV inventory, the [Toyota RAV4 Prime](/used-cars/toyota/rav4-prime/), [Mitsubishi Outlander PHEV](/used-cars/mitsubishi/outlander-phev/), and [Nissan Leaf](/used-cars/nissan/leaf/) catalogues on japanauto.ca show current Canadian used inventory across all six Tier-1 cities. Filter by city to see local market pricing and AWD availability.
+If you are tracking Japanese EV or PHEV inventory, browse the [Toyota](/used-cars/toyota/), [Mitsubishi](/used-cars/mitsubishi/), and [Nissan](/used-cars/nissan/) used-car catalogues on japanauto.ca across all six Tier-1 cities — electrified trims such as the RAV4 Prime, Outlander PHEV, and Leaf appear alongside their gas siblings. Filter by city to see local market pricing and AWD availability.
 
 ## Sources
 
