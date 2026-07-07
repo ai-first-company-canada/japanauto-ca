@@ -18,7 +18,89 @@ npm run deploy
   share one tree — check `git status` before deploying; you may ship someone
   else's uncommitted work.
 - CI (`.github/workflows/deploy.yml`) deploys on push to main and runs the same
-  gates including the SEO audit.
+  gates (typecheck → build → `audit:seo` → `audit:launch`) before `pages deploy`.
+
+## Deploy is main-only (OPS-1)
+
+`.github/workflows/deploy.yml` triggers **only** on `push` to `main` (plus the
+scheduled cron below and `workflow_dispatch`). It used to also fire on
+`feature/**` + `fix/**` — that shipped every branch to the **production** Pages
+project as a preview deployment, whose Functions bind the **production**
+D1/KV/R2 (bindings are declared at `wrangler.toml` top level, not per
+environment) and expose unauthenticated prod-D1 write paths (`track-contact`)
+on the public `*.pages.dev` host. Deep-audit 2026-07-05 flagged this (OPS-1); it
+is fixed.
+
+- **Feature/fix branches no longer auto-deploy.** To ship a branch deliberately
+  (a one-off preview or hotfix), trigger it by hand: GitHub → Actions → *Deploy
+  to Cloudflare Pages* → **Run workflow** (`workflow_dispatch`), or
+  `gh workflow run deploy.yml --ref <branch>`. Same gates run; you are opting in
+  knowingly to prod-bound preview Functions.
+- Residual gate **NEW-GATE-3**: confirm no `JWT_SECRET`/`STRIPE_*`/
+  `RESEND_API_KEY` sit at Pages *preview* scope (main-only deploy closed the
+  branch path, but a preview-scoped secret would still be reachable from a
+  `workflow_dispatch` preview URL). Check in the Cloudflare Pages dashboard.
+
+## Scheduled catalog rebuild (ADV-1)
+
+The browse surface (city/model/make pages and every "N listed" count) is a
+**build-time snapshot** of prod D1 — `catalog-live.json`, produced by
+`scripts/export-catalog-data.mjs` (selects `WHERE l.status='active'`). Listing
+**detail** pages are already live from D1 at request time and IndexNow-pinged on
+create; but without a rebuild a dealer's newly-active listing is **orphaned**
+from every browse page and count until someone redeploys. Deep-audit 2026-07-05
+flagged this (ADV-1); it is closed by a scheduled rebuild.
+
+- **The cron.** `deploy.yml` carries `schedule: - cron: '17 */3 * * *'` — every
+  3 hours (~240 runs/month). Each run re-exports `catalog-live.json` from D1,
+  rebuilds, passes the same gates, and deploys. New listings therefore reach the
+  browse pages/counts within **≤3h** with no manual redeploy; detail pages stay
+  instant.
+- **The fail-safe.** The "Refresh catalog from D1" step runs
+  `node scripts/export-catalog-data.mjs || echo "::warning::…"`. If the export
+  fails — most often because the deploy token lacks D1 read — CI keeps the
+  **committed** `catalog-live.json` snapshot and emits a CI warning rather than
+  failing the deploy. A stale-but-honest catalog beats a broken deploy.
+- **Hard requirement:** the Cloudflare API token in the `CLOUDFLARE_API_TOKEN`
+  secret **must carry `D1:read` on `japanauto-prod`**. Without it the refresh
+  step silently fails-safe to the committed snapshot (watch for the
+  `::warning::catalog export from D1 failed` line in the Actions log) and browse
+  freshness stops tracking D1 — the deploy still succeeds, so this fails quietly.
+  Verify with `npx wrangler d1 execute japanauto-prod --remote --command
+  "SELECT 1"` under the same token.
+- **Changing cadence:** edit the `cron:` line (standard 5-field UTC cron). Stay
+  under the Pages deploy budget — 3h ≈ 240 runs/month; e.g. hourly `'17 * * * *'`
+  ≈ 720/month, every 6h `'17 */6 * * *'` ≈ 120/month. The offset minute (`17`)
+  spreads load off the top of the hour; keep it non-zero.
+- **Verify (NEW-GATE-2):** after onboarding, run the live e2e — signup → activate
+  a listing → confirm it appears on its city/model **browse** page (by
+  navigation, not just the direct slug) within one cron interval, using the
+  prod-throwaway recipe below.
+
+## Edge protection for view-counting (PERF-1)
+
+`recordViewThrottled` (`functions/api/_lib/db.ts`) already bounds view-counting
+**in code**: each client is counted at most once per entity per day via a
+per-(hashed-IP, entity, day) limiter in `rate_limits`, so a `?cb=<rand>` loop no
+longer poisons the dealer-visible `view_count` or fires the 2-write
+`recordView` batch on repeats. Deep-audit 2026-07-05 flagged the unbounded case
+(PERF-1); the code gate closes counting/poisoning. What remains is **raw
+write-amplification / Function-invocation cost** under a distributed flood
+(each unique cache-busted URL still MISSES cache and invokes the Function, which
+runs one limiter upsert). Close that at the **edge**, out of band — nothing to
+deploy from this repo:
+
+- **Cloudflare Cache Rule (recommended).** In the dashboard → *Caching → Cache
+  Rules*, add a rule matching `/used-cars/listing/*` and `/parts/listing/*` that
+  **ignores query string** in the cache key (Cache Key → Query String → *Ignore
+  query string*, or *Include* a fixed allowlist). Then `?cb=<rand>` can no longer
+  force an origin MISS — repeated hits serve from edge cache and never reach the
+  Function. The detail routes emit `s-maxage=60`, so a shared cache key is safe.
+- **WAF rate-limit rule (optional).** Add a rate-limit rule scoped to the two
+  `.../listing/*` path prefixes (e.g. N requests / 10s per client IP) as a
+  backstop against a determined flood that varies the path itself.
+- Both are belt-and-suspenders on top of the in-code limiter; neither is
+  required for correctness, only for cost containment on the metered edge.
 
 ## The cron worker deploys separately
 
