@@ -185,7 +185,11 @@ export async function buildDealerReport(
   const onTrialNow = dealer.trial_ends_at !== null && dealer.trial_ends_at > now
     && !(dealer.subscription_tier === "pro" && dealer.subscription_status !== null);
 
-  const lots = (await env.DB.prepare(`
+  // All five base reads are independent — ONE env.DB.batch (atomic, and one
+  // subrequest instead of five; deep-audit PERF-3). Per-dealer total drops to
+  // ~3 D1 round-trips (reserve + this batch + hints/teaser), lifting the
+  // ~1000-subrequest invocation ceiling from ~50 dealers to ~200+.
+  const lotsStmt = env.DB.prepare(`
     SELECT l.id, l.slug, 'listing' AS kind,
            (l.year || ' ' || mk.name || ' ' || md.name || COALESCE(' ' || l.trim, '')) AS title,
            l.status, l.price, l.year, l.mileage, l.city,
@@ -207,10 +211,10 @@ export async function buildDealerReport(
     WHERE l.dealer_id = ?
     ORDER BY COALESCE(s.views, 0) DESC, l.created_at DESC
     LIMIT 60
-  `).bind(period.fromDay, period.toDay, dealer.id).all<LotRow>()).results ?? [];
+  `).bind(period.fromDay, period.toDay, dealer.id);
 
   // Yards: same query shape over donor_cars, folded into the same table.
-  const donors = (await env.DB.prepare(`
+  const donorsStmt = env.DB.prepare(`
     SELECT dc.id, dc.slug, 'donor' AS kind,
            (dc.year || ' ' || mk.name || ' ' || md.name || ' (donor)') AS title,
            dc.status, dc.price, dc.year, 0 AS mileage, dc.city_slug AS city,
@@ -232,14 +236,11 @@ export async function buildDealerReport(
     WHERE dc.dealer_id = ?
     ORDER BY COALESCE(s.views, 0) DESC
     LIMIT 60
-  `).bind(period.fromDay, period.toDay, dealer.id).all<LotRow>()).results ?? [];
-
-  const all = [...lots, ...donors];
-  if (all.length === 0) return null; // nothing to report — don't spam empty mail
+  `).bind(period.fromDay, period.toDay, dealer.id);
 
   // KPI totals come from UNBOUNDED aggregates — the LIMIT-60 lists above feed
   // only the table; a sold car outside the top-60 must still count (review).
-  const agg = await env.DB.prepare(`
+  const aggStmt = env.DB.prepare(`
     SELECT COALESCE(SUM(s.views), 0) AS views, COALESCE(SUM(s.contacts), 0) AS contacts,
            COALESCE(SUM(s.views_social), 0) AS social, COALESCE(SUM(s.views_paid), 0) AS paid
     FROM entity_stats_daily s
@@ -248,47 +249,81 @@ export async function buildDealerReport(
         SELECT id FROM listings WHERE dealer_id = ?3
         UNION SELECT id FROM donor_cars WHERE dealer_id = ?3
       )
-  `).bind(period.fromDay, period.toDay, dealer.id)
-    .first<{ views: number; contacts: number; social: number; paid: number }>();
-  const tot = agg ?? { views: 0, contacts: 0, social: 0, paid: 0 };
+  `).bind(period.fromDay, period.toDay, dealer.id);
 
-  const counts = await env.DB.prepare(`
+  const countsStmt = env.DB.prepare(`
     SELECT
       (SELECT COUNT(*) FROM listings   WHERE dealer_id = ?1 AND created_at >= ?2 AND created_at < ?3)
     + (SELECT COUNT(*) FROM donor_cars WHERE dealer_id = ?1 AND created_at >= ?2 AND created_at < ?3) AS created
-  `).bind(dealer.id, period.fromSec, period.toSec).first<{ created: number }>();
-  const created = counts?.created ?? 0;
+  `).bind(dealer.id, period.fromSec, period.toSec);
 
-  const sold = (await env.DB.prepare(`
+  const soldStmt = env.DB.prepare(`
     SELECT (l.year || ' ' || mk.name || ' ' || md.name || COALESCE(' ' || l.trim, '')) AS title,
            l.created_at, l.sold_at
     FROM listings l JOIN makes mk ON mk.id = l.make_id JOIN models md ON md.id = l.model_id
     WHERE l.dealer_id = ? AND l.sold_at IS NOT NULL AND l.sold_at >= ? AND l.sold_at < ?
     ORDER BY l.sold_at DESC LIMIT 10
-  `).bind(dealer.id, period.fromSec, period.toSec)
-    .all<{ title: string; created_at: number; sold_at: number }>()).results ?? [];
+  `).bind(dealer.id, period.fromSec, period.toSec);
+
+  const [lotsRes, donorsRes, aggRes, countsRes, soldRes] =
+    await env.DB.batch([lotsStmt, donorsStmt, aggStmt, countsStmt, soldStmt]);
+  const lots = (lotsRes?.results ?? []) as LotRow[];
+  const donors = (donorsRes?.results ?? []) as LotRow[];
+
+  const all = [...lots, ...donors];
+  if (all.length === 0) return null; // nothing to report — don't spam empty mail
+
+  const agg = (aggRes?.results?.[0] ?? null) as
+    { views: number; contacts: number; social: number; paid: number } | null;
+  const tot = agg ?? { views: 0, contacts: 0, social: 0, paid: 0 };
+
+  const created = ((countsRes?.results?.[0] ?? null) as { created: number } | null)?.created ?? 0;
+
+  const sold = (soldRes?.results ?? []) as { title: string; created_at: number; sold_at: number }[];
 
   // Truly silent period → skip the e-mail entirely (caller releases the slot).
   if (tot.views + tot.contacts + created + sold.length === 0) return null;
 
   // Pro: market position for active lots (market_stats may legitimately miss).
+  // ONE row-value IN query for all ≤12 lots instead of a query per lot
+  // (deep-audit PERF-3); the best-per-tuple pick by max n_active replicates
+  // the previous per-lot ORDER BY n_active DESC LIMIT 1 exactly — source
+  // segments are still never aggregated (privacy invariant), one row wins.
   const hints: MarketHint[] = [];
   if (tier === "pro") {
-    for (const l of lots.filter((x) => x.status === "active").slice(0, 12)) {
-      // Retail benchmark = other DEALERS' asking prices (seller_kind, 0019) —
-      // that's the dealer's actual competitive field.
-      const m = await env.DB.prepare(`
-        SELECT price_p50_cents, n_active FROM market_stats
-        WHERE city_slug = ? AND make_slug = ? AND model_slug = ?
-          AND anchor_year = ? AND mileage_bucket = 'all' AND seller_kind = 'dealer'
-        ORDER BY n_active DESC LIMIT 1
-      `).bind(l.city.toLowerCase(), l.make_slug, l.model_slug, l.year)
-        .first<{ price_p50_cents: number | null; n_active: number }>();
-      if (!m?.price_p50_cents || m.price_p50_cents <= 0 || l.price == null || l.price <= 0) continue;
-      const diff = Math.round((l.price - m.price_p50_cents) / m.price_p50_cents * 100);
-      const pos = Math.abs(diff) < 2 ? "at the market median"
-        : `${Math.abs(diff)}% ${diff > 0 ? "above" : "below"} the market median`;
-      hints.push({ slug: l.slug, line: `${esc(l.title)}: your asking price is <b>${pos}</b> (${m.n_active} similar at dealers, all mileages, asking prices)` });
+    // Retail benchmark = other DEALERS' asking prices (seller_kind, 0019) —
+    // that's the dealer's actual competitive field.
+    const active = lots.filter((x) => x.status === "active").slice(0, 12);
+    const keyOf = (city: string, mk: string, md: string, y: number) => `${city}|${mk}|${md}|${y}`;
+    const tuples = [...new Map(active.map((l) =>
+      [keyOf(l.city.toLowerCase(), l.make_slug, l.model_slug, l.year), l])).values()];
+    if (tuples.length > 0) {
+      // ≤12 tuples × 4 binds = 48 — safely under D1's 100-param cap.
+      const placeholders = tuples.map(() => "(?,?,?,?)").join(",");
+      const rows = ((await env.DB.prepare(`
+        SELECT city_slug, make_slug, model_slug, anchor_year, price_p50_cents, n_active
+        FROM market_stats
+        WHERE mileage_bucket = 'all' AND seller_kind = 'dealer'
+          AND (city_slug, make_slug, model_slug, anchor_year) IN (VALUES ${placeholders})
+      `).bind(...tuples.flatMap((l) => [l.city.toLowerCase(), l.make_slug, l.model_slug, l.year]))
+        .all()).results ?? []) as {
+          city_slug: string; make_slug: string; model_slug: string; anchor_year: number;
+          price_p50_cents: number | null; n_active: number;
+        }[];
+      const best = new Map<string, (typeof rows)[number]>();
+      for (const r of rows) {
+        const k = keyOf(r.city_slug, r.make_slug, r.model_slug, r.anchor_year);
+        const cur = best.get(k);
+        if (!cur || r.n_active > cur.n_active) best.set(k, r);
+      }
+      for (const l of active) {
+        const m = best.get(keyOf(l.city.toLowerCase(), l.make_slug, l.model_slug, l.year));
+        if (!m?.price_p50_cents || m.price_p50_cents <= 0 || l.price == null || l.price <= 0) continue;
+        const diff = Math.round((l.price - m.price_p50_cents) / m.price_p50_cents * 100);
+        const pos = Math.abs(diff) < 2 ? "at the market median"
+          : `${Math.abs(diff)}% ${diff > 0 ? "above" : "below"} the market median`;
+        hints.push({ slug: l.slug, line: `${esc(l.title)}: your asking price is <b>${pos}</b> (${m.n_active} similar at dealers, all mileages, asking prices)` });
+      }
     }
   }
 
@@ -363,6 +398,9 @@ export async function sendReports(env: ReportsEnv, kind: "weekly" | "monthly"): 
   const now = Math.floor(Date.now() / 1000);
   const period = kind === "weekly" ? weeklyPeriod(new Date()) : monthlyPeriod(new Date());
 
+  // TODO(scale): LIMIT 500 + ~3 subrequests/dealer fits one invocation up to
+  // ~200+ dealers (PERF-3 batching). Beyond that, page by created_at cursor
+  // across invocations — not needed at the current dealer count.
   const dealers = (await env.DB.prepare(`
     SELECT id, email, name, type, city, subscription_tier, subscription_status, trial_ends_at
     FROM dealers WHERE reports_opt_out = 0 ORDER BY created_at LIMIT 500
