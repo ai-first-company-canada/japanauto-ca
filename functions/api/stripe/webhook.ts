@@ -21,44 +21,7 @@
 
 import type { Env } from "../../../types/env";
 import { jsonError, notImplemented, json } from "../_lib/response";
-
-const TOLERANCE_SECONDS = 300;
-
-function hex(buf: ArrayBuffer): string {
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
-/** Verify a Stripe-Signature header. Returns true iff a v1 sig matches within tolerance. */
-async function verifyStripeSignature(
-  header: string, rawBody: string, secret: string, nowSec: number,
-): Promise<boolean> {
-  // Header: "t=<unix>,v1=<hex>[,v1=<hex>...]"
-  let t = 0;
-  const v1: string[] = [];
-  for (const part of header.split(",")) {
-    const [k, val] = part.split("=", 2);
-    if (k === "t") t = parseInt(val ?? "", 10);
-    else if (k === "v1" && val) v1.push(val);
-  }
-  if (!t || v1.length === 0) return false;
-  if (Math.abs(nowSec - t) > TOLERANCE_SECONDS) return false;
-
-  const key = await crypto.subtle.importKey(
-    "raw", new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
-  );
-  const expected = hex(await crypto.subtle.sign(
-    "HMAC", key, new TextEncoder().encode(`${t}.${rawBody}`),
-  ));
-  return v1.some((s) => timingSafeEqual(s, expected));
-}
+import { verifyStripeSignature } from "../_lib/stripe-verify";
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const secret = env.STRIPE_WEBHOOK_SECRET;

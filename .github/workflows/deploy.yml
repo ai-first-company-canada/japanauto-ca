@@ -44,6 +44,13 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Unit tests (WS-5): pure-unit vitest suite over validators, entitlements,
+      # Stripe signature verification and rate-limit key formats. Runs on the
+      # 3-hourly scheduled redeploy too — a regression from any merge is caught
+      # by the next cron at the cost of ~10s CI.
+      - name: Unit tests
+        run: npm test
+
       # Refresh catalog-live.json from prod D1 so the SSG browse pages + counts
       # reflect current inventory (deep-audit ADV-1). Fail-safe: if the deploy
       # token lacks D1:read (or D1 is unreachable), keep the committed snapshot

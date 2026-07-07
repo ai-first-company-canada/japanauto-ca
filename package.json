@@ -10,9 +10,10 @@
     "build": "astro build && node scripts/extract-css.mjs && node scripts/generate-csp-hashes.mjs",
     "preview": "astro preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
     "audit:seo": "python3 scripts/seo-audit.py dist",
     "audit:launch": "LAUNCH=1 python3 scripts/seo-audit.py dist",
-    "predeploy": "node scripts/export-catalog-data.mjs && npm run typecheck && npm run build && npm run audit:seo && npm run audit:launch",
+    "predeploy": "node scripts/export-catalog-data.mjs && npm run typecheck && npm test && npm run build && npm run audit:seo && npm run audit:launch",
     "deploy": "wrangler pages deploy dist --project-name japanauto",
     "astro": "astro"
   },
@@ -27,6 +28,7 @@
     "js-yaml": "^4.1.1",
     "tailwindcss": "4.1.18",
     "typescript": "5.6",
+    "vitest": "^4.1.10",
     "wrangler": "^4.87.0"
   }
 }

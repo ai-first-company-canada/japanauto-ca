@@ -48,10 +48,20 @@ export interface RateLimitResult {
  * Fails closed: if the write/read throws (D1 unavailable), the error propagates
  * to the caller, which returns 5xx rather than silently allowing the request.
  */
+/**
+ * D1 row key for a (bucket, identifier) pair. Exported so the format is pinned
+ * by tests (tests/rate-limit-keys.test.ts): changing it silently resets every
+ * in-flight window — for the `view-dedupe` bucket that voids up to a day of
+ * PERF-1 view idempotency.
+ */
+export function rateLimitKey(bucket: string, identifier: string): string {
+  return `rl:${bucket}:${identifier}`;
+}
+
 export async function rateLimit(
   env: Env, identifier: string, cfg: RateLimitConfig,
 ): Promise<RateLimitResult> {
-  const key = `rl:${cfg.bucket}:${identifier}`;
+  const key = rateLimitKey(cfg.bucket, identifier);
   const now = Math.floor(Date.now() / 1000);
   const windowCutoff = now - cfg.windowSeconds;   // windows starting at/before this have expired
 

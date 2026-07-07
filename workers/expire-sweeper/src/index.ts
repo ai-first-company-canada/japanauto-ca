@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import { sendReports, type ReportsEnv } from "./reports";
+import { buildMarketAuthAttempts } from "./market-auth";
 
 interface Env {
   DB: D1Database;
@@ -55,22 +56,7 @@ async function syncMarketStats(env: Env): Promise<void> {
   // If PostgREST rejects the HS256 JWT (the project runs ES256 signing keys;
   // legacy-secret acceptance unconfirmed), we fall back one rung and LOG
   // LOUDLY — a daily sync must not die over an auth experiment.
-  const attempts: Array<{ label: string; headers: Record<string, string> }> = [];
-  if (MARKET_SUPABASE_SECRET_KEY && MARKET_SYNC_JWT) {
-    attempts.push({
-      label: "jwt-role (least privilege)",
-      headers: { apikey: MARKET_SUPABASE_SECRET_KEY, Authorization: `Bearer ${MARKET_SYNC_JWT}` },
-    });
-  }
-  if (MARKET_SUPABASE_ANON_KEY && MARKET_SYNC_JWT) {
-    attempts.push({
-      label: "legacy anon+jwt",
-      headers: { apikey: MARKET_SUPABASE_ANON_KEY, Authorization: `Bearer ${MARKET_SYNC_JWT}` },
-    });
-  }
-  if (MARKET_SUPABASE_SECRET_KEY) {
-    attempts.push({ label: "sb-secret only", headers: { apikey: MARKET_SUPABASE_SECRET_KEY } });
-  }
+  const attempts = buildMarketAuthAttempts(env);
   if (attempts.length === 0) {
     console.log("market-sync: secrets not configured — skipping");
     return;

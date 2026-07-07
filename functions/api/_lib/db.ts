@@ -873,13 +873,24 @@ export async function recordView(
  * ignores unknown query strings on the listing detail routes — see runbook),
  * not closable in code.
  */
+/**
+ * Dedupe identifier for recordViewThrottled. Exported so the format is pinned
+ * by tests: the full D1 key is `rl:view-dedupe:<ipHash>:<type>:<id>` and a
+ * format change silently voids up to a day of view idempotency (PERF-1).
+ */
+export function viewDedupeIdentifier(
+  ipHash: string, entityType: StatsEntityType, entityId: string,
+): string {
+  return `${ipHash}:${entityType}:${entityId}`;
+}
+
 export async function recordViewThrottled(
   env: Env, request: Request, entityType: StatsEntityType, entityId: string, source: ViewSource,
 ): Promise<void> {
   try {
     const ip = request.headers.get("cf-connecting-ip") ?? "0.0.0.0";
     const ipHash = await hashIp(env, ip); // daily-rotating salt → stable within a day
-    const gate = await rateLimit(env, `${ipHash}:${entityType}:${entityId}`, {
+    const gate = await rateLimit(env, viewDedupeIdentifier(ipHash, entityType, entityId), {
       bucket: "view-dedupe", limit: 1, windowSeconds: 86400,
     });
     if (!gate.allowed) return; // already counted this client for this entity today
