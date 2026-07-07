@@ -102,20 +102,32 @@ deploy from this repo:
 - Both are belt-and-suspenders on top of the in-code limiter; neither is
   required for correctness, only for cost containment on the metered edge.
 
-## The cron worker deploys separately
+## Deploying all three targets
 
-`workers/expire-sweeper/` (flips TTL-expired listings to `expired` every 6h UTC)
-is **not** covered by `npm run deploy`:
+Workers stay **manual** (OPS-2 decision 2026-07-07: variant B — a CI deploy
+would need a `Workers Scripts:Edit` token that can also edit the
+Access-gated admin worker; revisit post-launch with a separate scoped token).
+The typecheck gate covers them everywhere: `npm run typecheck` compiles both
+workers, and predeploy/CI run that script — a worker/schema drift fails the
+Pages gate even though workers ship by hand.
 
 ```bash
-cd workers/expire-sweeper && npx wrangler deploy
-# logs: npx wrangler tail japanauto-expire-sweeper
+# order when a D1 migration is involved: migration → workers → Pages
+node scripts/check-migrations-journal.mjs          # 1. drift check (blocking in predeploy)
+npx wrangler d1 migrations apply japanauto-prod --remote
+node scripts/check-migrations-journal.mjs --snapshot   # refresh migrations/JOURNAL.md → commit
+cd workers/expire-sweeper && npx wrangler deploy   # 2. if workers/** or shared schema changed
+cd ../admin && npx wrangler deploy
+cd ../.. && npm run deploy                         # 3. Pages (full predeploy gates)
+# worker logs: npx wrangler tail japanauto-expire-sweeper
 ```
 
 ## D1 migrations (production)
 
 ```bash
+node scripts/check-migrations-journal.mjs               # before: confirm no drift
 npx wrangler d1 migrations apply japanauto-prod --remote
+node scripts/check-migrations-journal.mjs --snapshot    # after: snapshot journal, commit JOURNAL.md
 ```
 
 - Database: `japanauto-prod` (`b0d65b95-2f43-403d-9237-0d4cac6e186a`), binding `DB`.
@@ -128,6 +140,30 @@ npx wrangler d1 migrations apply japanauto-prod --remote
 - **Order on deploys that need a new table:** migration first, code second
   (the rate limiter and other D1 consumers fail closed → 5xx if the table is
   missing).
+- `migrations/JOURNAL.md` is the committed snapshot of the prod journal
+  (due-diligence + environment rebuild). `check-migrations-journal.mjs` runs
+  BLOCKING in predeploy and as a warning step in CI; offline/no-auth → skip
+  with a WARN, never a false red.
+
+## Cron alerting (OPS-4)
+
+Every scheduled job of `workers/expire-sweeper` writes its outcome to
+`ops_heartbeats` (migration 0023; fail-safe — a heartbeat write never fails
+the job). Two consumers:
+
+- **`scripts/check-cron-heartbeats.mjs`** runs at the END of every deploy.yml
+  run. On a *scheduled* run a stale REQUIRED job (`expire-sweep` > 13h,
+  `market-sync` > 26h) exits 1 → the run goes red → **GitHub emails the repo
+  owner**. Detection latency ≤ the 3h schedule cadence. `reports-*` stay
+  warnings until Resend is live (their ok-beat means "job ran", not "mail
+  sent").
+- **Admin `/ops` → Cron heartbeats** renders the same rows with ok/stale
+  badges and last errors.
+
+Red scheduled run triage: open the failing step → the `::error::` line names
+the job and its last error → `npx wrangler tail japanauto-expire-sweeper` for
+live logs. Planned downtime: no toggle — accept the red run or temporarily
+raise the threshold constant in the script (commit + revert).
 
 ## Local dev
 

@@ -5,15 +5,14 @@
  * without 'unsafe-inline' (audit #18). Regenerated on every `npm run build`.
  */
 export const SCRIPT_HASHES: readonly string[] = [
-  'sha256-+MpmbNqhVG2jZtQ7ftYNBXqCSWKqtfpVV+d5lW1gcYM=',
   'sha256-03lLsrCw++9lJUll8e1h/IkVYfxzwBW9u+scgN0oPxs=',
-  'sha256-0eX8PHo/nwPZntN8wsuVA7YFW2Hr/GhEXHzCBos6cow=',
-  'sha256-1fufWevoRjgHOx9bB1SrrywJxkDxpx0/UfkIkSgtMrU=',
   'sha256-4bLF2xA/ZUJYWmkbEZvBymQ53uPogmKqygTM2AhXQ8I=',
   'sha256-66wUDU1jY3PTzSVXT7kOwUZHVTTIhqZ5snfGxmCq/Fs=',
   'sha256-7sFbu4VqXBLyJ0PBUme3BFm3XHNxDvr9GOTjrkLMmtw=',
   'sha256-7sQ4Dumq0QpsW3ohac+SbwIcA87AT3hFQllFDqkJN7k=',
   'sha256-I+9bRy3pRBrWDW9JJqK2M2M5aiUn3/r2ZM14u6PQi74=',
+  'sha256-Q9eoJkTFg4UZTMuPebzVIa5aH8Me/SRPDn6NoOdYhJ4=',
+  'sha256-SkRcudvkEoRt9sme+IMb1xEVYy8yQyVIaGrFUAMLFcU=',
   'sha256-UmKSxAh1zXXpSABy9ZWWByUUwMMjZwdX4Q43iiseg/I=',
   'sha256-UpnMB2Zn/kkZW9G0iGjlXSxY5U5ZNLLV4VMLLhAkYFU=',
   'sha256-VfqaT1sjlsu5UVtwzoQj3N3wjacQqnMlZueHbO3n2gs=',
@@ -27,6 +26,7 @@ export const SCRIPT_HASHES: readonly string[] = [
   'sha256-k88iyx1/GNzdTJaD/aBBKZiNGFFtU3+czWawfz8t7d4=',
   'sha256-oEgzw3jfp2qeumlaezrW4LDl8xVYv9dZQ0ekT7TkBFU=',
   'sha256-osoV/qZGCL4tBGGRJrR88D3tQKJKWcy4+MAYuavvZj8=',
+  'sha256-sWi05UxLHZYGqyvAu+2g9zwPRlPb8GqnanfuDEd6UtY=',
   'sha256-u+GsEYo5xKu5gOeIKwDJPsq0dVfsGW87/KP9+EQcjiU=',
   'sha256-xBC6O3v6r+vmTB00mY8GQX4WDX/Jx3joVlt1T359C0M=',
   'sha256-xo93fEuLi5MxWJwNCTfTANMl4AvJNSg3PDJWtpx//xY=',

@@ -25,7 +25,16 @@ const COUNT_TABLES = [
   "market_stats",
   "entity_stats_daily",
   "pending_media_uploads",
+  "ops_heartbeats",
 ] as const;
+
+/** Staleness thresholds per cron job (mirror scripts/check-cron-heartbeats.mjs). */
+const HEARTBEAT_THRESHOLDS_S: Record<string, number> = {
+  "expire-sweep":    13 * 3600,
+  "market-sync":     26 * 3600,
+  "reports-weekly":   8 * 86400,
+  "reports-monthly": 32 * 86400,
+};
 
 /** The market sync runs daily; >36h without a row means a missed run + slack. */
 const MARKET_STALE_AFTER_S = 36 * 3600;
@@ -75,6 +84,34 @@ export async function opsPage(
   const sourceBits = (marketBySource.results ?? [])
     .map((s) => `${esc(s.source)}: <b>${s.n.toLocaleString("en-US")}</b>`)
     .join(" · ");
+
+  // (b2) Cron heartbeats (OPS-4, migration 0023) — tolerate a pre-0023 DB
+  // like the audit block below does.
+  let heartbeatBody: string;
+  try {
+    const hb = await env.DB.prepare(`
+      SELECT job_name, last_ok_at, last_error, last_error_at FROM ops_heartbeats ORDER BY job_name
+    `).all<{ job_name: string; last_ok_at: number | null; last_error: string | null; last_error_at: number | null }>();
+    const hbRows = (hb.results ?? []).map((h) => {
+      const threshold = HEARTBEAT_THRESHOLDS_S[h.job_name] ?? 26 * 3600;
+      const fresh = h.last_ok_at !== null && now - h.last_ok_at <= threshold;
+      const err = h.last_error
+        ? `<span style="font-size:12px;color:#a02020">[${fmtAgo(h.last_error_at)}] ${esc(h.last_error.slice(0, 160))}</span>`
+        : `<span style="color:#9aa1a9">—</span>`;
+      return `<tr>
+        <td style="font:12px ui-monospace,monospace">${esc(h.job_name)}</td>
+        <td>${fresh ? badge("ok", "ok") : badge("stale", "bad")}</td>
+        <td>${fmtAgo(h.last_ok_at)}</td>
+        <td>${err}</td>
+      </tr>`;
+    }).join("");
+    heartbeatBody = `<table>
+      <tr><th>Job</th><th>Status</th><th>Last ok</th><th>Last error</th></tr>
+      ${hbRows || `<tr><td colspan="4" style="text-align:center;color:#9aa1a9;padding:24px">No heartbeats yet — first cron run after the 0023 deploy pending.</td></tr>`}
+    </table>`;
+  } catch {
+    heartbeatBody = `<p style="color:#9aa1a9">Heartbeats unavailable — migration 0023 pending.</p>`;
+  }
 
   // (c) Rate-limit counters — fixed-window rows (0008), newest window first.
   const rl = await env.DB.prepare(`
@@ -134,6 +171,9 @@ export async function opsPage(
       · computed_on ${esc(marketSummary?.last_computed ?? "—")}<br>
       <span style="font-size:12px;color:#5a6068">${sourceBits || "no sources yet"}</span>
     </p>
+
+    <h2>Cron heartbeats</h2>
+    ${heartbeatBody}
 
     <h2>Rate limits <span style="color:#9aa1a9;font-weight:400">(${rl.results?.length ?? 0}, newest window first)</span></h2>
     <table>

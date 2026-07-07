@@ -62,6 +62,15 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: node scripts/export-catalog-data.mjs || echo "::warning::catalog export from D1 failed — building from the committed catalog-live.json snapshot"
 
+      # Migration journal drift check (deep-audit OPS-3). Non-blocking here —
+      # a schema drift must not kill the 3-hourly catalog redeploy; the local
+      # `npm run deploy` predeploy runs the same script BLOCKING.
+      - name: Migration journal drift check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/check-migrations-journal.mjs || echo "::warning::D1 migration journal drift — see docs/runbook.md (migration procedure)"
+
       - name: Build
         run: npm run build
 
@@ -95,3 +104,19 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=japanauto --branch="$DEPLOY_BRANCH"
+
+      # Cron heartbeat staleness check (deep-audit OPS-4). AFTER the deploy so
+      # a stale heartbeat never blocks the catalog redeploy — but it reddens
+      # the run, and a failed SCHEDULED workflow makes GitHub email the owner.
+      # Detection latency ≤ the 3h schedule cadence.
+      - name: Cron heartbeat check
+        if: always()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            node scripts/check-cron-heartbeats.mjs
+          else
+            node scripts/check-cron-heartbeats.mjs || echo "::warning::cron heartbeat check failed"
+          fi

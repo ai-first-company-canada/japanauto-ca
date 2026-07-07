@@ -219,21 +219,57 @@ const SWEEP_CRON = "0 */6 * * *";
 const WEEKLY_REPORT_CRON = "0 14 * * 1";   // Mondays 14:00 UTC ≈ 08:00 Calgary
 const MONTHLY_REPORT_CRON = "30 14 1 * *"; // 1st of month, 14:30 UTC
 
+// Exact-match dispatch both ways; an unmatched cron (e.g. a trigger string
+// reformatted in the dashboard) fails loudly instead of silently running the
+// wrong job. Job names are the ops_heartbeats primary keys — the staleness
+// checker (scripts/check-cron-heartbeats.mjs) and admin /ops read them.
+const JOBS: Record<string, { name: string; run: (env: Env) => Promise<void> }> = {
+  [SWEEP_CRON]:          { name: "expire-sweep",    run: (env) => sweepExpired(env, SWEEP_CRON) },
+  [MARKET_SYNC_CRON]:    { name: "market-sync",     run: (env) => syncMarketStats(env) },
+  [WEEKLY_REPORT_CRON]:  { name: "reports-weekly",  run: (env) => sendReports(env as ReportsEnv, "weekly") },
+  [MONTHLY_REPORT_CRON]: { name: "reports-monthly", run: (env) => sendReports(env as ReportsEnv, "monthly") },
+};
+
+/**
+ * Record the run outcome in ops_heartbeats (deep-audit OPS-4, migration 0023).
+ * Fail-safe by contract: a heartbeat write must NEVER fail the job — including
+ * before 0023 is applied ("no such table" is swallowed and logged).
+ * Nuance: an "ok" beat means "the job ran to completion", not "it did work" —
+ * reports without Resend secrets are a logged no-op that still beats ok, which
+ * is why the checker keeps reports jobs non-required until Resend is live.
+ */
+async function beat(env: Env, job: string, err?: unknown): Promise<void> {
+  try {
+    if (err === undefined) {
+      await env.DB.prepare(`
+        INSERT INTO ops_heartbeats (job_name, last_ok_at, updated_at)
+        VALUES (?1, unixepoch(), unixepoch())
+        ON CONFLICT(job_name) DO UPDATE SET last_ok_at = unixepoch(), updated_at = unixepoch()
+      `).bind(job).run();
+    } else {
+      await env.DB.prepare(`
+        INSERT INTO ops_heartbeats (job_name, last_error, last_error_at, updated_at)
+        VALUES (?1, ?2, unixepoch(), unixepoch())
+        ON CONFLICT(job_name) DO UPDATE SET last_error = ?2, last_error_at = unixepoch(), updated_at = unixepoch()
+      `).bind(job, String(err).slice(0, 500)).run();
+    }
+  } catch (e) {
+    console.error(`heartbeat(${job}) write failed:`, e instanceof Error ? e.message : e);
+  }
+}
+
 export default {
   async scheduled(controller, env, _ctx) {
-    // Exact-match dispatch both ways; an unmatched cron (e.g. a trigger string
-    // reformatted in the dashboard) fails loudly instead of silently running
-    // the wrong job.
-    if (controller.cron === MARKET_SYNC_CRON) {
-      await syncMarketStats(env);
-    } else if (controller.cron === SWEEP_CRON) {
-      await sweepExpired(env, controller.cron);
-    } else if (controller.cron === WEEKLY_REPORT_CRON) {
-      await sendReports(env as ReportsEnv, "weekly");
-    } else if (controller.cron === MONTHLY_REPORT_CRON) {
-      await sendReports(env as ReportsEnv, "monthly");
-    } else {
-      throw new Error(`unknown cron "${controller.cron}" — update the dispatch in src/index.ts`);
+    const job = JOBS[controller.cron];
+    if (!job) {
+      throw new Error(`unknown cron "${controller.cron}" — update JOBS in src/index.ts`);
+    }
+    try {
+      await job.run(env);
+      await beat(env, job.name);
+    } catch (e) {
+      await beat(env, job.name, e);
+      throw e; // rethrow — the run stays failed in Cloudflare's cron logs
     }
   },
 } satisfies ExportedHandler<Env>;
