@@ -8,7 +8,7 @@ const { size = 20, inverse = false, mono = false } = Astro.props;
 const wordColor = inverse ? '#FFFFFF' : '#0A0A0A';
 const dotColor = mono ? wordColor : '#BC002D';
 ---
-<span class="wordmark" style={`height:${size}px;line-height:1;color:${wordColor}`} aria-label="japanauto">
+<span class="wordmark" role="img" style={`height:${size}px;line-height:1;color:${wordColor}`} aria-label="japanauto">
   <svg viewBox="0 0 220 40" height={size} role="img" aria-hidden="true" style="overflow:visible">
     <text
       x="0"

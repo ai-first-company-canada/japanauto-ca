@@ -248,11 +248,23 @@ def main():
                 if line and not line.startswith('#'):
                     src = line.split()[0]
                     redirect_res.append(_re.compile('^' + _re.sub(r':[a-z]+', r'[^/]+', src.rstrip('/')) + '/?$'))
+        # Public routes served by Pages FUNCTIONS, not static files: a built
+        # browse page legitimately links to them the moment real inventory
+        # exists (caught live by the 2026-07-07 e2e — the gate blocked the
+        # first real listing's deploy). Checked ONLY as a second chance after
+        # static resolution, so a genuinely dead static link still fails.
+        function_route_res = [
+            _re.compile(r'^/used-cars/listing/[^/]+/?$'),
+            _re.compile(r'^/parts/listing/[^/]+/?$'),
+            _re.compile(r'^/dealers/[^/]+/?$'),
+        ]
         def _resolves(h):
             hh = h.rstrip('/') or '/'
             if hh in valid or (hh + '/') in valid or h in valid:
                 return True
-            return any(r.match(hh) or r.match(h) for r in redirect_res)
+            if any(r.match(hh) or r.match(h) for r in redirect_res):
+                return True
+            return any(r.match(hh) or r.match(h) for r in function_route_res)
         HREF = _re.compile(r'href="(/[^"#?]*)"')
         dead_links = {}
         for pg in pages:

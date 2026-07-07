@@ -9,14 +9,14 @@ const { cityShort = 'Canada' } = Astro.props;
 ---
 {/* Mobile navbar (default; hidden ≥1024px via CSS) */}
 <header class="navbar">
-  <a href="/" aria-label="japanauto, home" style="display:inline-flex;align-items:center">
+  <a href="/" style="display:inline-flex;align-items:center">
     <Wordmark size={20} />
   </a>
   <button
     class="city-pill"
     type="button"
     data-open-modal="city-picker"
-    aria-label="Change city"
+    title="Change city"
   >
     <Icon name="pin" size={14} />
     <span>{cityShort}</span>
@@ -35,7 +35,7 @@ const { cityShort = 'Canada' } = Astro.props;
 {/* Desktop navbar (≥1024px) */}
 <header class="navbar-desktop">
   <div class="navbar-desktop__left">
-    <a href="/" aria-label="japanauto, home" style="display:inline-flex;align-items:center;height:100%">
+    <a href="/" style="display:inline-flex;align-items:center;height:100%">
       <Wordmark size={22} />
     </a>
     <nav class="navbar-desktop__nav" aria-label="Primary">
@@ -93,7 +93,7 @@ const { cityShort = 'Canada' } = Astro.props;
       class="city-pill"
       type="button"
       data-open-modal="city-picker"
-      aria-label="Change city"
+      title="Change city"
     >
       <Icon name="pin" size={14} />
       <span>{cityShort}</span>

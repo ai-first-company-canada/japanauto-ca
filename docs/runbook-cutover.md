@@ -16,8 +16,8 @@
 |---|---|
 | **G1** Legal review of `/terms/` + `/privacy/` (WEB-2) | Owner confirms in writing. The signup consent notice (src/pages/dealer/signup.astro) references exactly these pages. |
 | **G2** `CLOUDFLARE_API_TOKEN` has D1:read (ADV-1) | GitHub → Actions → latest deploy.yml run: NO `::warning::catalog export from D1 failed`. **Status 2026-07-07: CONFIRMED FAILING** (run 28872708736 shows the warning) — the token must be re-scoped or the 3-hourly catalog refresh builds from the committed snapshot. |
-| **G3** No prod secrets on preview scope (NEW-GATE-3) | Pages dashboard → Settings → Variables and Secrets → Preview: `JWT_SECRET` / `STRIPE_*` / `RESEND_API_KEY` / `CLOUDFLARE_IMAGES_API_TOKEN` must not exist there. |
-| **G4** Live e2e sanctioned (NEW-GATE-2) | Executed in Phase 2; here only confirm the recipe + cleanup SQL are ready (`scripts/audit-prod-testdata.sql`, cleanup per `scripts/cleanup-test-data-2026-06-12.sql` pattern). |
+| **G3** No prod secrets on preview scope (NEW-GATE-3) | **CLOSED 2026-07-07**: `npx wrangler pages secret list --project-name japanauto --env preview` → empty. Re-check in the dashboard if new secrets get added. |
+| **G4** Live e2e (NEW-GATE-2) | **EXECUTED & PASSED 2026-07-07** (throwaway dealer, full chain): signup 201 → active listing 201 (atomic cap guard path) → detail page 200 instantly → local rebuild+deploy → **listing on `/toronto/toyota/camry/` browse by navigation** → contact reveal 204 (contact_count=1; view_count=1 — PERF-1 dedupe counted exactly one view) → cleanup SQL → all-zero inventory. Found & fixed live: the WEB-5 dead-link gate flagged function-served routes (`/used-cars/listing/*`, `/dealers/<slug>/`) as 404s the moment REAL inventory existed — would have blocked the first partner-era deploy; seo-audit.py now second-chances known function routes after static resolution. Re-run at T-0 against the final build per Phase 2. |
 
 Cheaper-before-cutover (not blocking): Cache Rule "ignore query string" on
 `/used-cars/listing/*` + `/parts/listing/*` and WAF rate-limit (edge half of
