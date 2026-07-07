@@ -40,7 +40,7 @@ import {
   getDealerById,
 } from "../_lib/db";
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
-import { enforceActiveCap } from "../_lib/entitlements";
+import { enforceActiveCap, activeCapGuard, capExceeded, getEntitlements } from "../_lib/entitlements";
 import { pingIndexNow } from "../_lib/indexnow";
 
 // ============================================================================
@@ -255,14 +255,22 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
 
   // Free-tier active-listing cap (Feature 5). Drafts don't count toward it, so
   // only enforce when this listing goes live now; the draft→active PATCH path
-  // re-checks. Pro/trial are uncapped.
+  // re-checks. Pro/trial are uncapped. This pre-check is ADVISORY (friendly
+  // early 403); the atomic backstop is the guard folded into the INSERT below
+  // (deep-audit COR-3).
   if (initialStatus === "active") {
     const capped = await enforceActiveCap(env, dealer, "listings");
     if (capped) return capped;
   }
+  const guard = initialStatus === "active"
+    ? activeCapGuard(dealer, "listings")
+    : { sql: "1", binds: [] as (string | number)[] };
 
   try {
-    await env.DB.prepare(`
+    // INSERT ... SELECT ... WHERE <cap guard>: the cap check and the write are
+    // ONE statement, so a concurrent publish burst cannot overshoot the cap
+    // (D1 serializes writers). meta.changes === 0 → the guard said no.
+    const res = await env.DB.prepare(`
       INSERT INTO listings (
         id, dealer_id, make_id, model_id, year, trim, vin,
         body_type, fuel_type, transmission, drivetrain, doors, seats,
@@ -271,10 +279,10 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
         city, province, slug, title, description,
         status, expires_at, view_count, contact_count, boost_paid_cents,
         created_at, updated_at
-      ) VALUES (
+      ) SELECT
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CAD', ?,
         ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, ?, ?
-      )
+      WHERE ${guard.sql}
     `).bind(
       id, auth.dealerId, input.make_id, input.model_id, input.year, input.trim ?? null, input.vin,
       input.body_type ?? null, input.fuel_type ?? null, input.transmission ?? null,
@@ -283,7 +291,9 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
       input.mileage, input.condition, input.price, input.negotiable,
       input.city, input.province, slug, input.title, input.description ?? null,
       initialStatus, expiresAt, now, now,
+      ...guard.binds,
     ).run();
+    if ((res.meta.changes ?? 0) === 0) return capExceeded(getEntitlements(dealer));
   } catch (e) {
     if (e instanceof Error && /UNIQUE.*vin/i.test(e.message)) {
       return conflict("A listing with this VIN already exists");

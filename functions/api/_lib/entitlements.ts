@@ -75,10 +75,26 @@ export function getEntitlements(d: BillingFields, nowSec = Math.floor(Date.now()
   };
 }
 
+/** The cap-403 both the advisory pre-check and the atomic backstop return, so
+ *  a dealer sees the same message no matter which layer stopped them. */
+export function capExceeded(ent: Entitlements): Response {
+  return forbidden(
+    `Free plan allows ${ent.maxActiveListings} active listings. ` +
+    `Upgrade to Pro for unlimited, or archive an active one first.`,
+  );
+}
+
 /**
- * Guard for transitions that make an entity publicly active (create-as-active,
- * draft→active PATCH). Returns a 403 Response when the dealer is already at
- * their active-listing cap, else null. Pro/trial accounts are uncapped.
+ * ADVISORY pre-check for transitions that make an entity publicly active
+ * (create-as-active, draft→active PATCH). Returns a 403 Response when the
+ * dealer is already at their active cap, else null. Pro/trial are uncapped.
+ *
+ * This is check-then-act and therefore racy on its own (deep-audit COR-3):
+ * it exists for a friendly early 403 without side effects. The ENFORCEMENT
+ * is activeCapGuard() below, which every write folds into its own statement.
+ *
+ * Cap semantics are PER TABLE — 5 active listings AND 5 active donor cars
+ * (a dealership lives in listings, a junkyard in donor_cars; see ADR-0019).
  *
  * `table` is a fixed literal (no injection). `excludeId` skips the row being
  * transitioned so re-activating an already-counted row never double-counts.
@@ -94,11 +110,32 @@ export async function enforceActiveCap(
   const row = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}`)
     .bind(...binds).first<{ n: number }>();
 
-  if ((row?.n ?? 0) >= ent.maxActiveListings) {
-    return forbidden(
-      `Free plan allows ${ent.maxActiveListings} active listings. ` +
-      `Upgrade to Pro for unlimited, or archive an active one first.`,
-    );
-  }
+  if ((row?.n ?? 0) >= ent.maxActiveListings) return capExceeded(ent);
   return null;
+}
+
+export type CapGuard = { sql: string; binds: (string | number)[] };
+
+/**
+ * Atomic cap enforcement (deep-audit COR-3). Returns a WHERE-predicate to fold
+ * into the SAME statement that writes status='active' (INSERT ... SELECT ...
+ * WHERE <sql> / UPDATE ... WHERE id = ? AND <sql>), so check and write are one
+ * SQLite statement — D1 serializes writers, so two concurrent publishes cannot
+ * both slip under the cap. Caller MUST check `meta.changes === 0` after .run()
+ * and answer capExceeded(ent).
+ *
+ * cap = -1 (Pro/trial) short-circuits the predicate to TRUE — the subquery
+ * still parses but `? < 0` wins, so uncapped writes stay single-statement too.
+ */
+export function activeCapGuard(
+  dealer: BillingFields, table: "listings" | "donor_cars", excludeId?: string,
+): CapGuard {
+  const ent = getEntitlements(dealer);
+  const cap = ent.maxActiveListings === Number.POSITIVE_INFINITY ? -1 : ent.maxActiveListings;
+  const sub = `SELECT COUNT(*) FROM ${table} WHERE dealer_id = ? AND status = 'active'`
+    + (excludeId ? ` AND id != ?` : ``);
+  return {
+    sql: `(? < 0 OR (${sub}) < ?)`,
+    binds: excludeId ? [cap, dealer.id, excludeId, cap] : [cap, dealer.id, cap],
+  };
 }

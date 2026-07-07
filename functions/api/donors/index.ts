@@ -32,7 +32,7 @@ import {
   getDealerById, listDonorsForDealer,
 } from "../_lib/db";
 import { rateLimit, RATE_LIMITS } from "../_lib/rate-limit";
-import { enforceActiveCap } from "../_lib/entitlements";
+import { enforceActiveCap, activeCapGuard, capExceeded, getEntitlements } from "../_lib/entitlements";
 import { pingIndexNow } from "../_lib/indexnow";
 
 // ============================================================================
@@ -132,12 +132,18 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   const now = Math.floor(Date.now() / 1000);
   const initialStatus = input.status ?? "draft";
 
-  // Free-tier active-listing cap (Feature 5) — donors share the same allowance.
-  // Only enforced when the donor goes live now; drafts are uncapped.
+  // Free-tier active cap (Feature 5). Donor cars have their OWN 5-active
+  // allowance, separate from listings (per-table semantics, ADR-0019 — a
+  // dealership lives in listings, a junkyard in donor_cars). Only enforced
+  // when the donor goes live now; drafts are uncapped. This pre-check is
+  // advisory; the atomic backstop is the guard in the INSERT below (COR-3).
   if (initialStatus === "active") {
     const capped = await enforceActiveCap(env, dealer, "donor_cars");
     if (capped) return capped;
   }
+  const guard = initialStatus === "active"
+    ? activeCapGuard(dealer, "donor_cars")
+    : { sql: "1", binds: [] as (string | number)[] };
 
   const compatibleMakes  = input.compatible_makes  ?? [makeRow?.slug ?? ""].filter(Boolean);
   const compatibleModels = input.compatible_models ?? null;
@@ -145,7 +151,9 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   const compatibleTrims  = input.compatible_trims  ?? null;
 
   try {
-    await env.DB.prepare(`
+    // INSERT ... SELECT ... WHERE <cap guard>: check + write in one statement
+    // (COR-3); meta.changes === 0 → the guard said no.
+    const res = await env.DB.prepare(`
       INSERT INTO donor_cars (
         id, dealer_id, slug, year, make_id, model_id, trim,
         generation_code, generation_range, city_slug,
@@ -156,7 +164,7 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
         price, price_currency, status,
         view_count, contact_count,
         created_at, updated_at
-      ) VALUES (
+      ) SELECT
         ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?,
         ?, ?, ?, ?,
@@ -166,7 +174,7 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
         ?, 'CAD', ?,
         0, 0,
         ?, ?
-      )
+      WHERE ${guard.sql}
     `).bind(
       id, auth.dealerId, slug, input.year, input.make_id, input.model_id, input.trim ?? null,
       input.generation_code ?? null, input.generation_range ?? null, input.city_slug,
@@ -181,7 +189,9 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
       compatibleTrims  ? JSON.stringify(compatibleTrims)  : null,
       input.price ?? null, initialStatus,
       now, now,
+      ...guard.binds,
     ).run();
+    if ((res.meta.changes ?? 0) === 0) return capExceeded(getEntitlements(dealer));
   } catch (e) {
     if (e instanceof Error && /UNIQUE.*slug/i.test(e.message)) {
       return conflict("Slug collision; please retry");

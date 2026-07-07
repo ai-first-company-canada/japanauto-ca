@@ -17,7 +17,9 @@ import {
 } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
 import { getListingById, getMediaForEntity, getDealerById } from "../../_lib/db";
-import { enforceActiveCap } from "../../_lib/entitlements";
+import {
+  enforceActiveCap, activeCapGuard, capExceeded, getEntitlements, type CapGuard,
+} from "../../_lib/entitlements";
 import { pingIndexNow } from "../../_lib/indexnow";
 
 export const onRequestGet: PagesFunction<Env, "id"> = async ({ request, params, env }) => {
@@ -87,6 +89,11 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
     return conflict(`Cannot change listing status from '${existing.status}' to '${nextStatus}'`);
   }
 
+  // Atomic cap backstop (deep-audit COR-3): set when this PATCH activates the
+  // row; folded into the UPDATE's WHERE so check + write are one statement.
+  let capGuard: CapGuard | null = null;
+  let capEnt: ReturnType<typeof getEntitlements> | null = null;
+
   if (isStatusChange && nextStatus === "active") {
     // Free-tier active-listing cap (Feature 5) — publishing/reviving counts the
     // listing toward the cap; exclude this row so re-activating never self-blocks.
@@ -94,6 +101,8 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
     if (!dealer) return notFound();
     const capped = await enforceActiveCap(env, dealer, "listings", existing.id);
     if (capped) return capped;
+    capGuard = activeCapGuard(dealer, "listings", existing.id);
+    capEnt = getEntitlements(dealer);
 
     // Re-entering the public catalog (draft publish or sold/expired revival).
     // The D1 age-cap trigger only fires on UPDATE OF year, so a status-only
@@ -130,9 +139,14 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
   const setClause = setCols.join(", ");
 
   try {
-    await env.DB.prepare(
-      `UPDATE listings SET ${setClause} WHERE id = ?`
-    ).bind(...values, id).run();
+    // With capGuard set, cap check + write are one statement (COR-3). A zero
+    // changes count here is practically always the cap saying no: existence
+    // and ownership were checked above, and rows are never deleted (lifecycle
+    // flips statuses) — so answer with the cap 403.
+    const res = await env.DB.prepare(
+      `UPDATE listings SET ${setClause} WHERE id = ?${capGuard ? ` AND ${capGuard.sql}` : ""}`
+    ).bind(...values, id, ...(capGuard?.binds ?? [])).run();
+    if (capGuard && capEnt && (res.meta.changes ?? 0) === 0) return capExceeded(capEnt);
   } catch (e) {
     if (e instanceof Error && /UNIQUE.*vin/i.test(e.message)) {
       return conflict("VIN already in use by another listing");

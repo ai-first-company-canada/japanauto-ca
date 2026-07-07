@@ -20,7 +20,9 @@ import {
 } from "../../_lib/response";
 import { requireDealer } from "../../_lib/auth";
 import { getDonorCarById, getMediaForEntity, getDealerById } from "../../_lib/db";
-import { enforceActiveCap } from "../../_lib/entitlements";
+import {
+  enforceActiveCap, activeCapGuard, capExceeded, getEntitlements, type CapGuard,
+} from "../../_lib/entitlements";
 import { pingIndexNow } from "../../_lib/indexnow";
 
 export const onRequestGet: PagesFunction<Env, "id"> = async (
@@ -84,18 +86,25 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
     expired:  [],
     flagged:  [],
   };
+  // Atomic cap backstop (COR-3) — set when this PATCH activates the donor.
+  let capGuard: CapGuard | null = null;
+  let capEnt: ReturnType<typeof getEntitlements> | null = null;
+
   if (data.status !== undefined && data.status !== existing.status) {
     const allowed = DONOR_LEGAL_TRANSITIONS[existing.status as string] ?? [];
     if (!allowed.includes(data.status)) {
       return conflict(`Cannot change donor status from '${existing.status}' to '${data.status}'`);
     }
-    // Free-tier active-listing cap (Feature 5): publishing a draft donor counts
-    // toward the shared allowance. Exclude this row so it never self-blocks.
+    // Free-tier active cap (Feature 5): donors have their OWN 5-active
+    // allowance, separate from listings (ADR-0019). Exclude this row so it
+    // never self-blocks. Advisory pre-check; enforcement is the UPDATE guard.
     if (data.status === "active") {
       const dealer = await getDealerById(env, auth.dealerId);
       if (!dealer) return notFound();
       const capped = await enforceActiveCap(env, dealer, "donor_cars", id);
       if (capped) return capped;
+      capGuard = activeCapGuard(dealer, "donor_cars", id);
+      capEnt = getEntitlements(dealer);
     }
   }
 
@@ -120,9 +129,12 @@ export const onRequestPatch: PagesFunction<Env, "id"> = async (ctx) => {
   });
 
   try {
-    await env.DB.prepare(
-      `UPDATE donor_cars SET ${setClause} WHERE id = ?`,
-    ).bind(...values, id).run();
+    // With capGuard set, cap check + write are one statement (COR-3); zero
+    // changes = the cap said no (existence/ownership already verified above).
+    const res = await env.DB.prepare(
+      `UPDATE donor_cars SET ${setClause} WHERE id = ?${capGuard ? ` AND ${capGuard.sql}` : ""}`,
+    ).bind(...values, id, ...(capGuard?.binds ?? [])).run();
+    if (capGuard && capEnt && (res.meta.changes ?? 0) === 0) return capExceeded(capEnt);
   } catch (e) {
     if (e instanceof Error && /CHECK constraint/i.test(e.message)) {
       return jsonError(422, "validation_failed", e.message);
