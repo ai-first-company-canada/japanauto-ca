@@ -73,6 +73,16 @@ const SECURITY_HEADERS: Record<string, string> = {
   "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
 };
 
+/** Merge SECURITY_HEADERS into any early-return response so a robots swap, a
+ *  413/403, or a CORS preflight ships the same HSTS/nosniff/frame posture as
+ *  the main path (deep-audit REG-2). Safe on mutable-header Responses. */
+function withSecurityHeaders(resp: Response): Response {
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+    if (!resp.headers.has(k)) resp.headers.set(k, v);
+  }
+  return resp;
+}
+
 /**
  * CSP (audit #18, full fix) — script-src carries NO 'unsafe-inline'.
  *
@@ -128,7 +138,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //    duplicate-content penalties at .ca cutover.
   const isPreviewHost = /\.pages\.dev$/i.test(url.hostname);
   if (isPreviewHost && url.pathname === "/robots.txt") {
-    return new Response(
+    return withSecurityHeaders(new Response(
       "# Preview host — not for indexing. Production: https://japanauto.ca/\nUser-agent: *\nDisallow: /\n",
       {
         status: 200,
@@ -138,7 +148,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           "x-robots-tag": "noindex, nofollow",
         },
       },
-    );
+    ));
   }
 
   // 0b. CSRF guard (audit #9) — reject cross-site unsafe-method API requests
@@ -147,7 +157,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //     webhook) pass through. Logic + second layer in api/_lib/csrf.ts.
   const isApi = url.pathname.startsWith("/api/");
   if (isApi && isCrossSiteUnsafe(request, env)) {
-    return forbidden("Cross-site request rejected");
+    return withSecurityHeaders(forbidden("Cross-site request rejected"));
   }
 
   // Body-size guard (audit #33): reject oversized /api/* write bodies before any
@@ -155,10 +165,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (isApi && /^(POST|PUT|PATCH)$/.test(request.method)) {
     const len = parseInt(request.headers.get("content-length") ?? "0", 10);
     if (Number.isFinite(len) && len > 64 * 1024) {
-      return new Response(
+      return withSecurityHeaders(new Response(
         JSON.stringify({ error: "payload_too_large", message: "Request body exceeds 64 KB" }),
         { status: 413, headers: { "content-type": "application/json; charset=utf-8" } },
-      );
+      ));
     }
   }
 
@@ -224,7 +234,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         },
       });
     }
-    return new Response(null, { status: 403 });
+    return withSecurityHeaders(new Response(null, { status: 403 }));
   }
 
   // 4. Forward to route handler / static asset. Wrap in try/catch (audit #23):

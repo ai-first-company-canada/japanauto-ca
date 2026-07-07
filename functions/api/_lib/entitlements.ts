@@ -18,7 +18,7 @@
  */
 
 import type { Env } from "../../../types/env";
-import { LIMITS } from "../../../lib/schema";
+import { LIMITS, LIVE_PAID_SUBSCRIPTION_STATUSES } from "../../../lib/schema";
 import { forbidden } from "./response";
 
 export type EffectiveTier = "free" | "pro";
@@ -30,8 +30,10 @@ type BillingFields = {
   trial_ends_at: number | null;
 };
 
-/** Statuses under which a paid Pro subscription still grants Pro access. */
-const LIVE_PAID_STATUSES = new Set(["active", "trialing", "past_due"]);
+/** Statuses under which a paid Pro subscription still grants Pro access.
+ *  Canonical list lives in lib/schema.ts (LIVE_PAID_SUBSCRIPTION_STATUSES) so
+ *  the Worker mirrors + SQL predicates stay findable (COR-4). */
+const LIVE_PAID_STATUSES = new Set<string>(LIVE_PAID_SUBSCRIPTION_STATUSES);
 
 function hasPaidPro(d: BillingFields): boolean {
   return d.subscription_tier === "pro"

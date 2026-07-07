@@ -42,8 +42,8 @@ const PROVINCES: Array<{ code: string; name: string }> = [
       <div class="auth-form-error" data-field-error="name"></div>
     </div>
 
-    <div class="auth-form-group">
-      <label class="auth-form-label">Account type</label>
+    <fieldset class="auth-form-group" style="border:0;padding:0;margin:0;min-width:0">
+      <legend class="auth-form-label" style="padding:0">Account type</legend>
       <div class="auth-radio-group">
         <label class="auth-radio-option">
           <input type="radio" name="type" value="dealer" checked />
@@ -55,7 +55,7 @@ const PROVINCES: Array<{ code: string; name: string }> = [
         </label>
       </div>
       <div class="auth-form-error" data-field-error="type"></div>
-    </div>
+    </fieldset>
 
     <div class="auth-form-group">
       <label class="auth-form-label" for="email">Email</label>

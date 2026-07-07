@@ -94,7 +94,7 @@ interface LotRow {
   views: number; contacts: number; views_social: number; views_paid: number;
 }
 
-/** Mirror of functions/api/_lib/entitlements.ts effectiveTier — keep in sync. */
+/** Mirror of effectiveTier. KEEP IN SYNC with LIVE_PAID_SUBSCRIPTION_STATUSES in lib/schema.ts (COR-4). */
 function effectiveTier(d: DealerRow, now: number): "free" | "pro" {
   const paid = d.subscription_tier === "pro" && d.subscription_status !== null
     && ["active", "trialing", "past_due"].includes(d.subscription_status);
@@ -381,8 +381,11 @@ export async function sendReports(env: ReportsEnv, kind: "weekly" | "monthly"): 
       const unsubUrl = `${SITE}/api/reports/unsubscribe?d=${encodeURIComponent(dealer.id)}&s=${sig}`;
       const report = await buildDealerReport(env, dealer, period, unsubUrl, now);
       if (!report) { // nothing to say — release the reservation, maybe next period
-        await env.DB.prepare(`DELETE FROM report_runs WHERE period = ? AND dealer_id = ?`)
-          .bind(period.key, dealer.id).run();
+        // Ownership-conditional release (deep-audit COR-6): only drop the row
+        // THIS invocation reserved (sent_at = now), so an overrunning prior run
+        // cannot delete a retry's reservation.
+        await env.DB.prepare(`DELETE FROM report_runs WHERE period = ? AND dealer_id = ? AND sent_at = ?`)
+          .bind(period.key, dealer.id, now).run();
         skipped++;
         continue;
       }
@@ -401,12 +404,15 @@ export async function sendReports(env: ReportsEnv, kind: "weekly" | "monthly"): 
       });
       if (!res.ok) throw new Error(`resend ${res.status}: ${(await res.text()).slice(0, 200)}`);
       sent++;
+      // Pace under Resend's ~2 req/s default (deep-audit PERF-4) — a burst
+      // otherwise trips 429 and silently drops a dealer's report for the period.
+      await new Promise((r) => setTimeout(r, 550));
     } catch (e) {
       failed++;
       console.error(`reports: dealer ${dealer.id} failed:`, e instanceof Error ? e.message : e);
-      // Release so the next run retries this dealer.
-      await env.DB.prepare(`DELETE FROM report_runs WHERE period = ? AND dealer_id = ?`)
-        .bind(period.key, dealer.id).run();
+      // Release so the next run retries this dealer (ownership-conditional, COR-6).
+      await env.DB.prepare(`DELETE FROM report_runs WHERE period = ? AND dealer_id = ? AND sent_at = ?`)
+        .bind(period.key, dealer.id, now).run();
     }
   }
   console.log(`reports(${period.key}): sent ${sent}, skipped ${skipped}, failed ${failed}`);

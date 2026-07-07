@@ -48,6 +48,16 @@ export const SUBSCRIPTION_STATUSES = [
 ] as const;
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
+/**
+ * The single source of truth for "a paid Pro subscription still grants Pro
+ * access" (deep-audit COR-4). effectiveTier() imports this; the two Worker
+ * bundles (reports.ts, admin/dealers.ts) and the two inlined SQL predicates
+ * (meta-vehicles.csv.ts, reports.ts teaser/hints) each carry a KEEP-IN-SYNC
+ * pointer to THIS list — when Stripe wiring changes the set, change it here and
+ * the pointers make every copy findable in one grep.
+ */
+export const LIVE_PAID_SUBSCRIPTION_STATUSES = ["active", "trialing", "past_due"] as const;
+
 export const LISTING_STATUSES = ["draft", "active", "sold", "expired", "flagged"] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
 
@@ -376,8 +386,8 @@ export const brandSlugSchema = z.enum(BRAND_SLUGS);
 // Empty array OR null on the row = hours not configured (UI shows placeholder).
 export const dealerHoursEntrySchema = z.object({
   dow: z.array(z.number().int().min(0).max(6)).min(1).max(7),
-  open: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  close: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  open: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
+  close: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
 }).refine(
   (e) => (e.open === null) === (e.close === null),
   { message: "open and close must both be null (Closed) or both set" },

@@ -41,9 +41,10 @@ interface ViewRow {
 }
 
 /**
- * Pulls the scraper project's japanauto_market_stats view via PostgREST and
- * replaces the D1 market_stats snapshot in one transactional batch (D1 batch
- * = implicit transaction, so readers never observe a half-synced table).
+ * Pulls the scraper project's japanauto_market_stats view via PostgREST, fills
+ * a staging table, then swaps it into the live market_stats in ONE atomic D1
+ * batch (DELETE + INSERT...SELECT), so readers never observe a half-synced
+ * table even if the multi-batch staging fill fails mid-run (deep-audit COR-1).
  * Money: the view emits whole CAD dollars; D1 stores cents (app invariant).
  */
 async function syncMarketStats(env: Env): Promise<void> {
@@ -138,15 +139,21 @@ async function syncMarketStats(env: Env): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
   const cents = (d: number | null) => (d == null ? null : Math.round(d * 100));
 
-  // D1 hard-caps 100 bound parameters per statement (NOT SQLite's 999 — and
-  // local miniflare won't enforce it, so only prod would fail; caught in
-  // adversarial review): 6 rows × 15 cols = 90 params. Upsert in batches of
-  // ≤40 statements, then drop rows the run didn't touch — readers briefly see
-  // a fresh/stale row mix instead of an empty table, which is fine for a
-  // daily snapshot and avoids one giant batch hitting per-invocation caps.
+  // Atomic snapshot swap via a staging table (deep-audit COR-1, migration
+  // 0021). We fill market_stats_staging (unread by any reader) across many
+  // batches, then swap into market_stats in ONE atomic batch. This replaces
+  // the old many-batches-then-prune approach whose mid-run failure left a torn
+  // fresh/stale mix in the live table.
+  //
+  // D1 caps 100 bound params/statement: 6 rows × 15 cols = 90. Staging fill is
+  // batched ≤40 statements/call; failures here abort BEFORE the swap, so the
+  // live table is untouched. INSERT OR REPLACE into staging tolerates a within-
+  // run duplicate key defensively.
   const ROWS_PER_STMT = 6;
   const STMTS_PER_BATCH = 40;
-  const statements: D1PreparedStatement[] = [];
+  const statements: D1PreparedStatement[] = [
+    env.DB.prepare(`DELETE FROM market_stats_staging`),
+  ];
   for (let i = 0; i < usable.length; i += ROWS_PER_STMT) {
     const chunk = usable.slice(i, i + ROWS_PER_STMT);
     const placeholders = chunk.map(() => "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").join(",");
@@ -162,22 +169,26 @@ async function syncMarketStats(env: Env): Promise<void> {
       );
     }
     statements.push(env.DB.prepare(`
-      INSERT OR REPLACE INTO market_stats (
+      INSERT OR REPLACE INTO market_stats_staging (
         city_slug, make_slug, model_slug, anchor_year, mileage_bucket, source, seller_kind,
         n_active, price_p25_cents, price_p50_cents, price_p75_cents,
         n_delisted, median_days_listed, computed_on, synced_at
       ) VALUES ${placeholders}
     `).bind(...binds));
   }
+  // Fill staging (the leading DELETE rides in the first batch).
   for (let i = 0; i < statements.length; i += STMTS_PER_BATCH) {
     await env.DB.batch(statements.slice(i, i + STMTS_PER_BATCH));
   }
-  const { meta } = await env.DB.prepare(
-    `DELETE FROM market_stats WHERE synced_at < ?`,
-  ).bind(now).run();
-  console.log(
-    `market-sync: upserted ${usable.length} rows (${statements.length} statements), removed ${meta.changes} stale`,
-  );
+  // Atomic swap: both statements in one implicit transaction. INSERT...SELECT
+  // is a single statement (no param cap), so the live table goes from the old
+  // snapshot to the new one with no torn intermediate state (COR-1). This also
+  // retires the old synced_at prune (closes PERF-5's full-table DELETE).
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM market_stats`),
+    env.DB.prepare(`INSERT INTO market_stats SELECT * FROM market_stats_staging`),
+  ]);
+  console.log(`market-sync: swapped in ${usable.length} rows atomically (${statements.length - 1} fill statements)`);
 }
 
 async function sweepExpired(env: Env, cron: string): Promise<void> {

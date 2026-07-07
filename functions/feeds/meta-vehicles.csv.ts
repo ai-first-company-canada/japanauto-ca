@@ -20,6 +20,7 @@
  */
 
 import type { Env } from "../../types/env";
+import { rateLimit } from "../api/_lib/rate-limit";
 
 const TRANSMISSION: Record<string, string> = {
   automatic: "AUTOMATIC", cvt: "AUTOMATIC", dct: "AUTOMATIC", manual: "MANUAL",
@@ -90,6 +91,22 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   if (!key || !(await keyMatches(key, expected))) {
     return new Response("Forbidden.", { status: 403 });
   }
+
+  // Rate-limit even a valid key (deep-audit PERF-2): the feed is an uncached
+  // LIMIT-5000 scan with a per-row image subquery; Meta fetches ~once/day, so
+  // 20 pulls / 10 min per IP is generous and stops a leaked/shared key from
+  // hammering D1. Fail-open on limiter error — the feed staleness that a
+  // dropped pull causes is worse than the DoS it would otherwise prevent.
+  const ip = request.headers.get("cf-connecting-ip") ?? "0.0.0.0";
+  try {
+    const rl = await rateLimit(env, ip, { bucket: "meta-feed", limit: 20, windowSeconds: 600 });
+    if (!rl.allowed) {
+      return new Response("Rate limited.", {
+        status: 429,
+        headers: { "retry-after": String(rl.retryAfterSeconds) },
+      });
+    }
+  } catch { /* limiter unavailable — serve the feed rather than break Meta ingestion */ }
 
   // Pro entitlement inlined in SQL — mirrors effectiveTier() (entitlements.ts):
   // paid pro with a live status OR an unexpired trial.

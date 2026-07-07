@@ -30,8 +30,11 @@ export const onRequestGet: PagesFunction<Env, "id"> = async (
   const donor = await getDonorCarById(env, id);
   if (!donor) return notFound("Donor car not found");
 
-  // Draft rows are owner-only. Other statuses are public.
-  if (donor.status === "draft") {
+  // Only active + depleted donors are public (mirrors getDonorCarBySlug and the
+  // listing route). draft/expired(soft-deleted)/flagged(moderated-off) are
+  // owner-only — otherwise an anon caller with a UUID reads soft-deleted or
+  // flagged rows + owner/vin (deep-audit COR-2, P9).
+  if (!(["active", "depleted"] as string[]).includes(donor.status as string)) {
     const auth = await requireDealer(request, env);
     if (auth instanceof Response) return auth;
     if (donor.dealer_id !== auth.dealerId) return forbidden();

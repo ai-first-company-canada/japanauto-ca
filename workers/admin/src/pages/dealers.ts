@@ -31,7 +31,8 @@ interface DealerRow {
 
 /**
  * Mirror of functions/api/_lib/entitlements.ts effectiveTier() — duplicated
- * because the admin Worker doesn't share the Pages bundle. Keep in sync.
+ * because the admin Worker doesn't share the Pages bundle. KEEP IN SYNC with
+ * LIVE_PAID_SUBSCRIPTION_STATUSES in lib/schema.ts (COR-4).
  */
 function effectiveTier(d: DealerRow, now: number): "free" | "pro" {
   const paidPro = d.subscription_tier === "pro" && d.subscription_status !== null
