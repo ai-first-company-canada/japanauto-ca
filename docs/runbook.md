@@ -194,7 +194,35 @@ https://admin.japanauto.ca` from anywhere must return Access's 302, never 200.
 
 Every panel mutation lands in `admin_audit_log` (migration 0017). Password
 reset for a locked-out dealer: Dealers → "Reset link" → copy the 1-hour
-single-use URL and send it to the partner yourself (no email service yet).
+single-use URL and send it to the partner yourself. This stays the manual
+fallback whenever Resend is unconfigured/down — the self-serve path is
+`POST /api/auth/password-reset` (decision 0020), dark → 501.
+
+## Transactional auth email (decision 0020, WS-2)
+
+Self-serve password-reset request + email confirmation live in Pages
+Functions (`functions/api/_lib/email.ts` + `auth/password-reset/index.ts`,
+`auth/verify-email/{index,resend}.ts`). Dark until configured; to light up:
+
+1. Resend domain verification — same DNS-only procedure as reports below;
+   doable BEFORE the domain is attached to Pages (the zone is already on
+   Cloudflare).
+2. `RESEND_API_KEY` is needed in **TWO places** — the reports worker AND the
+   Pages project: `npx wrangler pages secret put RESEND_API_KEY
+   --project-name japanauto` (production scope only — NEW-GATE-3: never on
+   preview).
+3. Optional `AUTH_EMAIL_FROM` var overrides the default
+   `japanauto.ca <no-reply@japanauto.ca>`.
+4. Caveat until cutover: links in auth emails point at `https://japanauto.ca`,
+   which is not attached yet — recommended sequence: DNS verification now,
+   secrets at cutover (or earlier, accepting dead links for a day or two).
+5. Make sure `support@japanauto.ca` actually delivers (Cloudflare Email
+   Routing → forward) — it is printed in UI fallbacks and 501 responses.
+
+Fallback matrix while dark: locked-out dealer → admin "Reset link" (above);
+verification questions → admin `verify` action; channel — support@japanauto.ca.
+Delivery check: Resend dashboard → Emails. Failed sends log
+`email-send-failed {kind, status}` in the Pages Functions log.
 
 ## Dealer e-mail reports (decision 0016)
 

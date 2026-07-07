@@ -52,7 +52,13 @@ export interface Env {
   JWT_SECRET: string;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
-  RESEND_API_KEY: string;
+  /** Resend API key for transactional email (WS-2, decision 0020). OPTIONAL by
+   *  design: absent → email flows degrade honestly (reset-request 501,
+   *  signup verify-send silently skipped). Needed in TWO places: this Pages
+   *  project AND workers/expire-sweeper (reports have their own copy). */
+  RESEND_API_KEY?: string;
+  /** Optional From override for transactional auth email ("name <addr>"). */
+  AUTH_EMAIL_FROM?: string;
   DAILY_IP_HASH_SALT: string;
   /** Cloudflare API token with `Account → Cloudflare Images: Edit` scope. Used by upload-url to mint direct-upload URLs. */
   CLOUDFLARE_IMAGES_API_TOKEN: string;

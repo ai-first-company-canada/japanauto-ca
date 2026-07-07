@@ -171,6 +171,28 @@ export const RATE_LIMITS = {
     limit: 60,
     windowSeconds: 3600,    // 60 refreshes/hour per IP — caps refresh-token brute/rotation abuse (audit #42)
   } as RateLimitConfig,
+  // Email flows (WS-2). Request-side caps stop reset/verify email-bombing;
+  // the consume side mirrors pw-reset-confirm's 10/h.
+  PW_RESET_REQUEST_PER_IP: {
+    bucket: "pw-reset-req-ip",
+    limit: 5,
+    windowSeconds: 3600,    // 5 reset requests/hour per IP
+  } as RateLimitConfig,
+  PW_RESET_REQUEST_PER_EMAIL: {
+    bucket: "pw-reset-req-email",
+    limit: 3,
+    windowSeconds: 3600,    // 3 reset requests/hour per target email (bombing cap)
+  } as RateLimitConfig,
+  EMAIL_VERIFY_PER_IP: {
+    bucket: "email-verify-ip",
+    limit: 10,
+    windowSeconds: 3600,    // 10 consume attempts/hour per IP (256-bit token — nobody guesses for free)
+  } as RateLimitConfig,
+  EMAIL_VERIFY_RESEND_PER_DEALER: {
+    bucket: "email-verify-resend",
+    limit: 3,
+    windowSeconds: 86400,   // 3 re-sends/day per dealer (authenticated, own address only)
+  } as RateLimitConfig,
 } as const;
 
 /**

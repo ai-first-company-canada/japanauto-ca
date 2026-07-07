@@ -17,6 +17,21 @@ import Icon from '../../components/atoms/Icon.astro';
     <span data-dealer-meta>—</span>
   </p>
 
+  <div
+    class="card"
+    data-email-verify-nudge
+    style="display:none;padding:12px 16px;margin-bottom:24px;border-left:3px solid var(--color-accent)"
+  >
+    <span class="t-body-m">Your email isn't confirmed yet — check your inbox for the link.</span>
+    <button
+      class="btn btn-secondary"
+      data-email-verify-resend
+      type="button"
+      style="margin-left:12px"
+    >Re-send email</button>
+    <span class="t-body-m ink-muted" data-email-verify-result></span>
+  </div>
+
   <section
     class="dashboard-stats"
     style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:32px"
@@ -96,6 +111,32 @@ import Icon from '../../components/atoms/Icon.astro';
           (dealer.type === 'salvage_yard' ? 'Salvage yard' : 'Verified seller') +
           ' · ' + (dealer.city || '') + ', ' + (dealer.province || '');
         setText('[data-dealer-meta]', meta);
+
+        // Email-confirmation nudge (WS-2). Nothing is gated on it — purely a
+        // reminder + re-send. Hidden when confirmed or when the field is absent
+        // (pre-0022 cache shapes).
+        if (dealer.email_verified_at === null) {
+          var nudge = document.querySelector('[data-email-verify-nudge]');
+          var resendBtn = document.querySelector('[data-email-verify-resend]');
+          var resendResult = document.querySelector('[data-email-verify-result]');
+          if (nudge) nudge.style.display = '';
+          if (resendBtn) resendBtn.addEventListener('click', async function () {
+            resendBtn.disabled = true;
+            try {
+              var r = await fetch('/api/auth/verify-email/resend', { method: 'POST' });
+              if (resendResult) {
+                resendResult.textContent =
+                  r.ok ? ' Sent — check your inbox (and spam).'
+                  : r.status === 429 ? ' Limit reached — try again tomorrow.'
+                  : r.status === 503 ? ' Email sending isn’t enabled yet.'
+                  : ' Could not send — try again later.';
+              }
+            } catch (_) {
+              if (resendResult) resendResult.textContent = ' Network error — try again.';
+            }
+            resendBtn.disabled = false;
+          });
+        }
 
         var listingsRes = await fetch('/api/listings?dealer_id=me&limit=10');
         if (listingsRes.ok) {

@@ -6,13 +6,10 @@ import AuthLayout from '../../../layouts/AuthLayout.astro';
   description="Confirm your email address for your dealer account"
   canonical="https://japanauto.ca/dealer/verify-email/"
 >
-  <h1 class="t-display-m" style="font-size:26px;line-height:32px;margin-bottom:8px">Verifying your email…</h1>
+  <h1 class="t-display-m" style="font-size:26px;line-height:32px;margin-bottom:8px" data-ve-title>Verifying your email…</h1>
 
-  <div class="auth-info-box" data-info-box>
-    Token validation pending Phase 6 (Resend integration).
-    Once verification is live, your account will be marked verified automatically.
-    Contact <a href="mailto:support@japanauto.ca" style="color:var(--color-accent);font-weight:500">support@japanauto.ca</a>
-    if you need manual verification.
+  <div class="auth-info-box" data-ve-status>
+    Checking your verification link…
   </div>
 
   <p class="auth-link-row">
@@ -21,14 +18,36 @@ import AuthLayout from '../../../layouts/AuthLayout.astro';
 
   <script is:inline>
     (function () {
+      var title = document.querySelector('[data-ve-title]');
+      var status = document.querySelector('[data-ve-status]');
+      function show(t, msg) {
+        if (title) title.textContent = t;
+        if (status) status.textContent = msg;
+      }
       var params = new URLSearchParams(window.location.search);
       var token = params.get('token') || '';
-      if (!token) return;
+      if (!token) {
+        show('Verification link incomplete',
+          'This page needs the token from your email — open the link from the message we sent you, or re-send it from your dashboard.');
+        return;
+      }
       fetch('/api/auth/verify-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: token }),
-      }).catch(function () {});
+      }).then(function (res) {
+        if (res.ok) {
+          show('Email confirmed ✓',
+            'Your email address is confirmed. You can close this page or sign in.');
+        } else if (res.status === 429) {
+          show('Too many attempts', 'Please wait a bit and open the link again.');
+        } else {
+          show('Link invalid or expired',
+            'Verification links work once and expire in 24 hours. Re-send a fresh one from your dashboard, or contact support@japanauto.ca.');
+        }
+      }).catch(function () {
+        show('Network error', 'Could not reach the server — check your connection and reload this page.');
+      });
     })();
   </script>
 </AuthLayout>

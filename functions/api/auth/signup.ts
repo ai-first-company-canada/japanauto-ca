@@ -21,8 +21,11 @@ import {
 } from "../_lib/auth";
 import { storeRefreshToken, getDealerByEmail } from "../_lib/db";
 import { rateLimit, RATE_LIMITS, hashIpStable } from "../_lib/rate-limit";
+import { emailConfigured, sendEmail, renderTransactionalEmail } from "../_lib/email";
+import { mintVerificationToken } from "../_lib/tokens";
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async (ctx) => {
+  const { request, env } = ctx;
   // Rate limit by IP
   const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
   const rl = await rateLimit(env, ip, RATE_LIMITS.SIGNUP_PER_IP);
@@ -95,6 +98,36 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     issuedAt: now,
     expiresAt: now + refreshTtl,
   });
+
+  // Send the email-confirmation link (WS-2, decision 0020). Entirely off the
+  // response path: a failed email must NEVER fail signup (partner onboarding
+  // beats verification). Dark without RESEND_API_KEY — silent skip.
+  if (emailConfigured(env)) {
+    ctx.waitUntil((async () => {
+      try {
+        const token = await mintVerificationToken(env, id, "email_verify", 86400);
+        const link = `${env.PUBLIC_SITE_URL.replace(/\/$/, "")}/dealer/verify-email/?token=${token}`;
+        await sendEmail(env, "verify-email", {
+          to: input.email,
+          subject: "Confirm your email — japanauto.ca",
+          html: renderTransactionalEmail({
+            heading: "Confirm your email",
+            bodyHtml: `
+              <p>Welcome to japanauto.ca. Click below to confirm this address for
+              your dealer account.</p>
+              <p style="margin:18px 0"><a href="${link}"
+                style="background:#0a4ec2;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;display:inline-block">Confirm email</a></p>
+              <p>The link works <b>once</b> and expires in <b>24 hours</b>. You can
+              also re-send it later from your dashboard.</p>`,
+          }),
+        });
+      } catch (e) {
+        console.error("email-send-failed", JSON.stringify({
+          kind: "verify-email", status: "handler_error", message: e instanceof Error ? e.message : String(e),
+        }));
+      }
+    })());
+  }
 
   // Build response with cookies
   const cookies = buildAuthCookies(access.token, refresh, env);

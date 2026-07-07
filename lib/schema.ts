@@ -491,6 +491,10 @@ export const dealerSchema = z.object({
   password_hash: z.string(),
   country: countrySchema.default("CA"),
   verified: z.union([z.literal(0), z.literal(1)]),
+  // Email-confirmation timestamp (migration 0022) — deliberately separate from
+  // the admin-granted `verified` trust badge. NULL = not confirmed. Visible in
+  // the self view (cabinet nudge); omitted from the public view.
+  email_verified_at: timestampSchema.nullable().default(null),
   subscription_tier: subscriptionTierSchema,
   subscription_status: subscriptionStatusSchema.nullable(),
   stripe_customer_id: z.string().nullable(),
@@ -548,6 +552,7 @@ export const dealerPublicSchema = dealerRowSchema.omit({
   password_hash: true,
   stripe_customer_id: true,
   stripe_subscription_id: true,
+  email_verified_at: true,
   trial_ends_at: true,
   daily_listing_count: true,
   daily_listing_reset_at: true,
