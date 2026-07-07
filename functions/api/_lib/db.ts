@@ -92,6 +92,15 @@ export async function getDealerBySlug(env: Env, slug: string): Promise<Dealer | 
 const LISTING_NOT_EXPIRED =
   `(l.expires_at IS NULL OR l.expires_at > CAST(strftime('%s','now') AS INTEGER))`;
 
+/**
+ * Downgrade-freeze guard (WS-1, migration 0024). A frozen row keeps
+ * status='active' for its owner but must vanish from every PUBLIC surface —
+ * a missed filter here is a free unlimited tier. Owner/cabinet selections
+ * (`?mine`, dealer self views) deliberately do NOT apply this.
+ */
+const LISTING_NOT_FROZEN = `l.frozen_at IS NULL`;
+const DONOR_NOT_FROZEN = `dc.frozen_at IS NULL`;
+
 export async function getListingBySlug(env: Env, slug: string): Promise<Listing | null> {
   const row = await env.DB.prepare(
     `SELECT * FROM listings WHERE slug = ? LIMIT 1`
@@ -112,6 +121,7 @@ export interface ListingDetailRow {
   id: string;
   slug: string;
   dealer_id: string;
+  frozen_at: number | null;
   make_id: number;
   model_id: number;
   year: number;
@@ -170,7 +180,7 @@ export async function getListingDetailBySlug(
     SELECT
       l.id, l.slug, l.dealer_id, l.make_id, l.model_id, l.year, l.trim, l.vin,
       l.mileage, l.price, l.transmission, l.drivetrain, l.fuel_type,
-      l.body_type, l.condition, l.negotiable, l.status, l.expires_at,
+      l.body_type, l.condition, l.negotiable, l.status, l.expires_at, l.frozen_at,
       l.city, l.province, l.description,
       mk.slug AS make_slug, mk.name AS make_name,
       md.slug AS model_slug, md.name AS model_name,
@@ -302,6 +312,7 @@ export async function listCatalog(
       AND l.city = ?
       AND l.status = 'active'
       AND ${LISTING_NOT_EXPIRED}
+      AND ${LISTING_NOT_FROZEN}
       ${yearClause}
       ${mileageClause}
     ${sortClause}
@@ -317,7 +328,7 @@ export async function listCatalog(
   const countStmt = env.DB.prepare(`
     SELECT COUNT(*) AS n FROM listings l
     WHERE l.make_id = ? AND l.model_id = ? AND l.city = ? AND l.status = 'active'
-      AND ${LISTING_NOT_EXPIRED}
+      AND ${LISTING_NOT_EXPIRED} AND ${LISTING_NOT_FROZEN}
     ${yearClause} ${mileageClause}
   `).bind(q.makeId, q.modelId, q.city, ...yearBinds, ...mileageBinds);
 
@@ -345,7 +356,7 @@ export interface RecentListingsParams {
 export async function listRecentListings(
   env: Env, q: RecentListingsParams,
 ): Promise<CatalogRow[]> {
-  const where: string[] = [`l.status = 'active'`, LISTING_NOT_EXPIRED];
+  const where: string[] = [`l.status = 'active'`, LISTING_NOT_EXPIRED, LISTING_NOT_FROZEN];
   const binds: (string | number)[] = [];
   if (q.city) {
     where.push(`l.city = ?`);
@@ -1014,6 +1025,7 @@ export interface DonorCarDetailRow {
   // donor_cars.*
   id: string;
   dealer_id: string;
+  frozen_at: number | null;
   slug: string;
   year: number;
   make_id: number;
@@ -1086,7 +1098,7 @@ export async function getDonorCarBySlug(
       dc.vin, dc.mileage, dc.engine, dc.transmission,
       dc.condition, dc.available_parts_notes, dc.parts_available,
       dc.compatible_makes, dc.compatible_models, dc.compatible_years, dc.compatible_trims,
-      dc.price, dc.price_currency, dc.status,
+      dc.price, dc.price_currency, dc.status, dc.frozen_at,
       dc.view_count, dc.contact_count, dc.created_at, dc.updated_at,
       d.name AS dealer_name, d.slug AS dealer_slug,
       d.phone AS dealer_phone, d.email AS dealer_email, d.website AS dealer_website,
@@ -1155,7 +1167,7 @@ export interface DonorRelatedQuery {
 export async function listRelatedDonors(
   env: Env, q: DonorRelatedQuery,
 ): Promise<DonorCardRow[]> {
-  const where: string[] = [`dc.status = 'active'`, `dc.id != ?`];
+  const where: string[] = [`dc.status = 'active'`, DONOR_NOT_FROZEN, `dc.id != ?`];
   const binds: (string | number)[] = [q.excludeId];
   if (q.dealerId) { where.push(`dc.dealer_id = ?`); binds.push(q.dealerId); }
   if (q.modelId) { where.push(`dc.model_id = ?`); binds.push(q.modelId); }
@@ -1204,6 +1216,7 @@ export async function listDonorCountsByCity(
     JOIN cities ci ON ci.slug = dc.city_slug
     WHERE dc.make_id = ? AND dc.model_id = ?
       AND dc.status = 'active'
+      AND ${DONOR_NOT_FROZEN}
       AND dc.city_slug != ?
     GROUP BY ci.slug, ci.name, ci.province
     ORDER BY count DESC, ci.name ASC

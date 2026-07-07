@@ -89,7 +89,7 @@ year BETWEEN
 
 Ожидаемые до MVP launch:
 
-- `0003_subscriptions_audit.sql` — Stripe webhook history, subscription_events таблица
+- `0003_subscriptions_audit.sql` — (историческое имя) Stripe webhook history; фактическая таблица идемпотентности — `stripe_events` из `0024_stripe_billing.sql`
 - `0004_email_log.sql` — отправленные Resend emails, для compliance + debug
 - `0005_listing_revisions.sql` — soft-history изменений price/description (для GST audit, opt-in)
 

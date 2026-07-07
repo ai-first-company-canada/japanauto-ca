@@ -65,7 +65,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       FROM donor_cars dc
       LEFT JOIN makes  mk ON mk.id = dc.make_id
       LEFT JOIN models md ON md.id = dc.model_id
-      WHERE dc.dealer_id = ? AND dc.status = 'active'
+      WHERE dc.dealer_id = ? AND dc.status = 'active' AND dc.frozen_at IS NULL
       ORDER BY dc.created_at DESC
       LIMIT ?
     `).bind(dealerIdParam, limit).all();

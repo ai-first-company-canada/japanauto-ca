@@ -36,7 +36,7 @@ export const onRequestPost: PagesFunction<Env, "id"> = async ({ request, env, pa
   // Still returns 204 either way — no count/existence leak.
   const exists = await env.DB.prepare(
     `SELECT 1 FROM listings
-      WHERE id = ? AND status = 'active'
+      WHERE id = ? AND status = 'active' AND frozen_at IS NULL
         AND (expires_at IS NULL OR expires_at > CAST(strftime('%s','now') AS INTEGER))
       LIMIT 1`,
   ).bind(id).first();

@@ -15,6 +15,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
     `SELECT slug, updated_at
        FROM donor_cars
       WHERE status IN ('active', 'depleted')
+        AND frozen_at IS NULL
       ORDER BY updated_at DESC
       LIMIT 50000`,
   ).all<{ slug: string; updated_at: number }>();

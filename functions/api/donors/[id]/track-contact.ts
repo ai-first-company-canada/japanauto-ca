@@ -35,7 +35,7 @@ export const onRequestPost: PagesFunction<Env, "id"> = async ({ request, env, pa
   // audit table (same rationale as the listing beacon). Donors are visible in
   // both 'active' and 'depleted' states. Still returns 204 either way.
   const exists = await env.DB.prepare(
-    `SELECT 1 FROM donor_cars WHERE id = ? AND status IN ('active','depleted') LIMIT 1`,
+    `SELECT 1 FROM donor_cars WHERE id = ? AND status IN ('active','depleted') AND frozen_at IS NULL LIMIT 1`,
   ).bind(id).first();
   if (!exists) return noContent();
 

@@ -41,7 +41,16 @@ for admin.japanauto.ca confirmed.
    `npx lighthouse <url> --preset=desktop ...` + default mobile run.
    Thresholds: Perf ≥85 mobile / ≥95 desktop, SEO ≥95, BP ≥95, A11y ≥90.
    Fix real regressions; ignore: "unused CSS" (inlineStylesheets: always),
-   robots-fail on pages.dev (that IS our swap), IBM Plex font warnings.
+   robots-fail on pages.dev (that IS our swap → SEO ~66 there is expected),
+   IBM Plex font warnings.
+   **Baseline 2026-07-07** (pages.dev, astro 6.4.8, 0 listings): home mobile
+   perf 97 / desktop 99, city hub 97, **browse `/toronto/toyota/` 58 (mobile,
+   TBT 1450ms — main thread is Style & Layout 2699ms, i.e. DOM/layout cost of
+   the link grids under inlined CSS, NOT scripts)**; BP 100 everywhere; a11y
+   88–95 (home fails: aria-prohibited-attr, color-contrast,
+   label-content-name-mismatch). Follow-ups before/at T-1: profile the browse
+   DOM size, fix the three a11y audits on home. Desktop browse is fine —
+   mobile-CPU-throttle artifact of a large DOM.
 5. Check the last scheduled deploy.yml runs and
    `npx wrangler tail japanauto-expire-sweeper` for fresh errors; admin `/ops`
    → Cron heartbeats all ok.

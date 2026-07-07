@@ -28,6 +28,9 @@ type BillingFields = {
   subscription_tier: "free" | "pro";
   subscription_status: string | null;
   trial_ends_at: number | null;
+  // Stripe mirror (migration 0024) — grace math input. Optional so pre-0024
+  // call sites and tests keep compiling; absent = no paid period ever.
+  subscription_period_end?: number | null;
 };
 
 /** Statuses under which a paid Pro subscription still grants Pro access.
@@ -58,12 +61,24 @@ export interface Entitlements {
   textImprover: boolean;       // both tiers — we want the content
   onTrial: boolean;            // Pro via trial, not a paid plan
   trialDaysLeft: number;       // 0 when not on trial
+  // Downgrade grace (ADR-0012 §3): tier already free, but the sweeper hasn't
+  // frozen over-cap rows yet — the cabinet shows a countdown banner.
+  inGrace: boolean;
+  graceEndsAt: number | null;  // unix; null unless inGrace
 }
 
 export function getEntitlements(d: BillingFields, nowSec = Math.floor(Date.now() / 1000)): Entitlements {
   const tier = effectiveTier(d, nowSec);
   const trial = !hasPaidPro(d) && onTrial(d, nowSec);
+  // Grace window: Pro lapsed (free now), within DOWNGRADE_GRACE_DAYS of the
+  // later of trial end / paid period end. KEEP IN SYNC with the sweeper SQL
+  // (workers/expire-sweeper sweepOverCapFreeze — it can't import this).
+  const lapsedAt = Math.max(d.trial_ends_at ?? 0, d.subscription_period_end ?? 0);
+  const graceEnd = lapsedAt + LIMITS.DOWNGRADE_GRACE_DAYS * 86400;
+  const inGrace = tier === "free" && lapsedAt > 0 && nowSec >= lapsedAt && nowSec < graceEnd;
   return {
+    inGrace,
+    graceEndsAt: inGrace ? graceEnd : null,
     tier,
     maxActiveListings: tier === "pro" ? Number.POSITIVE_INFINITY : LIMITS.FREE_MAX_ACTIVE_LISTINGS,
     marketAnalytics: tier === "pro",

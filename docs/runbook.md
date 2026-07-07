@@ -260,6 +260,37 @@ verification questions → admin `verify` action; channel — support@japanauto.
 Delivery check: Resend dashboard → Emails. Failed sends log
 `email-send-failed {kind, status}` in the Pages Functions log.
 
+## Billing operations (WS-1, ADR-0012)
+
+Dark until configured: `STRIPE_SECRET_KEY` (secret) + `STRIPE_PRICE_PRO_MONTHLY`
+/ `STRIPE_PRICE_PRO_YEARLY` (vars in wrangler.toml) → checkout/portal answer
+503 until then. `STRIPE_WEBHOOK_SECRET` is already set; **rotate it when the
+webhook endpoint moves from *.pages.dev to japanauto.ca at cutover** (new
+endpoint = new whsec).
+
+- **Local test loop**: `npx wrangler pages dev dist --binding "JWT_SECRET=dev"
+  --binding "STRIPE_SECRET_KEY=sk_test_…" --binding "STRIPE_WEBHOOK_SECRET=<from listen>"
+  --binding "STRIPE_PRICE_PRO_MONTHLY=price_…" --binding "STRIPE_PRICE_PRO_YEARLY=price_…"`
+  (never `--d1=DB=…`) + `stripe listen --forward-to
+  http://127.0.0.1:8788/api/stripe/webhook`; `stripe trigger
+  checkout.session.completed`; card 4242…, decline 4000 0000 0000 9995.
+- **Stripe 500-retries**: our webhook 500s ONLY when the batch wrote nothing —
+  Stripe retries cleanly. A duplicate delivery answers
+  `{received, duplicate:true}`. If retries pile up, read the error in Pages
+  Functions logs; events are auditable in `stripe_events`
+  (`SELECT type, id, datetime(created,'unixepoch') FROM stripe_events ORDER BY created DESC LIMIT 20`).
+- **Manual reconciliation**: compare `dealers.subscription_status /
+  stripe_subscription_id / subscription_period_end` against the Stripe
+  dashboard; the sweeper self-heals frozen rows for any dealer who is Pro
+  again, and freezes over-cap rows 7 days after `max(trial_ends_at,
+  subscription_period_end)`.
+- **Unknown subscription status** (e.g. `paused`): stored as `'unpaid'` +
+  logged — extend `SUBSCRIPTION_STATUSES` (lib/schema.ts) + the dealers CHECK
+  (needs a table-rebuild migration) before mapping it properly.
+- **Featured slots** stay manual B2B invoicing (ADR-0013): Stripe Dashboard →
+  customer + Invoice (net-15, Stripe Tax auto-GST) → on payment, activate the
+  slot in the admin panel; the sweeper auto-ends lapsed slots.
+
 ## Dealer e-mail reports (decision 0016)
 
 Weekly (Mon 14:00 UTC) + monthly (1st) reports are composed and sent by the
@@ -296,7 +327,14 @@ Before attaching the domain, ALL of:
 1. `LAUNCH-CHECKLIST.md` — every item.
 2. `npm run audit:launch` green (fails while any page carries
    `data-demo-content`, robots blocks the host, or sitemap is missing).
-3. Test accounts cleaned from prod D1 (`diag-*`, `e2e-test-*`, etc.).
+3. Test accounts cleaned from prod D1 — inventory with
+   `scripts/audit-prod-testdata.sql` (SELECT-only), clean per the
+   cleanup-2026-06-12 pattern.
+
+**The full step-by-step cutover procedure lives in
+[runbook-cutover.md](runbook-cutover.md)** — phases 0-5: owner gates, T-1
+freeze/preflight, live e2e, attach, Search Console/IndexNow, T+48h
+monitoring with honest rollback semantics, post-cutover tail (Resend, Meta).
 
 ## Production verification recipes
 

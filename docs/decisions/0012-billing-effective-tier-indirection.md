@@ -1,6 +1,15 @@
 # 0012 — Billing via Stripe with an "effective tier" indirection
 
-- **Status:** accepted — foundation shipped (entitlement layer, trial, active-listing cap); Stripe wiring still post-launch
+- **Status:** accepted — IMPLEMENTED end-to-end 2026-07-07 (WS-1): migration 0024
+  (stripe_events idempotency, frozen_at on listings+donor_cars,
+  subscription_period_end + stripe_last_event_created guard), checkout/portal
+  endpoints, webhook event mirroring, 7-day grace + over-cap freeze/self-heal
+  unfreeze in the sweeper, frozen_at IS NULL on every public surface, cabinet
+  billing card. Trial carryover semantics: mid-trial upgrade passes
+  subscription_data[trial_end]=trial_ends_at when >48h+1h remain (card now,
+  billing starts when OUR trial ends); dealers.trial_ends_at is never written
+  by Stripe — the two never fight. Dark until owner sets STRIPE_SECRET_KEY +
+  price ids (fail-closed 503).
 - **Date:** 2026-06-11
 - **Commits:** 5c13be8 (foundation: effectiveTier/getEntitlements/enforceActiveCap, migration 0013, 30-day trial, cap at create + draft→active)
 

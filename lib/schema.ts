@@ -154,6 +154,10 @@ export const LIMITS = {
   // Billing (Feature 5): free tier caps active inventory; Pro is unlimited.
   FREE_MAX_ACTIVE_LISTINGS: 5,
   TRIAL_DAYS: 30,
+  // Days past max(trial_ends_at, subscription_period_end) before the sweeper
+  // freezes over-cap listings (ADR-0012 §3; KEEP IN SYNC with the SQL in
+  // workers/expire-sweeper sweepOverCapFreeze — the worker can't import this).
+  DOWNGRADE_GRACE_DAYS: 7,
 } as const;
 
 // ============================================================================
@@ -503,6 +507,11 @@ export const dealerSchema = z.object({
   // the account is treated as Pro. NULL = no trial. Visible in self view so the
   // cabinet can show the countdown; omitted from the public view.
   trial_ends_at: timestampSchema.nullable().default(null),
+  // Stripe mirror (migration 0024): current_period_end/ended_at — grace math
+  // input; self-view visible (grace banner). Guard column against out-of-order
+  // webhook retries — internal, omitted from self/public views.
+  subscription_period_end: timestampSchema.nullable().default(null),
+  stripe_last_event_created: timestampSchema.nullable().default(null),
   daily_listing_count: z.number().int().min(0),
   daily_listing_reset_at: timestampSchema.nullable(),
   // Session generation — bumped to invalidate all outstanding access tokens
@@ -669,6 +678,9 @@ export const listingSchema = z.object({
   boost_until: timestampSchema.nullable(),
   boost_paid_cents: z.number().int().min(0),
   flagged_reason: z.string().max(500).nullable(),
+  // Downgrade freeze (migration 0024, ADR-0012 §3): non-NULL = hidden from
+  // every public surface while staying status='active' in the owner's cabinet.
+  frozen_at: timestampSchema.nullable().default(null),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -877,6 +889,8 @@ export const donorCarSchema = z.object({
   status: donorCarStatusSchema,
   view_count: z.number().int().min(0),
   contact_count: z.number().int().min(0),
+  // Downgrade freeze (migration 0024) — same semantics as listings.frozen_at.
+  frozen_at: timestampSchema.nullable().default(null),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });

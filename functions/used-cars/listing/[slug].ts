@@ -37,7 +37,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ request, params
   // query — 2 D1 round-trips. The INNER JOINs also subsume the old
   // dealer/make/model missing-row 404 guard: a dangling FK yields no row.
   const listing = await getListingDetailBySlug(env, slug);
-  if (!listing || listing.status !== 'active' || isListingExpired(listing)) {
+  if (!listing || listing.status !== 'active' || isListingExpired(listing) || listing.frozen_at != null) {
     return new Response(notFoundHtml(cspNonce), {
       status: 404,
       headers: { 'content-type': 'text/html; charset=utf-8' },

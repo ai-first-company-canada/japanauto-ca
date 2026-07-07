@@ -32,6 +32,7 @@ JOIN makes  mk ON mk.id = l.make_id
 JOIN models md ON md.id = l.model_id
 JOIN dealers d ON d.id = l.dealer_id
 WHERE l.status = 'active'
+  AND l.frozen_at IS NULL
   AND (l.expires_at IS NULL OR l.expires_at > unixepoch())
 ORDER BY is_boosted DESC, l.created_at DESC
 `.replace(/\s+/g, " ").trim();
@@ -42,10 +43,10 @@ ORDER BY is_boosted DESC, l.created_at DESC
 const DEALERS_SQL = `
 SELECT d.slug, d.name, d.city, d.province, d.type, d.specializes_in,
        (SELECT COUNT(*) FROM listings l
-         WHERE l.dealer_id = d.id AND l.status = 'active'
+         WHERE l.dealer_id = d.id AND l.status = 'active' AND l.frozen_at IS NULL
            AND (l.expires_at IS NULL OR l.expires_at > unixepoch())) AS listing_count,
        (SELECT COUNT(*) FROM donor_cars dc
-         WHERE dc.dealer_id = d.id AND dc.status = 'active') AS donor_count
+         WHERE dc.dealer_id = d.id AND dc.status = 'active' AND dc.frozen_at IS NULL) AS donor_count
 FROM dealers d
 ORDER BY listing_count + donor_count DESC, d.created_at ASC
 `.replace(/\s+/g, " ").trim();

@@ -19,6 +19,34 @@ import Icon from '../../components/atoms/Icon.astro';
 
   <div
     class="card"
+    data-grace-banner
+    style="display:none;padding:12px 16px;margin-bottom:16px;border-left:3px solid #c2410c"
+  >
+    <span class="t-body-m" data-grace-text>Your Pro plan has ended.</span>
+    <button class="btn btn-primary" data-billing-upgrade="monthly" type="button" style="margin-left:12px">
+      Reactivate Pro
+    </button>
+  </div>
+
+  <div
+    class="card"
+    data-billing-card
+    style="display:none;padding:12px 16px;margin-bottom:16px"
+  >
+    <span class="t-body-m" data-billing-plan>—</span>
+    <span data-billing-actions style="margin-left:12px">
+      <button class="btn btn-primary" data-billing-upgrade="monthly" type="button">Upgrade to Pro — CA$99/mo</button>
+      <button class="btn btn-secondary" data-billing-upgrade="yearly" type="button" style="margin-left:8px">Yearly — CA$990/yr</button>
+      <a href="/dealers/pricing/" class="t-body-m" style="margin-left:8px">Compare plans</a>
+    </span>
+    <button class="btn btn-secondary" data-billing-portal type="button" style="display:none;margin-left:12px">
+      Manage billing
+    </button>
+    <span class="t-body-m ink-muted" data-billing-msg></span>
+  </div>
+
+  <div
+    class="card"
     data-email-verify-nudge
     style="display:none;padding:12px 16px;margin-bottom:24px;border-left:3px solid var(--color-accent)"
   >
@@ -111,6 +139,71 @@ import Icon from '../../components/atoms/Icon.astro';
           (dealer.type === 'salvage_yard' ? 'Salvage yard' : 'Verified seller') +
           ' · ' + (dealer.city || '') + ', ' + (dealer.province || '');
         setText('[data-dealer-meta]', meta);
+
+        // Billing card + grace banner (WS-1). Data comes from /api/dealers/me
+        // entitlements; after a successful Checkout return the cached badge
+        // must be dropped or the dealer "stays Free" until the session ends.
+        try {
+          if (new URLSearchParams(window.location.search).get('billing') === 'success') {
+            sessionStorage.removeItem('jc_dealer_meta');
+          }
+          var ent = dealer.entitlements || dealerJson.entitlements || {};
+          var card = document.querySelector('[data-billing-card]');
+          var planEl = document.querySelector('[data-billing-plan]');
+          var actions = document.querySelector('[data-billing-actions]');
+          var portalBtn = document.querySelector('[data-billing-portal]');
+          var msgEl = document.querySelector('[data-billing-msg]');
+          var hasSub = Boolean(dealer.subscription_status);
+          if (card) card.style.display = '';
+          if (planEl) {
+            planEl.textContent = ent.tier === 'pro'
+              ? (ent.onTrial ? 'Plan: Pro trial — ' + (ent.trialDaysLeft || 0) + 'd left' : 'Plan: Pro')
+              : 'Plan: Free (5 active max)';
+          }
+          if (actions && ent.tier === 'pro' && !ent.onTrial) actions.style.display = 'none';
+          if (portalBtn && hasSub) portalBtn.style.display = '';
+          function billingPost(path) {
+            return fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+              .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); });
+          }
+          document.querySelectorAll('[data-billing-upgrade]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              btn.disabled = true;
+              fetch('/api/stripe/checkout', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan: btn.getAttribute('data-billing-upgrade') }),
+              }).then(function (r) { return r.json().then(function (j) { return { status: r.status, j: j }; }); })
+                .then(function (res) {
+                  if (res.j && res.j.checkout_url) { window.location.href = res.j.checkout_url; return; }
+                  if (msgEl) {
+                    msgEl.textContent = res.status === 503
+                      ? ' Online billing isn’t enabled yet — contact support@japanauto.ca.'
+                      : ' Could not start checkout — try again.';
+                  }
+                  btn.disabled = false;
+                }).catch(function () {
+                  if (msgEl) msgEl.textContent = ' Could not start checkout — try again.';
+                  btn.disabled = false;
+                });
+            });
+          });
+          if (portalBtn) portalBtn.addEventListener('click', function () {
+            portalBtn.disabled = true;
+            billingPost('/api/stripe/portal').then(function (res) {
+              if (res.ok && res.j.portal_url) { window.location.href = res.j.portal_url; return; }
+              if (msgEl) msgEl.textContent = ' Portal unavailable right now.';
+              portalBtn.disabled = false;
+            }).catch(function () { portalBtn.disabled = false; });
+          });
+          if (ent.inGrace && ent.graceEndsAt) {
+            var gb = document.querySelector('[data-grace-banner]');
+            var gt = document.querySelector('[data-grace-text]');
+            var daysLeft = Math.max(1, Math.ceil((ent.graceEndsAt * 1000 - Date.now()) / 86400000));
+            if (gt) gt.textContent = 'Your Pro plan has ended — in ' + daysLeft +
+              ' day' + (daysLeft === 1 ? '' : 's') + ' only your 5 newest listings will stay publicly active.';
+            if (gb) gb.style.display = '';
+          }
+        } catch (_) { /* billing UI must never break the dashboard */ }
 
         // Email-confirmation nudge (WS-2). Nothing is gated on it — purely a
         // reminder + re-send. Hidden when confirmed or when the field is absent

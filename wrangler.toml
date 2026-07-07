@@ -77,6 +77,10 @@ INDEXNOW_KEY = "e3d465c40a7250b500ed3d3358a86ee5"
 # JWT_SECRET                  — HMAC-SHA256 key (256+ bits)
 # STRIPE_SECRET_KEY           — sk_live_... or sk_test_...
 # STRIPE_WEBHOOK_SECRET       — whsec_...
+# Billing price ids are VARS, not secrets (price_… is public). Set them here
+# once the owner creates the products (WS-1/T1); absent → checkout answers 503:
+# STRIPE_PRICE_PRO_MONTHLY = "price_..."
+# STRIPE_PRICE_PRO_YEARLY  = "price_..." 
 # RESEND_API_KEY              — re_... for transactional emails
 # DAILY_IP_HASH_SALT          — rotates daily, used for contact_reveals.ip_hash
 # CLOUDFLARE_IMAGES_API_TOKEN — Account → Cloudflare Images: Edit. Used by

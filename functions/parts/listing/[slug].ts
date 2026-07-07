@@ -49,7 +49,8 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ request, params
   const slug = params.slug as string;
   const cspNonce = takeCspNonce(data);
   const donor = await getDonorCarBySlug(env, slug);
-  if (!donor) {
+  // frozen_at (WS-1 downgrade freeze) = public-gone, same as a missing row.
+  if (!donor || donor.frozen_at != null) {
     return new Response(
       renderShell({
         title: 'Donor car not found — japanauto.ca',

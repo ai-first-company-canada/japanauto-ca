@@ -215,6 +215,69 @@ async function sweepExpired(env: Env, cron: string): Promise<void> {
   }
 }
 
+/**
+ * Downgrade freeze + self-heal unfreeze (WS-1/T7, ADR-0012 §3, migration 0024).
+ *
+ * Freeze: a dealer whose Pro lapsed (no live paid status, trial over) gets
+ * DOWNGRADE_GRACE_DAYS = 7 days of grace past max(trial_ends_at,
+ * subscription_period_end); after that, everything but the 5 newest active
+ * rows is frozen (frozen_at, hidden from public surfaces, still 'active' in
+ * the cabinet). KEEP IN SYNC with lib/schema.ts LIVE_PAID_SUBSCRIPTION_STATUSES
+ * (:59), FREE_MAX_ACTIVE_LISTINGS (:155) and DOWNGRADE_GRACE_DAYS — the
+ * worker cannot import lib.
+ *
+ * Self-heal unfreeze: insurance for a missed webhook — any dealer who is Pro
+ * again (paid or live trial) gets every frozen row released.
+ */
+async function sweepOverCapFreeze(env: Env): Promise<void> {
+  const LIVE = `d.subscription_tier = 'pro' AND d.subscription_status IN ('active','trialing','past_due')`;
+  const GRACE_S = 7 * 86400;
+  const CAP = 5;
+
+  // Self-heal first: an upgraded dealer must never wait for the freeze pass.
+  const heal = await env.DB.batch([
+    env.DB.prepare(`
+      UPDATE listings SET frozen_at = NULL, updated_at = unixepoch()
+      WHERE frozen_at IS NOT NULL AND dealer_id IN (
+        SELECT d.id FROM dealers d
+        WHERE (${LIVE}) OR COALESCE(d.trial_ends_at, 0) > unixepoch())
+    `),
+    env.DB.prepare(`
+      UPDATE donor_cars SET frozen_at = NULL, updated_at = unixepoch()
+      WHERE frozen_at IS NOT NULL AND dealer_id IN (
+        SELECT d.id FROM dealers d
+        WHERE (${LIVE}) OR COALESCE(d.trial_ends_at, 0) > unixepoch())
+    `),
+  ]);
+  const healed = (heal[0]?.meta.changes ?? 0) + (heal[1]?.meta.changes ?? 0);
+  if (healed > 0) console.log(`over-cap: self-heal unfroze ${healed} row(s)`);
+
+  for (const table of ["listings", "donor_cars"] as const) {
+    // Candidates: free-effective dealers past grace with >CAP unfrozen actives.
+    const candidates = (await env.DB.prepare(`
+      SELECT d.id FROM dealers d
+      WHERE NOT (${LIVE})
+        AND COALESCE(d.trial_ends_at, 0) < unixepoch()
+        AND MAX(COALESCE(d.trial_ends_at, 0), COALESCE(d.subscription_period_end, 0)) + ${GRACE_S} < unixepoch()
+        AND (SELECT COUNT(*) FROM ${table} t
+             WHERE t.dealer_id = d.id AND t.status = 'active' AND t.frozen_at IS NULL) > ${CAP}
+    `).all<{ id: string }>()).results ?? [];
+
+    for (const { id } of candidates) {
+      // Freeze everything but the CAP newest (ADR-0012 default; dealer-chosen
+      // keep-list is a post-launch feature).
+      const res = await env.DB.prepare(`
+        UPDATE ${table} SET frozen_at = unixepoch(), updated_at = unixepoch()
+        WHERE dealer_id = ?1 AND status = 'active' AND frozen_at IS NULL
+          AND id NOT IN (SELECT id FROM ${table}
+                         WHERE dealer_id = ?1 AND status = 'active' AND frozen_at IS NULL
+                         ORDER BY created_at DESC LIMIT ${CAP})
+      `).bind(id).run();
+      console.log(`over-cap: froze ${res.meta.changes ?? 0} ${table} row(s) for dealer ${id}`);
+    }
+  }
+}
+
 const SWEEP_CRON = "0 */6 * * *";
 const WEEKLY_REPORT_CRON = "0 14 * * 1";   // Mondays 14:00 UTC ≈ 08:00 Calgary
 const MONTHLY_REPORT_CRON = "30 14 1 * *"; // 1st of month, 14:30 UTC
@@ -224,7 +287,7 @@ const MONTHLY_REPORT_CRON = "30 14 1 * *"; // 1st of month, 14:30 UTC
 // wrong job. Job names are the ops_heartbeats primary keys — the staleness
 // checker (scripts/check-cron-heartbeats.mjs) and admin /ops read them.
 const JOBS: Record<string, { name: string; run: (env: Env) => Promise<void> }> = {
-  [SWEEP_CRON]:          { name: "expire-sweep",    run: (env) => sweepExpired(env, SWEEP_CRON) },
+  [SWEEP_CRON]:          { name: "expire-sweep",    run: async (env) => { await sweepExpired(env, SWEEP_CRON); await sweepOverCapFreeze(env); } },
   [MARKET_SYNC_CRON]:    { name: "market-sync",     run: (env) => syncMarketStats(env) },
   [WEEKLY_REPORT_CRON]:  { name: "reports-weekly",  run: (env) => sendReports(env as ReportsEnv, "weekly") },
   [MONTHLY_REPORT_CRON]: { name: "reports-monthly", run: (env) => sendReports(env as ReportsEnv, "monthly") },

@@ -13,6 +13,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
     `SELECT slug, updated_at
        FROM listings
       WHERE status = 'active'
+        AND frozen_at IS NULL
         AND (expires_at IS NULL OR expires_at > CAST(strftime('%s','now') AS INTEGER))
       ORDER BY updated_at DESC
       LIMIT 50000`,

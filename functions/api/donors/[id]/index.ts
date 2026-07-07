@@ -36,7 +36,10 @@ export const onRequestGet: PagesFunction<Env, "id"> = async (
   // listing route). draft/expired(soft-deleted)/flagged(moderated-off) are
   // owner-only — otherwise an anon caller with a UUID reads soft-deleted or
   // flagged rows + owner/vin (deep-audit COR-2, P9).
-  if (!(["active", "depleted"] as string[]).includes(donor.status as string)) {
+  // frozen_at (WS-1 downgrade freeze) hides a row from the public exactly
+  // like a non-public status — the owner still reads it with a Frozen badge.
+  if (!(["active", "depleted"] as string[]).includes(donor.status as string)
+      || donor.frozen_at !== null) {
     const auth = await requireDealer(request, env);
     if (auth instanceof Response) return auth;
     if (donor.dealer_id !== auth.dealerId) return forbidden();

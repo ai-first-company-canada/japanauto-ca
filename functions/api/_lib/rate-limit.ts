@@ -193,6 +193,11 @@ export const RATE_LIMITS = {
     limit: 3,
     windowSeconds: 86400,   // 3 re-sends/day per dealer (authenticated, own address only)
   } as RateLimitConfig,
+  STRIPE_CHECKOUT_PER_DEALER: {
+    bucket: "stripe-checkout-dealer",
+    limit: 10,
+    windowSeconds: 3600,    // 10 checkout sessions/hour per dealer (WS-1)
+  } as RateLimitConfig,
 } as const;
 
 /**

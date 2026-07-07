@@ -45,13 +45,18 @@ export interface Env {
   PUBLIC_CLOUDFLARE_ACCOUNT_HASH: string;
   /** IndexNow API key. The same hex string is hosted at `/<key>.txt` for ownership verification — public by design. Empty disables IndexNow pings. */
   INDEXNOW_KEY: string;
+  /** Stripe price ids for Pro (vars, not secrets — price_… ids are public).
+   *  Absent → checkout answers 503 not_configured (billing dark, WS-1). */
+  STRIPE_PRICE_PRO_MONTHLY?: string;
+  STRIPE_PRICE_PRO_YEARLY?: string;
 
   // ==========================================================================
   // Secrets (wrangler secret put …)
   // ==========================================================================
   JWT_SECRET: string;
-  STRIPE_SECRET_KEY: string;
-  STRIPE_WEBHOOK_SECRET: string;
+  /** Optional until billing goes live: absent → checkout/portal answer 503. */
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
   /** Resend API key for transactional email (WS-2, decision 0020). OPTIONAL by
    *  design: absent → email flows degrade honestly (reset-request 501,
    *  signup verify-send silently skipped). Needed in TWO places: this Pages

@@ -129,6 +129,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     JOIN models md ON md.id = l.model_id
     JOIN dealers d ON d.id = l.dealer_id
     WHERE l.status = 'active'
+      AND l.frozen_at IS NULL
       AND (l.expires_at IS NULL OR l.expires_at > unixepoch())
       AND (
         (d.subscription_tier = 'pro' AND d.subscription_status IN ('active','trialing','past_due'))

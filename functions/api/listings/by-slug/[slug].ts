@@ -23,7 +23,8 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ params, env }) 
   const listing = await getListingBySlug(env, slug);
   if (!listing) return notFound("Listing not found");
   // TTL counts as gone too — no sweeper flips past-expiry rows (audit #8).
-  if (listing.status !== "active" || isListingExpired(listing)) {
+  // frozen_at (WS-1 downgrade freeze) is public-gone the same way.
+  if (listing.status !== "active" || isListingExpired(listing) || listing.frozen_at !== null) {
     return notFound("Listing not available");
   }
 
