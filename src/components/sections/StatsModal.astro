@@ -276,7 +276,12 @@
       (primary.buckets || []).forEach(function (b) { if (b.bucket === 'all') primAll = b; });
       segments.forEach(function (seg) {
         if (seg === primary) return;
-        if (seg.seller_kind === 'unknown' && segments.length > 1) return; // noise once real kinds exist
+        // 'unknown' is noise only when the SAME source also reports real kinds
+        // (pre-0019 leftovers). Facebook Marketplace rows are almost always
+        // 'unknown' by nature — a real segment there (scraper report 2026-09-17).
+        if (seg.seller_kind === 'unknown' && segments.some(function (o) {
+          return o !== seg && o.source === seg.source && o.seller_kind !== 'unknown';
+        })) return;
         var all = null, ownB = null;
         (seg.buckets || []).forEach(function (b) {
           if (b.bucket === 'all') all = b;

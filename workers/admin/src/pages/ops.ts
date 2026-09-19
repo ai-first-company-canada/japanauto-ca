@@ -38,6 +38,8 @@ const HEARTBEAT_THRESHOLDS_S: Record<string, number> = {
 
 /** The market sync runs daily; >36h without a row means a missed run + slack. */
 const MARKET_STALE_AFTER_S = 36 * 3600;
+// autotrader computed_on is a date (midnight UTC) that lags the run by ~1 day.
+const UPSTREAM_STALE_AFTER_S = 60 * 3600;
 
 /** Pending media claims older than this are orphans (mint without finalize). */
 const PENDING_MEDIA_TTL_S = 86400;
@@ -72,7 +74,8 @@ export async function opsPage(
 
   // (b) Market sync freshness — MAX(synced_at) over the whole snapshot table.
   const marketSummary = await env.DB.prepare(`
-    SELECT MAX(synced_at) AS last_sync, COUNT(*) AS n_rows, MAX(computed_on) AS last_computed
+    SELECT MAX(synced_at) AS last_sync, COUNT(*) AS n_rows,
+           MAX(CASE WHEN source = 'autotrader' THEN computed_on END) AS last_computed
     FROM market_stats
   `).first<{ last_sync: number | null; n_rows: number; last_computed: string | null }>();
   const marketBySource = await env.DB.prepare(`
@@ -81,6 +84,11 @@ export async function opsPage(
 
   const lastSync = marketSummary?.last_sync ?? null;
   const marketFresh = lastSync !== null && now - lastSync <= MARKET_STALE_AFTER_S;
+  // Upstream freshness rides on autotrader's computed_on only: marketplace's
+  // computed_on is the last (≈monthly) FB collection date by design (scraper
+  // report 2026-09-17) and would false-alarm. 'YYYY-MM-DD' → UTC midnight.
+  const upstreamAt = marketSummary?.last_computed ? Date.parse(`${marketSummary.last_computed}T00:00:00Z`) / 1000 : null;
+  const upstreamFresh = upstreamAt !== null && now - upstreamAt <= UPSTREAM_STALE_AFTER_S;
   const sourceBits = (marketBySource.results ?? [])
     .map((s) => `${esc(s.source)}: <b>${s.n.toLocaleString("en-US")}</b>`)
     .join(" · ");
@@ -168,7 +176,8 @@ export async function opsPage(
       ${marketFresh ? badge("fresh", "ok") : badge("stale", "bad")}
       last sync <b>${fmtAgo(lastSync)}</b> (${fmtTs(lastSync)})
       · ${(marketSummary?.n_rows ?? 0).toLocaleString("en-US")} rows
-      · computed_on ${esc(marketSummary?.last_computed ?? "—")}<br>
+      · autotrader computed_on ${esc(marketSummary?.last_computed ?? "—")}
+      ${upstreamFresh ? badge("upstream ok", "ok") : badge("upstream stale", "bad")}<br>
       <span style="font-size:12px;color:#5a6068">${sourceBits || "no sources yet"}</span>
     </p>
 
