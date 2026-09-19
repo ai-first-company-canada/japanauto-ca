@@ -2,6 +2,7 @@
 
 import { sendReports, type ReportsEnv } from "./reports";
 import { buildMarketAuthAttempts } from "./market-auth";
+import { buildMarketDiff, isEmptyRow, rowKey, rowSignature, type MarketRow } from "./market-diff";
 
 interface Env {
   DB: D1Database;
@@ -10,16 +11,14 @@ interface Env {
   REPORTS_UNSUB_SECRET?: string;  // shared with /api/reports/unsubscribe on Pages
   REPORTS_FROM?: string;          // optional var override
   MARKET_SUPABASE_URL?: string;       // https://<project>.supabase.co — non-secret, set in [vars]
-  // Auth: the scraper project migrated to ES256 JWT signing keys, so the
-  // originally-designed self-minted HS256 JWT (role japanauto_sync) cannot
-  // validate there. Fallback: a Secret API key (sb_secret_…) sent as the
-  // apikey header — broader rights than designed (service_role), accepted
-  // because it lives only in Cloudflare secrets. Set via:
-  //   npx wrangler secret put MARKET_SUPABASE_SECRET_KEY
-  MARKET_SUPABASE_SECRET_KEY?: string;
-  // Legacy pair kept for the day the scraper project mints role-scoped keys:
+  // Auth (verified by the scraper project 2026-09-17): the working rung is
+  // anon key + japanauto_sync JWT — least privilege, stats view only. The old
+  // "HS256 JWT can't validate against ES256 keys" assumption was wrong.
   MARKET_SUPABASE_ANON_KEY?: string;  // anon key (PostgREST apikey header)
-  MARKET_SYNC_JWT?: string;           // JWT with {"role":"japanauto_sync"}
+  MARKET_SYNC_JWT?: string;           // JWT with {"role":"japanauto_sync"}, valid to 2027-06-13
+  // Service-role Secret API key — NOT needed. While set it is tried first;
+  // delete it after a sync logs `auth 'legacy anon+jwt' OK`.
+  MARKET_SUPABASE_SECRET_KEY?: string;
 }
 
 const MARKET_SYNC_CRON = "45 9 * * *"; // daily 09:45 UTC ≈ 03:45 Calgary, after the scraper's nightly cadence
@@ -42,10 +41,12 @@ interface ViewRow {
 }
 
 /**
- * Pulls the scraper project's japanauto_market_stats view via PostgREST, fills
- * a staging table, then swaps it into the live market_stats in ONE atomic D1
- * batch (DELETE + INSERT...SELECT), so readers never observe a half-synced
- * table even if the multi-batch staging fill fails mid-run (deep-audit COR-1).
+ * Pulls the scraper project's japanauto_market_stats view via PostgREST and
+ * applies the DIFF to market_stats: only new/changed rows are written and rows
+ * gone upstream are deleted (market-diff.ts). A normal day's diff fits one D1
+ * batch, so readers still never observe a half-synced table (deep-audit COR-1).
+ * Replaces the staging-table swap, which rewrote ~20k rows nightly and blew
+ * D1's daily write cap once Facebook Marketplace data doubled the snapshot.
  * Money: the view emits whole CAD dollars; D1 stores cents (app invariant).
  */
 async function syncMarketStats(env: Env): Promise<void> {
@@ -53,9 +54,10 @@ async function syncMarketStats(env: Env): Promise<void> {
   // Auth ladder (contract §3, JWT handover 2026-06-12). The gateway always
   // needs an api key in `apikey`; the japanauto_sync JWT rides in
   // Authorization and narrows the Postgres role to the stats view only.
-  // If PostgREST rejects the HS256 JWT (the project runs ES256 signing keys;
-  // legacy-secret acceptance unconfirmed), we fall back one rung and LOG
-  // LOUDLY — a daily sync must not die over an auth experiment.
+  // Production rung is `legacy anon+jwt` (confirmed 2026-09-17). Rungs using
+  // MARKET_SUPABASE_SECRET_KEY only exist while that key is still set; any
+  // rejected rung falls through and LOGS LOUDLY — a daily sync must not die
+  // over an upstream key rotation.
   const attempts = buildMarketAuthAttempts(env);
   if (attempts.length === 0) {
     console.log("market-sync: secrets not configured — skipping");
@@ -125,56 +127,97 @@ async function syncMarketStats(env: Env): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
   const cents = (d: number | null) => (d == null ? null : Math.round(d * 100));
 
-  // Atomic snapshot swap via a staging table (deep-audit COR-1, migration
-  // 0021). We fill market_stats_staging (unread by any reader) across many
-  // batches, then swap into market_stats in ONE atomic batch. This replaces
-  // the old many-batches-then-prune approach whose mid-run failure left a torn
-  // fresh/stale mix in the live table.
-  //
-  // D1 caps 100 bound params/statement: 6 rows × 15 cols = 90. Staging fill is
-  // batched ≤40 statements/call; failures here abort BEFORE the swap, so the
-  // live table is untouched. INSERT OR REPLACE into staging tolerates a within-
-  // run duplicate key defensively.
+  const incoming: MarketRow[] = usable.map((r) => ({
+    city_slug: r.city_slug,
+    make_slug: r.make_slug,
+    model_slug: r.model_slug,
+    anchor_year: r.anchor_year,
+    mileage_bucket: r.mileage_bucket,
+    source: r.source ?? "marketplace",
+    seller_kind: r.seller_kind ?? "unknown",
+    n_active: r.n_active ?? 0,
+    price_p25_cents: cents(r.price_p25),
+    price_p50_cents: cents(r.price_p50),
+    price_p75_cents: cents(r.price_p75),
+    n_delisted: r.n_delisted ?? 0,
+    median_days_listed: r.median_days_listed == null ? null : Math.round(r.median_days_listed),
+    computed_on: r.computed_on ?? null,
+  })).filter((row) => !isEmptyRow(row));
+  const dropped = usable.length - incoming.length;
+  if (dropped > 0) {
+    console.log(`market-sync: dropped ${dropped} empty rows (no active listings, no price)`);
+  }
+  if (incoming.length === 0) {
+    console.log("market-sync: nothing usable after filtering — keeping previous snapshot");
+    return;
+  }
+
+  // Write only what changed (2026-09-18). Reads are ~1000× cheaper than writes
+  // on D1's meter, so we pull the current snapshot, compare, and touch just the
+  // rows that actually moved. See market-diff.ts for why the full nightly
+  // rewrite had to go.
+  const current = await env.DB.prepare(`
+    SELECT city_slug, make_slug, model_slug, anchor_year, mileage_bucket, source, seller_kind,
+           n_active, price_p25_cents, price_p50_cents, price_p75_cents,
+           n_delisted, median_days_listed, computed_on
+    FROM market_stats
+  `).all<MarketRow>();
+  const existing = new Map<string, string>();
+  for (const row of current.results ?? []) existing.set(rowKey(row), rowSignature(row));
+
+  const diff = buildMarketDiff(existing, incoming);
+  if (diff.upserts.length === 0 && diff.deletes.length === 0) {
+    console.log(`market-sync: no changes (${diff.unchanged} rows identical) — nothing written`);
+    return;
+  }
+
+  // D1 caps 100 bound params/statement: 6 rows × 15 cols = 90.
   const ROWS_PER_STMT = 6;
   const STMTS_PER_BATCH = 40;
-  const statements: D1PreparedStatement[] = [
-    env.DB.prepare(`DELETE FROM market_stats_staging`),
-  ];
-  for (let i = 0; i < usable.length; i += ROWS_PER_STMT) {
-    const chunk = usable.slice(i, i + ROWS_PER_STMT);
+  const statements: D1PreparedStatement[] = [];
+  for (let i = 0; i < diff.upserts.length; i += ROWS_PER_STMT) {
+    const chunk = diff.upserts.slice(i, i + ROWS_PER_STMT);
     const placeholders = chunk.map(() => "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").join(",");
     const binds: unknown[] = [];
     for (const r of chunk) {
       binds.push(
         r.city_slug, r.make_slug, r.model_slug, r.anchor_year, r.mileage_bucket,
-        r.source ?? "marketplace", r.seller_kind ?? "unknown",
-        r.n_active ?? 0, cents(r.price_p25), cents(r.price_p50), cents(r.price_p75),
-        r.n_delisted ?? 0,
-        r.median_days_listed == null ? null : Math.round(r.median_days_listed),
-        r.computed_on ?? null, now,
+        r.source, r.seller_kind,
+        r.n_active, r.price_p25_cents, r.price_p50_cents, r.price_p75_cents,
+        r.n_delisted, r.median_days_listed, r.computed_on, now,
       );
     }
     statements.push(env.DB.prepare(`
-      INSERT OR REPLACE INTO market_stats_staging (
+      INSERT OR REPLACE INTO market_stats (
         city_slug, make_slug, model_slug, anchor_year, mileage_bucket, source, seller_kind,
         n_active, price_p25_cents, price_p50_cents, price_p75_cents,
         n_delisted, median_days_listed, computed_on, synced_at
       ) VALUES ${placeholders}
     `).bind(...binds));
   }
-  // Fill staging (the leading DELETE rides in the first batch).
+  for (const key of diff.deletes) {
+    statements.push(env.DB.prepare(`
+      DELETE FROM market_stats
+      WHERE city_slug = ?1 AND make_slug = ?2 AND model_slug = ?3 AND anchor_year = ?4
+        AND mileage_bucket = ?5 AND source = ?6 AND seller_kind = ?7
+    `).bind(key[0], key[1], key[2], Number(key[3]), key[4], key[5], key[6]));
+  }
+
+  // One batch = one implicit transaction. A normal day's diff fits in a single
+  // batch, so the snapshot stays atomic exactly as the staging swap made it
+  // (deep-audit COR-1). A rare huge diff (upstream re-baseline) spills into
+  // several batches: rows stay individually consistent, only cross-row
+  // freshness can differ for a few seconds — logged when it happens.
+  if (statements.length > STMTS_PER_BATCH) {
+    console.log(`market-sync: large diff — ${statements.length} statements across ` +
+      `${Math.ceil(statements.length / STMTS_PER_BATCH)} batches (not atomic)`);
+  }
   for (let i = 0; i < statements.length; i += STMTS_PER_BATCH) {
     await env.DB.batch(statements.slice(i, i + STMTS_PER_BATCH));
   }
-  // Atomic swap: both statements in one implicit transaction. INSERT...SELECT
-  // is a single statement (no param cap), so the live table goes from the old
-  // snapshot to the new one with no torn intermediate state (COR-1). This also
-  // retires the old synced_at prune (closes PERF-5's full-table DELETE).
-  await env.DB.batch([
-    env.DB.prepare(`DELETE FROM market_stats`),
-    env.DB.prepare(`INSERT INTO market_stats SELECT * FROM market_stats_staging`),
-  ]);
-  console.log(`market-sync: swapped in ${usable.length} rows atomically (${statements.length - 1} fill statements)`);
+  const rowsTouched = diff.upserts.length + diff.deletes.length;
+  console.log(`market-sync: ${diff.upserts.length} upserted, ${diff.deletes.length} deleted, ` +
+    `${diff.unchanged} unchanged (${rowsTouched} rows written, was ~${incoming.length * 4})`);
 }
 
 async function sweepExpired(env: Env, cron: string): Promise<void> {

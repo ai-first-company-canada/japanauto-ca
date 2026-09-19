@@ -11,11 +11,13 @@
 #   "30 14 1 * *"  monthly dealer reports (same secrets)
 #   "45 9 * * *"   market-sync — pulls the scraper project's
 #                  japanauto_market_stats Supabase view into D1 market_stats
-#                  (Feature 1 step 3). URL is a [vars] entry below; auth is a
-#                  Secret API key (the scraper project runs ES256 signing
-#                  keys, so the originally-planned role-scoped HS256 JWT
-#                  cannot validate there). No-op until the secret is set:
-#                    npx wrangler secret put MARKET_SUPABASE_SECRET_KEY
+#                  (Feature 1 step 3). URL is a [vars] entry below; auth is
+#                  least privilege: anon key + the role-scoped japanauto_sync
+#                  JWT (verified live by the scraper project 2026-09-17:
+#                  200 on the stats view, 403 on listings; JWT valid to
+#                  2027-06-13). No service/secret key needed. No-op until set:
+#                    npx wrangler secret put MARKET_SYNC_JWT
+#                    npx wrangler secret put MARKET_SUPABASE_ANON_KEY
 #
 # Pages Functions cannot run scheduled() handlers, hence a separate Worker.
 # NOT deployed by the Pages `npm run deploy` — deploy separately:

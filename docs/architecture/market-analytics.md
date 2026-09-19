@@ -78,21 +78,42 @@ dispatches every scheduled job by exact cron-string match in `scheduled()`).
 `MARKET_SYNC_CRON = "45 9 * * *"` — 09:45 UTC ≈ 03:45 Calgary, after the
 scraper's nightly cadence.
 
-**Auth ladder** (contract §3; the scraper project runs ES256 signing keys, so
-the originally-designed self-minted HS256 `japanauto_sync` JWT may not
-validate there). Attempts in order, falling one rung on a 401/403 of the
-first page and logging loudly via `console.error`:
+**Auth ladder** (contract §3). The working production rung is **anon key +
+`japanauto_sync` JWT** — least privilege, verified live by the scraper project
+on 2026-09-17 (200 on `japanauto_market_stats`, 403 on `listings`; JWT valid to
+2027-06-13). The earlier belief that an HS256 JWT cannot validate against the
+project's ES256 keys was wrong. Attempts in order, falling one rung on a
+401/403 of the first page and logging loudly via `console.error`:
 
-1. `jwt-role (least privilege)` — `apikey: MARKET_SUPABASE_SECRET_KEY` (gateway)
-   + `Authorization: Bearer MARKET_SYNC_JWT` (narrows the Postgres role to the
-   stats view only);
-2. `legacy anon+jwt` — `apikey: MARKET_SUPABASE_ANON_KEY` + the same Bearer;
-3. `sb-secret only` — `apikey: MARKET_SUPABASE_SECRET_KEY` (service-role
-   rights, broader than designed; accepted because it lives only in Cloudflare
-   secrets).
+1. `jwt-role` — `apikey: MARKET_SUPABASE_SECRET_KEY` + `Authorization: Bearer
+   MARKET_SYNC_JWT` — exists only while the secret key is still set;
+2. `legacy anon+jwt` — `apikey: MARKET_SUPABASE_ANON_KEY` + the same Bearer —
+   **the production rung**;
+3. `sb-secret only` — `apikey: MARKET_SUPABASE_SECRET_KEY` (service role).
+   The service-role key is not needed and is to be deleted from the Worker
+   (`wrangler secret delete MARKET_SUPABASE_SECRET_KEY`) after the first sync
+   that logs `auth 'legacy anon+jwt' OK` — rungs 1 and 3 then disappear.
 
 No rungs configured → logged no-op. All rungs rejected → throw (the run shows
 as failed in Workers logs).
+
+**Write path — diff, not rewrite (2026-09-18).** The sync reads the current
+snapshot, compares each upstream row against it (`market-diff.ts`:
+`rowKey` = the 7-column PK, `rowSignature` = every reader-visible column EXCEPT
+`synced_at`), then writes only new/changed rows (`INSERT OR REPLACE`, 6 rows per
+statement) and deletes keys that vanished upstream. Rows that carry nothing —
+`n_active = 0`, no `price_p50`, `n_delisted = 0` — are dropped before the
+comparison (4,210 of 20,215 on the day this landed). A normal diff fits one D1
+batch, so the snapshot stays atomic as before; an unusually large diff spills
+into several batches and logs that it did.
+
+*Why:* the previous staging-swap path rewrote everything nightly — DELETE
+staging + INSERT staging + DELETE live + INSERT…SELECT ≈ 4 × 20k rows — and D1
+bills index writes too (the 7-column PK doubles each row), so one run cost
+~170k rows written against a 100k/day free-tier cap. Exceeding it blocks every
+D1 write on the account, not just the sync (alert received 2026-09-17). The
+account is now on Workers Paid; the diff keeps the daily cost in the hundreds
+of rows anyway. `market_stats_staging` (migration 0021) is no longer used.
 
 **Ordered pagination.** PostgREST limit/offset is only deterministic with an
 explicit total order; without it Postgres may duplicate or skip rows across
@@ -274,12 +295,11 @@ sync also shows as a failed scheduled run in Workers logs
   is fully regenerated daily, so preserving history was worthless;
   re-keying in place (with an `'unknown'` backfill bridging until the next
   sync) kept every reader's SQL unchanged except for the added column.
-- **Secret-key auth accepted as a fallback rung** (commits `b4f35cf`,
-  `e03fbba`) — the designed least-privilege HS256 `japanauto_sync` JWT may
-  not validate against the scraper project's ES256 keys; rather than block
-  the feature on someone else's key infrastructure, the ladder tries least
-  privilege first and degrades with loud logs. The sb-key is not to be
-  revoked upstream until the JWT rung is confirmed in a production sync.
+- **Secret-key auth was accepted as a temporary fallback rung** (commits
+  `b4f35cf`, `e03fbba`) while the `japanauto_sync` JWT was unverified. The
+  scraper project confirmed anon + JWT works (2026-09-17), so the service-role
+  key is being retired: delete it from the Worker after the first sync logs
+  `auth 'legacy anon+jwt' OK`.
 
 ## Gaps
 
@@ -288,10 +308,10 @@ sync also shows as a failed scheduled run in Workers logs
 - No push alert on staleness — `/ops` badge and dashboard only. If a daily
   glance stops being the routine, wire a notification onto the >36 h
   condition.
-- The JWT auth rung is unconfirmed in production as of 2026-06-12 (first
-  post-handover sync runs 09:45 UTC next morning); until then the sync may be
-  running on the sb-secret rung — check the run logs for
-  `auth 'jwt-role (least privilege)' OK`.
+- The anon + JWT rung is verified upstream (2026-09-17) but awaits its first
+  logged production sync (`auth 'legacy anon+jwt' OK` in `wrangler tail
+  japanauto-expire-sweeper` around 09:45 UTC); close this gap and delete
+  `MARKET_SUPABASE_SECRET_KEY` once seen.
 - No automated tests cover `syncMarketStats` (pagination, enum filtering,
   batching arithmetic); the 100-param cap regression class is exactly the
   kind local dev won't catch.
@@ -299,3 +319,19 @@ sync also shows as a failed scheduled run in Workers logs
   scraper adds a platform (the contract obliges them to send the exact
   spelling in advance); an unlabeled source renders as its raw key — ugly but
   functional.
+
+## Source semantics: `marketplace` (scraper report 2026-09-17)
+
+- Upstream is now a **materialized snapshot** refreshed atomically after the
+  nightly run (done ≤ 09:00 UTC) and after each FB load; same GET, columns,
+  units, 7-column key and enums. New column `refreshed_at` (timestamptz) —
+  not stored in D1 yet.
+- `source = marketplace` = Facebook Marketplace, 9 makes, **Calgary and
+  Edmonton only**. `n_active` / prices = live listings seen within 45 days;
+  `n_delisted ≈ 0` and `median_days_listed = NULL` by design (time-to-sell on
+  FB is unknown) — never render a liquidity line for it.
+- `computed_on` for marketplace = date of the last FB collection (≈ monthly).
+  **Never alert on it** — freshness is `synced_at` (ours) plus autotrader's
+  `computed_on` (or upstream `refreshed_at`).
+- `seller_kind` for marketplace is almost always `unknown` — it is a real
+  segment there, not pre-0019 noise (see the modal's unknown-suppression rule).

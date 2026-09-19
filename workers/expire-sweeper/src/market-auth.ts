@@ -10,10 +10,13 @@
  * whole worker (ExportedHandler types etc.) into the Pages typecheck.
  *
  * Rung order is the degradation contract the daily sync depends on:
- *   1. jwt-role (least privilege)  — secret apikey + japanauto_sync JWT
- *   2. legacy anon+jwt             — anon apikey + JWT
- *   3. sb-secret only              — secret apikey, full role (last resort;
- *      retire once the scraper project issues a role-scoped key — OPS-5)
+ *   1. jwt-role              — secret apikey + japanauto_sync JWT (only while
+ *                              MARKET_SUPABASE_SECRET_KEY is still set)
+ *   2. legacy anon+jwt       — anon apikey + JWT. THE production rung: least
+ *                              privilege, verified live 2026-09-17 (200 stats
+ *                              view / 403 listings). No secret key required.
+ *   3. sb-secret only        — secret apikey, service role. Retired once
+ *                              MARKET_SUPABASE_SECRET_KEY is deleted (OPS-5).
  */
 
 export interface MarketAuthEnv {
