@@ -5,7 +5,7 @@
  * when indexable (src/lib/indexability.ts).
  */
 import { getCollection } from 'astro:content';
-import { TIER_1_CITIES } from '../data/brand-content';
+import { BRAND_CONTENT, TIER_1_CITIES } from '../data/brand-content';
 import { MODELS_BY_BRAND } from '../data/models-stubs';
 import { isIndexable } from '../lib/indexability';
 import { SITE } from '../lib/markdown-alternates';
@@ -31,7 +31,7 @@ export async function GET() {
   for (const make of Object.keys(MODELS_BY_BRAND)) {
     for (const city of TIER_1_CITIES) {
       const path = `/${city.slug}/${make}/`;
-      if (await isIndexable(path)) inventory.push(`- [Used ${make} in ${city.name}](${SITE}${path})`);
+      if (await isIndexable(path)) inventory.push(`- [Used ${BRAND_CONTENT[make]?.name ?? make} in ${city.name}](${SITE}${path})`);
     }
   }
 
