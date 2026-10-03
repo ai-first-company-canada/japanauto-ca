@@ -9,7 +9,7 @@
     "dev": "astro dev",
     "build": "astro build && node scripts/extract-css.mjs && node scripts/generate-csp-hashes.mjs",
     "preview": "astro preview",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p workers/expire-sweeper && tsc --noEmit -p workers/admin",
+    "typecheck": "astro sync && tsc --noEmit -p tsconfig.json && tsc --noEmit -p workers/expire-sweeper && tsc --noEmit -p workers/admin",
     "test": "vitest run",
     "audit:seo": "python3 scripts/seo-audit.py dist",
     "audit:launch": "LAUNCH=1 python3 scripts/seo-audit.py dist",
