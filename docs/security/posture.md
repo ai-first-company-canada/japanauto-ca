@@ -43,7 +43,7 @@ JapanAuto is an Astro 6 SSG storefront fronting Cloudflare Pages Functions (D1/K
 | #23 No global error boundary — a thrown zod .parse() on a malformed D1 row produced a 500 with no security headers/CORS, breaking the JSON error contract | Wrapped next() in a try/catch in functions/_middleware.ts emitting a clean, fully-headered JSON envelope | 297ede4 |
 | #33 Unbounded array cardinality on donor compatible_* and catalog years[] (storage amplification) | Added .max() caps on the arrays plus a 64 KB /api/* request-body guard in middleware | 40799bf |
 | #35 GET /api/listings/:id had no auth/status/ownership filter — anonymously exposed draft/expired/sold/flagged listings and internal moderation fields (IDOR) | Non-active or past-TTL rows now require requireDealer + ownership; only active rows are public | 40799bf |
-| #37 deploy.yml interpolated github.ref_name directly into the wrangler shell command (branch-name script injection) | Branch name passed via a quoted DEPLOY_BRANCH env var: --branch="$DEPLOY_BRANCH" | 40799bf |
+| #37 deploy.yml interpolated github.ref_name directly into the wrangler shell command (branch-name script injection) | Branch name passed via a quoted DEPLOY_BRANCH env var (40799bf). 2026-10-03: that var was never expanded (wrangler-action runs no shell), so CI only produced Previews; replaced by a literal `--branch=main` on a main-only step, still no interpolation | 40799bf, 1dad51b |
 | #42 Refresh-token endpoint had no rate limit (brute/rotation abuse) | Added REFRESH_PER_IP (60/h) throttle at the top of functions/api/auth/refresh.ts | 40799bf |
 
 ## Open items
