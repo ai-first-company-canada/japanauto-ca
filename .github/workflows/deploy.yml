@@ -62,6 +62,14 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: node scripts/export-catalog-data.mjs || echo "::warning::catalog export from D1 failed — building from the committed catalog-live.json snapshot"
 
+      # Refresh the public Calgary asking-price snapshot (ADR 0021) the same
+      # fail-safe way: on failure, build from the committed market-live.json.
+      - name: Refresh market prices from D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/export-market-data.mjs || echo "::warning::market export from D1 failed — building from the committed market-live.json snapshot"
+
       # Migration journal drift check (deep-audit OPS-3). Non-blocking here —
       # a schema drift must not kill the 3-hourly catalog redeploy; the local
       # `npm run deploy` predeploy runs the same script BLOCKING.

@@ -5,6 +5,19 @@
 
 The build-time SEO/GEO surface for japanauto.ca: ~925 city-first Astro SSG pages (incl. six top-level legal/info pages added 2026-07-05 — terms/privacy/cookies/accessibility/about/cities) plus D1-backed dynamic detail/sitemap Pages Functions, every indexable page carrying title/description/self-canonical/single-H1/Open Graph/JSON-LD, enforced by a Python audit that gates deploy and a stricter LAUNCH mode that refuses to ship fabricated demo inventory, dead internal links, or a host-blocking robots.txt before the production domain is connected. The browse (city/model) surface is a build-time snapshot of prod D1 refreshed on every deploy and by a 3-hourly CI schedule; listing detail pages are live D1 Functions (see "Catalog freshness" below).
 
+## 2026-10-03 update (SEO/GEO audit, ADRs 0021–0023)
+
+| File | Role |
+|---|---|
+| `src/lib/indexability.ts` | `isIndexable(pathname)` — the single robots/sitemap rule (ADR 0022). BaseLayout emits `noindex, follow` from it; `sitemap-static.xml.ts` filters through it. |
+| `src/lib/market.ts` + `src/data/market-live.json` | Public Calgary asking-price aggregates (ADR 0021); `modelMarket()`, `brandMarket()`, `PROVINCE_FACTS` (regulator + sales-tax rule per province). Snapshot written by `scripts/export-market-data.mjs` (predeploy + CI). |
+| `src/components/sections/AnswerCapsule.astro` | Answer capsule under the H1 on city×model, city×make and national model pages; optional price table. Calgary pages with a table also emit `Dataset` JSON-LD. |
+| `src/pages/llms.txt.ts` | llms.txt generated from collections + indexable inventory + Calgary price pages. `public/llms.txt` was deleted (7 dead links). |
+| `src/lib/markdown-alternates.ts`, `src/pages/{blog/[slug],glossary/[term],brands/[make]}.md.ts` | `.md` twins of the 49 editorial pages; BaseLayout adds `rel=alternate type=text/markdown` only where a twin exists. `public/_headers` serves `/*.md` as `text/markdown`, `X-Robots-Tag: noindex`. |
+| `public/robots.txt` | One group for all crawlers (named bots had their own `Allow: /` groups, which by RFC 9309 dropped the private-path Disallows) + `Content-Signal: search=yes, ai-input=yes, ai-train=no`. |
+
+Additional `seo-audit.py` gates (always on): "Updated today", `[verify`, "150+ dealers", "~N listed", AMVIC in a non-Alberta page description, indexable empty inventory state without a price table, llms.txt or sitemap URL that isn't an indexable built page. Preview hosts now also get `x-robots-tag: noindex, nofollow` on every response (middleware), not only on robots.txt. `formatIsoDate` formats in UTC (visible dates were a day behind JSON-LD).
+
 ## Key files
 
 | Path | Role |

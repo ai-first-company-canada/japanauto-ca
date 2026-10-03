@@ -1,0 +1,29 @@
+### Glossary: claims kept verbatim but likely wrong or unsourced (from the three rewrite passes)
+- **riv-program / jdm / kei-car / provincial-safety-inspection**: pages assume 15+-year-old JDM cars still go through RIV (fee, Form 2 inspection). Vehicles 15+ years old are generally *exempt* from RIV; "Do I need RIV for a 15-year-old JDM car? Yes" is likely wrong. Highest priority.
+- **kei-car**: "S660 from 2015 onward ... importable under the 15-year rule" (earliest eligible ~2030). Quebec described as "accommodating" for kei imports (Quebec restricts kei trucks).
+- **jdm**: "OMVIC-aligned safety in Ontario, AMVIC-aligned in Alberta" (regulators don't run inspections); Pearson / "port terminals on Lake Ontario" import route.
+- **provincial-safety-inspection, jdm**: AB out-of-province inspection "at an AMVIC-licensed inspection facility" (Alberta Transportation licenses those).
+- **catalytic-converter**: "Ontario and British Columbia require catalyst presence to pass Provincial Safety Inspection on transfer" (BC has no general transfer inspection).
+- **abs**: "CMVSS 126 has required ABS since September 2011" (CMVSS 126 is ESC).
+- **amvic**: "Alberta is the only province ... regulated by a delegated authority" (OMVIC, VSA are also delegated); "$100,000" curbsider fines; minister name.
+- **awd**: G7 per-capita AWD claim attributed to StatCan/DesRosiers; "$1,500–$3,000" premium; Subaru share "roughly double" in QC/Atlantic.
+- **carfax**: CarProof acquisition year/buyer (2015 vs IHS Markit / ~2017 rebrand); SAAQ data access; $40–55 price.
+- **cvt**: "2025-onward Direct Shift CVT ... current Corolla and Camry" (DS-CVT ~2019; 2025 Camry is hybrid-only); Nissan warranty "10 years/120,000 miles" (US was 7/84k); "every high-volume Japanese compact uses a CVT" (Mazda3 doesn't).
+- **e-cvt**: taxi-fleet 500,000 km claim unsourced; "entire Lexus hybrid line" (Multi Stage Hybrid exists).
+- **ev / phev / hybrid**: iZEV paused Jan 2025, CleanBC paused 2025, Roulez vert max likely lower — "$12,000 stackable" and PHEV rebate figures probably stale. Leaf "second generation" (third gen exists); Clarity Electric never sold in CA; Prologue is on sale; Lexus "future-only EV" contradicts RZ; Outlander "one of very few PHEV SUVs with full AWD" contradicts RAV4 Prime/NX 450h+ on same page; Civic Hybrid "returning for 2026" (returned 2025); Toyota hybrid battery warranty terms.
+- **eyesight**: NA intro year (2013 MY, launched 2012); "latest generation ... 2022+ WRX and Outback Wilderness".
+- **oem**: 2018 Camry "Cambridge, Ontario assembly line" (Canadian Camrys built in Kentucky); "CBSA clearance under CUSMA" for parts from Japan (CPTPP).
+- **i-vtec**: current Civic Si engine (1.5T L15B7, not K20C); "pre-2006 volume trims had no variable valve system"; 350,000 km.
+- **i-mmd**: Civic Hybrid "returning for 2026"; "no major service bulletins in Transport Canada's defects database" unsourced.
+- **lien**: RDPRM "requires a French-language search" (English available). lien/omvic reviewer role "OMVIC-licensed advisor" — OMVIC registers dealers/salespeople, not advisors (also affects editorial-policy page wording).
+- **omvic**: "$45,000 ... highest among the three provincial regulators".
+- **s-awc**: Mitsubishi powertrain warranty "transferable" (limited for later owners); "longest among Japanese mainstream brands".
+- **salvage-title**: Ontario brands are Salvage / Rebuilt / Irreparable ("Non-repairable" is other provinces); Rebuilt needs a Structural Inspection Certificate, not an SSC.
+- **sh-awd**: "fourth-generation 2024+ MDX" (4th gen = 2022 MY); SH-AWD "optional" on RDX/TLX (standard in CA); Integra SH-AWD (none; Type S is FWD).
+- **skyactiv**: "non-direct-injection turbocharged" (SkyActiv-G is DI, NA); "first Mazda assembled in North America" (Flat Rock MI earlier); CX-50 SkyActiv-X elements; 300,000 km.
+- **symmetrical-awd**: "standard on virtually every Subaru since the 1980s" (NA standard ~1996); "$4,000–$6,000" Black Book premium.
+- **timing-belt**: "older Toyota 2GR-FE V6 ... used belts" (2GR is chain-driven).
+- **uvip**: TL;DR says "provincial sales tax (HST)", body correctly says RST.
+- **vin**: "every motor vehicle since 1981 under ISO 3779" (NA mandate; JDM uses chassis numbers); Transport Canada recall DB "accepts VIN"; "all four" VIN locations incl. engine block contradicts FAQ; "2009 Camry built in Japan for Canada" example. Also "Service Ontario" normalised to "ServiceOntario".
+- **vsa**: imports "land at Roberts Bank or Vanterm" (RoRo terminals e.g. Annacis Island).
+- **vvt-i**: "no electric solenoids" (OCV solenoid); "Dual VVT-i late 2000s" (~1998); current Camry/Highlander V6 is 2GR-FKS; hybrid oil spec "identical".

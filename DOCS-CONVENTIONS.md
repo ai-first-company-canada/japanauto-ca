@@ -20,6 +20,7 @@ alters behaviour is not "done" until its docs are updated in the same change.
 | Architecture decisions | `docs/decisions/NNNN-*.md` | ADR format (§4) |
 | Domain rules (the "source of truth" cited by code) | `docs/rules/*.md` | Stable normative rules |
 | Security posture | `docs/security/posture.md` | Controls, fixed findings, open items |
+| Audit reports | `docs/audits/YYYY-MM-DD-<topic>.md` (+ same-name folder for artifacts) | Findings, evidence, what was fixed; decisions go to ADRs |
 | Operations / runbook | `docs/runbook.md` | Deploy, migrations, cron, secrets, incident steps |
 | Per-area implementation notes | `<dir>/README.md` | Short, local to the code it describes |
 | Launch | `LAUNCH-CHECKLIST.md` | Pre-cutover gate (machine-checked items marked 🤖) |

@@ -65,8 +65,15 @@ Total: 902 SSG pages + Pages Function endpoints.
 - **No `data-geo*` attributes anywhere** — removed 2026-05-19 along with the `/api/listings` runtime fetch on model-city pages. City must be baked in at SSG time via component props; if you need dynamic content, that's a separate architectural decision. SEO/GEO crawlers must see the same HTML the user sees.
 - **Schema.org**: every brand/model/city page has `BreadcrumbList` + `ItemList` + `Place` + `FAQPage` JSON-LD. When moving URLs, update all 3-4 JSON-LD blocks AND the canonical AND the breadcrumb component AND any internal links.
 - **FAQ rendering (brand/blog/glossary)**: answers are authored as body prose under a `## Common questions` H2. The `remark-strip-faq` plugin (`src/lib/remark-strip-faq.mjs`, wired in `astro.config.mjs`) removes that section from the rendered `<Content />`; the template lifts the Q&A out of the *raw* `entry.body` via `faqFromBody()` and renders a `<details>` accordion + `FAQPage`. So: edit answers in the markdown body, keep the exact `### Question?` heading matching `faq_questions`/`related_questions` frontmatter, and don't expect the prose to render — it becomes the accordion.
-- **Sitemap**: `/sitemap.xml` is the index pointing to `/sitemap-static.xml` (build-time, 887 URLs) + `/sitemap-listings.xml` + `/sitemap-donors.xml` (Pages Functions, D1-backed, 1h edge cache).
+- **Sitemap**: `/sitemap.xml` is the index pointing to `/sitemap-static.xml` (build-time, only URLs `isIndexable()` accepts — 124 as of 2026-10-03) + `/sitemap-listings.xml` + `/sitemap-donors.xml` (Pages Functions, D1-backed, 1h edge cache).
 - **IndexNow** key file at `/e3d465c40a7250b500ed3d3358a86ee5.txt`; auto-pings on listing/donor CRUD. After DNS cutover, change `host` field in batch-ping payloads from `japanauto.pages.dev` to `japanauto.ca`.
+
+- **Indexing is one rule** (ADR 0022): `src/lib/indexability.ts`. Never set robots meta in a template or list a URL in a sitemap by hand. Empty inventory pages are `noindex, follow` until they have listings (or, for Calgary, a price table).
+- **Authorship** (ADR 0023): all content is `author: japanauto-editorial` (Organization). Don't add personas, bios, `reviewer_role` or `reviewedBy` unless a real, named person with a checkable credential exists.
+- **Public market prices** (ADR 0021): only through `src/lib/market.ts` (Calgary pilot, aggregates, segments never blended, asking prices with dates and the year ±1 caveat). Everything else in `market_stats` stays cabinet-only.
+- **llms.txt and `.md` twins are generated** (`src/pages/llms.txt.ts`, `*.md.ts`) — don't recreate `public/llms.txt`.
+- **`audit:seo` also fails on unbacked claims**: "Updated today", `[verify`, "150+ dealers", "~N listed", AMVIC on non-Alberta pages. Use the real snapshot date (`snapshotLabel`) and the per-province regulator (`DEALER_REGULATOR` / `PROVINCE_FACTS`).
+- **Editorial copy style**: no em-dashes, no AI tells — rubric in `docs/audits/2026-10-03-seo-geo/ai-tells-rubric.md`. Facts need a primary source in the page's sources list.
 
 ## Open work
 

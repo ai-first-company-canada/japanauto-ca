@@ -10,7 +10,11 @@ npm run deploy
 ```
 
 - `git push` does **NOT** deploy. `npm run deploy` runs the `predeploy` gate
-  (typecheck → build → `npm run audit:seo`) and then `wrangler pages deploy dist`.
+  (export catalog + Calgary market snapshots from D1 → migration-journal check →
+  typecheck → tests → build → `audit:seo` → `audit:launch`) and then
+  `wrangler pages deploy dist`. Run it from `main` (or pass `-- --branch main`):
+  without a branch flag wrangler uses the git branch name, and any other branch
+  becomes a preview deployment, not production.
   The SEO gate **blocks** on any indexable page missing title/description/
   self-canonical, h1≠1, missing OG or JSON-LD.
 - Requires valid wrangler auth (`npx wrangler whoami`).
@@ -56,6 +60,9 @@ flagged this (ADV-1); it is closed by a scheduled rebuild.
   rebuilds, passes the same gates, and deploys. New listings therefore reach the
   browse pages/counts within **≤3h** with no manual redeploy; detail pages stay
   instant.
+- **Market prices.** The same run refreshes `src/data/market-live.json`
+  (Calgary asking-price aggregates, ADR 0021) via "Refresh market prices from
+  D1", with the same fail-soft fallback to the committed snapshot.
 - **The fail-safe.** The "Refresh catalog from D1" step runs
   `node scripts/export-catalog-data.mjs || echo "::warning::…"`. If the export
   fails — most often because the deploy token lacks D1 read — CI keeps the
