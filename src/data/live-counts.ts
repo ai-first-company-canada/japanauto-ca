@@ -9,6 +9,7 @@
  */
 
 import { LIVE_LISTINGS } from './catalog-stubs';
+import catalogLive from './catalog-live.json';
 
 function countBy(key: (r: (typeof LIVE_LISTINGS)[number]) => string): Map<string, number> {
   const m = new Map<string, number>();
@@ -41,3 +42,13 @@ export const liveCounts = {
     byCityModel.get(`${city}/${make}/${model}`) ?? 0,
   brandModel: (make: string, model: string) => byBrandModel.get(`${make}/${model}`) ?? 0,
 };
+
+/**
+ * "Updated Sep 17" — the date of the prod-D1 snapshot this build rendered.
+ * Static pages used to say "Updated today", which stops being true the day
+ * after a deploy. <time> carries the exact ISO stamp for crawlers.
+ */
+export const snapshotIso: string = catalogLive.exported_at;
+export const snapshotLabel: string = `Updated ${new Date(snapshotIso).toLocaleDateString('en-CA', {
+  month: 'short', day: 'numeric', timeZone: 'UTC',
+})}`;

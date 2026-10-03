@@ -13,7 +13,8 @@ import ModelCrossLinks from '../../../../components/sections/ModelCrossLinks.ast
 import FaqSection from '../../../../components/sections/FaqSection.astro';
 import YearFilterDialog from '../../../../components/sections/YearFilterDialog.astro';
 import SortFilterDialog from '../../../../components/sections/SortFilterDialog.astro';
-import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
+import { BRAND_CONTENT, TIER_1_CITIES, DEALER_REGULATOR } from '../../../../data/brand-content';
+import { LISTING_YEAR_MIN, generationsInWindow } from '../../../../lib/model-copy';
 import { MODELS_BY_BRAND, getModelsForCity } from '../../../../data/models-stubs';
 import { getCatalogForModelCity } from '../../../../data/catalog-stubs';
 
@@ -37,23 +38,34 @@ const catalog = getCatalogForModelCity(make!, model!, modelInfo.name, city!);
 const cityShort = `${cityInfo.name}, ${cityInfo.province}`;
 
 const otherModels = getModelsForCity(make!, city!);
+const reg = DEALER_REGULATOR[cityInfo.province]!;
+const gens = generationsInWindow(make!, model!);
+const prices = [...catalog.boosted, ...catalog.organic].map((l) => l.price).filter((p) => p > 0);
+const priceMin = prices.length ? Math.min(...prices) : null;
+const priceMax = prices.length ? Math.max(...prices) : null;
 
 const modelFaqs = [
   {
     q: `Is the ${brand.name} ${modelInfo.name} reliable?`,
-    a: `${brand.name} models including the ${modelInfo.name} consistently rank in the top tier for long-term reliability across Canadian conditions.`,
+    a: `${brand.name} has a strong reliability record, but problems tend to cluster by generation and powertrain, so judge the car in front of you. Ask for service records, check the VIN for open recalls, and book an independent pre-purchase inspection in ${cityInfo.name} before you pay.`,
   },
   {
     q: `What years of ${brand.name} ${modelInfo.name} are available?`,
-    a: `Used ${brand.name} ${modelInfo.name} listings on japanauto.ca cover the model years available within our rolling 10-year window for used inventory. Filter by year to see what's currently listed in ${cityInfo.name}.`,
+    a: gens
+      ? `Dealers can list model years ${LISTING_YEAR_MIN} and newer. For the ${modelInfo.name} that means ${gens}. Use the year filter to see what is listed in ${cityInfo.name} right now.`
+      : `Dealers can list model years ${LISTING_YEAR_MIN} and newer (a rolling 10-year limit). Use the year filter to see what is listed in ${cityInfo.name} right now.`,
   },
   {
     q: `Does the ${brand.name} ${modelInfo.name} have AWD?`,
-    a: `AWD availability depends on year and trim. Most ${brand.name} ${modelInfo.name} listings show drivetrain in the spec line. Filter by drive on the listing detail page.`,
+    a: make === 'subaru'
+      ? `Yes. Symmetrical AWD is standard on the ${modelInfo.name}, as on every Subaru model listed here.`
+      : `It depends on the year and trim. Each listing shows the drivetrain in its spec line, so check there before you contact the dealer.`,
   },
   {
     q: `What's the typical price range for a used ${brand.name} ${modelInfo.name}?`,
-    a: `Pricing depends on year, mileage, and trim. As a rule, expect roughly 10-15% depreciation per year on top trims, more on base trims.`,
+    a: priceMin !== null && priceMax !== null
+      ? `Right now ${cityInfo.name} dealers are asking CA$${priceMin.toLocaleString('en-US')} to CA$${priceMax.toLocaleString('en-US')} across ${prices.length} listing${prices.length === 1 ? '' : 's'}. Year, kilometres and trim explain most of the spread.`
+      : `There are no ${cityInfo.name} listings to price against yet. Year, kilometres and trim move the price most; the national ${modelInfo.name} page shows other cities.`,
   },
 ];
 
@@ -61,8 +73,8 @@ const title = `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}, ${cityI
 // Real counts only — zero inventory gets honest "onboarding" copy, never an
 // invented number (LAUNCH-CHECKLIST §1).
 const description = catalog.totalCount > 0
-  ? `${catalog.totalCount} used ${brand.name} ${modelInfo.name} listing${catalog.totalCount === 1 ? '' : 's'} in ${cityInfo.name}. AMVIC-verified dealers, VIN-checked vehicles, prices in CA$.`
-  : `Used ${brand.name} ${modelInfo.name} for sale in ${cityInfo.name} from AMVIC-licensed dealers — VIN-checked listings appear here as local dealers onboard.`;
+  ? `${catalog.totalCount} used ${brand.name} ${modelInfo.name} listing${catalog.totalCount === 1 ? '' : 's'} in ${cityInfo.name}. ${reg.short}-licensed dealers, VIN-checked vehicles, prices in CA$.`
+  : `Used ${brand.name} ${modelInfo.name} for sale in ${cityInfo.name} from ${reg.short}-licensed dealers. No live listings yet; cars appear here once local dealers post them.`;
 const canonical = `https://japanauto.ca/${city}/${make}/${model}/`;
 
 const allListings = [...catalog.boosted, ...catalog.organic];
@@ -128,7 +140,7 @@ const schemaLD = [
 
 const subtitleHtml = catalog.totalCount > 0
   ? `<span class="num">${catalog.totalCount}</span> listing${catalog.totalCount === 1 ? '' : 's'} from <span class="num">${catalog.dealerCount}</span> dealer${catalog.dealerCount === 1 ? '' : 's'} · Updated with every listing`
-  : `Local dealers are onboarding — live listings appear here first`;
+  : `Model years ${LISTING_YEAR_MIN}+ from ${reg.short}-licensed ${cityInfo.name} dealers`;
 const visibleCount = catalog.boosted.length + catalog.organic.length;
 ---
 <BaseLayout

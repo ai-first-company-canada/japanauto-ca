@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css';
+import { isIndexable } from '../lib/indexability';
+import { markdownHrefFor } from '../lib/markdown-alternates';
 
 interface Props {
   title: string;
@@ -26,6 +28,11 @@ const pageTitle = title.length > 65 && title.endsWith(' — japanauto.ca')
 // Absolute URL — Open Graph / Twitter reject relative image paths.
 const ogImageUrl = new URL(ogImage ?? '/og-default.png', 'https://japanauto.ca').href;
 
+// Robots + `.md` twin are derived from the URL so templates can't drift from
+// the sitemap (see src/lib/indexability.ts, src/lib/markdown-alternates.ts).
+const indexable = await isIndexable(Astro.url.pathname);
+const markdownHref = indexable ? await markdownHrefFor(Astro.url.pathname) : undefined;
+
 const extraGraph = schemaLD ? (Array.isArray(schemaLD) ? schemaLD : [schemaLD]) : [];
 
 const jsonLd = {
@@ -38,7 +45,7 @@ const jsonLd = {
       url: 'https://japanauto.ca',
       logo: 'https://japanauto.ca/logo.svg',
       description:
-        'Independent Canadian marketplace for used Japanese cars and salvage-yard donor parts, aggregating AMVIC- and OMVIC-verified dealer listings across Toronto, Montreal, Vancouver, Calgary, Edmonton, and Ottawa.',
+        'Independent Canadian marketplace for used Japanese cars and salvage-yard donor cars, listing provincially licensed dealers (AMVIC, OMVIC, VSA, OPC) in Toronto, Montreal, Vancouver, Calgary, Edmonton, and Ottawa.',
       slogan: "Canada's marketplace for used Japanese cars and parts.",
       areaServed: { '@type': 'Country', name: 'Canada' },
       // Topical entities for entity recognition + GEO citability. Keep accurate —
@@ -82,7 +89,10 @@ const jsonLd = {
     <meta name="theme-color" content="#FFFFFF" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    {!indexable && <meta name="robots" content="noindex, follow" />}
     <link rel="canonical" href={canonical} />
+    {markdownHref && <link rel="alternate" type="text/markdown" href={markdownHref} />}
+    <link rel="alternate" type="text/plain" href="https://japanauto.ca/llms.txt" title="llms.txt" />
     <!-- Single-locale (en-CA) geo-targeted site: self-referential hreflang +
          x-default. Add fr-ca alternates here if/when French content ships. -->
     <link rel="alternate" hreflang="en-ca" href={canonical} />

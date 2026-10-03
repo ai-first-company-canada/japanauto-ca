@@ -3,9 +3,9 @@ term: CVT
 slug: cvt
 group: vehicle-tech
 priority: 1
-canonical_definition: "A Continuously Variable Transmission (CVT) is an automatic transmission that uses a belt or chain running between two variable-diameter pulleys to provide a seamless, infinite range of effective gear ratios."
-tldr_draft: "CVT replaces fixed gears with a steel push-belt or chain between two variable-diameter pulleys, allowing the engine to hold its optimal RPM independent of road speed. This improves fuel economy and smoothness but produces the characteristic 'rubber-band' acceleration feel. Toyota, Honda, Nissan, Subaru, and Mitsubishi use CVTs extensively in compact and mid-size models sold in Canada."
-why_it_matters_in_canada: "CVTs dominate the Canadian compact-car segment — the Toyota Corolla, Honda Civic, Nissan Sentra, Subaru Impreza, and Mitsubishi Mirage all use a CVT in their volume Canadian trims. Service history matters: Nissan's earlier JATCO CVT had documented durability issues that led to extended Canadian warranties on certain 2013–2018 model-year vehicles, so CarFax and service-record review is essential when buying used."
+canonical_definition: "A Continuously Variable Transmission (CVT) is an automatic transmission that runs a belt or chain between two variable-diameter pulleys, giving a smooth, unbroken range of effective gear ratios."
+tldr_draft: "A CVT swaps fixed gears for a steel push-belt or chain between two variable-diameter pulleys, so the engine can stay at its most efficient RPM whatever the road speed. You get better fuel economy and smoothness, plus the familiar 'rubber-band' feel under acceleration. Toyota, Honda, Nissan, Subaru and Mitsubishi use CVTs widely in the compact and mid-size models they sell in Canada."
+why_it_matters_in_canada: "CVTs are common in Canadian compact cars. The Toyota Corolla, Honda Civic, Nissan Sentra, Subaru Impreza and Mitsubishi Mirage use one in their volume automatic trims, though the Mazda3 sticks with a conventional automatic. Check service history on any used one: Nissan's earlier JATCO CVT had documented durability problems that led Nissan to extend CVT warranty coverage on some 2013 to 2018 model-year vehicles, so read the CarFax and the service records before you buy."
 related_questions:
   - "What is the difference between a CVT and a regular automatic transmission?"
   - "Are CVT transmissions reliable in cold Canadian winters?"
@@ -19,38 +19,39 @@ related_terms:
 sources:
   - "https://en.wikipedia.org/wiki/Continuously_variable_transmission"
   - "https://www.toyota.ca/toyota/en/owners"
-author: Marc Tremblay
+author: japanauto-editorial
 body_status: published
+last_reviewed: 2026-10-03
 ---
 
 ## What is a CVT?
 
-A Continuously Variable Transmission has no discrete gears. Instead of the four, six, eight, or ten fixed ratios you would find in a conventional automatic, a CVT uses a steel push-belt or chain running between two variable-diameter pulleys. As the pulleys squeeze or open, the effective ratio sweeps continuously across the operating range. The engine can hold its peak-efficiency RPM regardless of how fast the car is moving — that is the entire engineering point.
+A Continuously Variable Transmission has no discrete gears. Where a conventional automatic has four, six, eight or ten fixed ratios, a CVT runs a steel push-belt or chain between two variable-diameter pulleys. As the pulleys squeeze together or open up, the effective ratio sweeps smoothly across its range. The engine can sit at its most efficient RPM no matter how fast the car is going. That is the whole engineering reason for it.
 
-The trade-off is the feel. Because the engine note does not climb and fall with shifts, drivers often describe CVT acceleration as a "rubber-band" sensation: throttle goes down, revs jump, the car catches up. Manufacturers have spent the last decade tuning around it. Toyota's 2025-onward Direct Shift CVT, fitted to the current Corolla and Camry, adds a physical launch gear for the first 40 km/h of acceleration before handing off to the variable-ratio section. Subaru's Lineartronic CVT simulates eight stepped ratios under hard throttle. Both compromises preserve the efficiency win while masking the worst of the sensation.
+The cost is in the feel. The engine note doesn't rise and drop with shifts, so drivers often call CVT acceleration a "rubber-band" sensation: you press the throttle, the revs jump, and the car catches up. Manufacturers have spent ten years tuning around this. Toyota's Direct Shift CVT, introduced on the 2019 Corolla Hatchback and used in the gas Corolla, adds a physical launch gear for pulling away from a stop and then hands over to the belt-and-pulley section. Subaru's Lineartronic CVT fakes eight stepped ratios under hard throttle. Both keep the efficiency and hide most of the rubber-band effect.
 
-CVTs are mechanically simpler than torque-converter automatics in most respects, with fewer planetary gear sets and no mechanical shift events. They are also more sensitive to fluid contamination and heat than a conventional auto, which is why fluid intervals matter.
+In most respects a CVT is mechanically simpler than a torque-converter automatic. It has fewer planetary gear sets and no mechanical shift events. It is also more sensitive to dirty fluid and heat than a conventional automatic, so fluid intervals matter.
 
 ## Why it matters in Canada
 
-Every high-volume Japanese compact sold in Canada uses a CVT in its mainstream trim. The Toyota Corolla, Honda Civic, Nissan Sentra, Subaru Impreza, and Mitsubishi Mirage are all CVT-equipped from the entry trim upward, and the same is true of most mid-size sedans and crossovers in their non-hybrid trims. If you are shopping a used Japanese sedan or compact SUV from 2016 onward in Canada, you are almost certainly looking at a CVT.
+Most high-volume Japanese compacts sold in Canada use a CVT in their automatic trims. The Toyota Corolla, Honda Civic, Nissan Sentra, Subaru Impreza and Mitsubishi Mirage all do, and so do many non-hybrid crossovers. Mazda is the main exception: it uses conventional six-speed automatics. Shopping for a 2016-or-newer used Japanese compact sedan or SUV in Canada usually means shopping for a CVT, unless it's a Mazda.
 
-Service history matters more than usual. Nissan's earlier JATCO-built CVT had documented durability issues across the 2013 to 2018 model years, and Nissan responded by extending the Canadian powertrain warranty on certain affected vehicles to 10 years or 120,000 miles in North America. A clean [CarFax Canada](/glossary/carfax/) report and dealer service records showing fluid changes at the manufacturer-specified interval — typically 60,000 to 100,000 km depending on model — should be a non-negotiable check before buying used.
+Service history counts for more than usual here. Nissan's earlier JATCO-built CVT had documented durability problems across the 2013 to 2018 model years. Nissan's answer was to extend CVT warranty coverage on some affected vehicles. Terms varied by model and market, so ask a Nissan dealer to check the specific VIN. Before buying used, insist on a clean [CarFax Canada](/glossary/carfax/) report and dealer records showing fluid changes at the factory interval, usually 60,000 to 100,000 km depending on the model.
 
 ## Common questions
 
 ### What is the difference between a CVT and a regular automatic transmission?
 
-A conventional automatic has fixed gears — typically six to ten — separated by torque-converter shift events you can feel as the car accelerates. A CVT has no fixed gears. It uses two variable-diameter pulleys connected by a steel belt or chain, and the effective ratio changes continuously as the pulleys open and close. The driver-facing result is smoother acceleration without shift kick, generally better fuel economy in stop-and-go driving, and a different engine sound that holds RPM under hard throttle rather than climbing and falling.
+A conventional automatic has fixed gears, usually six to ten, and you can feel each torque-converter shift as the car speeds up. A CVT has none. Two variable-diameter pulleys are linked by a steel belt or chain, and the ratio changes continuously as they open and close. From the driver's seat that means smoother acceleration with no shift kick, generally better fuel economy in stop-and-go traffic, and an engine that holds steady RPM under hard throttle.
 
 ### Are CVT transmissions reliable in cold Canadian winters?
 
-Modern CVTs are designed and tested for Canadian temperature extremes, and warm-up behaviour is normal — slightly delayed forward engagement on the coldest mornings, particularly at -30°C and below in Calgary or Edmonton, is by design and protects the belt-pulley interface from cold-fluid wear. The greater risk is operator-side: driving aggressively before the transmission reaches operating temperature, using the wrong fluid type at service, or skipping a fluid change. CVT fluid is a specialized lubricant and a generic ATF substitute will damage the transmission.
+Modern CVTs are designed and tested for Canadian temperature extremes. On the coldest mornings, especially at -30°C and below in Calgary or Edmonton, forward engagement may come a moment late. That is deliberate: it protects the belt and pulleys from wear while the fluid is cold. The bigger risks come from the owner. Driving hard before the transmission warms up, using the wrong fluid at service, or skipping a fluid change all do damage. CVT fluid is a specialized lubricant, and a generic ATF substitute will ruin the transmission.
 
 ### How long does a CVT last?
 
-A well-maintained Japanese CVT in a Canadian market vehicle should last between 200,000 and 350,000 km, with the high end achievable on Toyota and Honda applications and the low end appearing on poorly serviced Nissan units from the affected 2013–2018 generations. The single largest determinant is fluid maintenance at the manufacturer-specified interval. Replacement of a failed CVT is expensive — typically $4,000 to $7,000 CAD installed at a dealer, depending on model — which is why fluid history on a used purchase matters more than the odometer reading alone.
+A well-maintained Japanese CVT in a Canadian-market car should go 200,000 to 350,000 km. Toyota and Honda units tend to reach the high end; poorly serviced Nissan units from the affected 2013 to 2018 generations show up at the low end. Fluid changes at the factory interval are the biggest single factor. A replacement CVT typically costs $4,000 to $7,000 CAD installed at a dealer, depending on the model, so on a used car the fluid history tells you more than the odometer.
 
 ### What is e-CVT and how is it different from a regular CVT?
 
-[e-CVT](/glossary/e-cvt/) is Toyota's name for the planetary-gear power-split device used in the Hybrid Synergy Drive system. It is not a CVT in the mechanical sense — there is no belt and no pulleys. It is a single planetary gearset connected to the engine and two motor-generators, and software varies the speed of the motor-generators to produce a continuously variable effective ratio. The result feels similar to a conventional CVT to the driver but the underlying mechanics are completely different and substantially more durable. Toyota Prius taxi fleets routinely exceed 500,000 km on the original e-CVT.
+[e-CVT](/glossary/e-cvt/) is Toyota's name for the planetary-gear power-split device in its Hybrid Synergy Drive system. Mechanically it isn't a CVT at all. There is no belt and there are no pulleys. A single planetary gearset links the engine and two motor-generators, and software varies the motor-generator speeds to create a continuously variable ratio. To the driver it feels much like a CVT. Underneath it is a completely different and far more durable design. Toyota Prius taxi fleets routinely pass 500,000 km on the original e-CVT.

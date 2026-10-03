@@ -94,7 +94,7 @@ const schemaLD = [
 const subtitleHtml =
   totalDonors > 0
     ? `<span class="num">${totalDonors.toLocaleString('en-US')}</span> donor cars · ${cityCount} cities · 9 makes covered`
-    : `${cityCount} active cities · 9 makes covered · listings opening as junkyards onboard`;
+    : `${cityCount} cities · 9 makes · no donor cars listed yet`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" />
@@ -117,9 +117,9 @@ const subtitleHtml =
   <EducationalBlock
     heading="Why we don't list individual parts"
     paragraphs={[
-      "Finding the right used part for your car requires specific knowledge — the exact engine code, trim package, factory options. We don't ask you to filter through hundreds of part entries.",
-      "Instead, we show you which junkyards have a donor car like yours. Pick a donor of your make, model, and generation. Call the junkyard.",
-      "Their staff has the car in front of them, the right tools, and the parts databases. They'll find what you need in minutes.",
+      "Finding the right used part means knowing the exact engine code, trim package and factory options. We don't make you dig through hundreds of part entries.",
+      "We show you which junkyards have a donor car like yours. Pick one that matches your make, model and generation, then call the yard.",
+      "Yard staff have the car on the lot, the tools to pull the part and the interchange databases. They can usually find what you need in minutes.",
     ]}
   />
 
@@ -140,7 +140,7 @@ const subtitleHtml =
         Featured junkyards
       </h2>
       <p class="t-body-s ink-muted" style="margin-top:4px;margin-bottom:16px;font-size:13px;color:var(--color-ink-muted)">
-        Long-time inventory partners with active donor inventory. Featured selection launches as more junkyards onboard.
+        Yards with live donor inventory. This list fills in as more junkyards join.
       </p>
     </div>
     {featuredYards.length > 0 ? (
@@ -172,7 +172,7 @@ const subtitleHtml =
     ) : (
       <div class="card" style="margin:0 16px;padding:24px;text-align:center">
         <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px;margin:0 0 12px">
-          Salvage yards are onboarding — every yard featured here is a real,
+          No yards featured yet. Every yard shown here will be a real,
           licensed business with live donor inventory.
         </p>
         <a href="/dealer/signup/" class="btn btn-secondary btn-sm" style="display:inline-flex">
@@ -208,13 +208,13 @@ const subtitleHtml =
       About used Japanese car parts in Canada
     </h2>
     <p style="margin:0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
-      Most used parts in Canada come from junkyards (also called salvage yards or auto recyclers) that specialize in Japanese makes. These yards source donor cars from insurance write-offs, end-of-life trade-ins, and JDM importers — then dismantle them part by part as buyers call.
+      Most used parts in Canada come from junkyards (also called salvage yards or auto recyclers), and many specialise in Japanese makes. They buy donor cars from insurance write-offs, end-of-life trade-ins and JDM importers, then pull parts as buyers call.
     </p>
     <p style="margin:12px 0 0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
-      Warranty norms vary: <span class="num">30</span>-day warranty is standard on mechanical parts, with some yards offering 60–90 days for engines and transmissions. Body panels and interior trim are typically as-is. Parts are matched to donor cars by generation — a 2015 Corolla bumper fits any 2014–2018 Corolla, but not a 2019.
+      A <span class="num">30</span>-day warranty is standard on mechanical parts, and some yards give 60–90 days on engines and transmissions. Body panels and interior trim usually sell as-is. Fitment goes by generation: a 2015 Corolla bumper fits any 2014–2018 Corolla, but not a 2019.
     </p>
     <p style="margin:12px 0 0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
-      For body panels (doors, fenders, bumpers, hoods), color matters: yards stock panels in their factory color, and a mismatched panel costs $300–$800 to repaint at a body shop. Always tell the junkyard your car's color when asking about body parts.
+      For doors, fenders, bumpers and hoods, colour matters. Panels come in the donor's factory colour, and repainting a mismatched one costs $300–$800 at a body shop, so give the yard your paint colour when you ask.
     </p>
   </section>
 
@@ -223,7 +223,7 @@ const subtitleHtml =
   {totalDonors === 0 && (
     <section style="padding:24px 16px 0">
       <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">
-        No donor cars listed yet — featured junkyards are launching their inventory now.
+        No donor cars listed yet. Yards are still loading their inventory.
         Run a junkyard? <a href="/dealer/signup/?type=salvage_yard" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
       </p>
     </section>

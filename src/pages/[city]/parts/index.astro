@@ -44,7 +44,7 @@ const popularSearches = [
 ];
 
 const title = `Used Japanese car parts in ${cityShort} — japanauto.ca`;
-const description = `Used Japanese-car parts from salvage yards in ${cityInfo.name} — Toyota, Honda, Nissan, Mazda, Subaru, Lexus and more. Donor cars at local junkyards.`;
+const description = `Used Japanese-car parts from salvage yards in ${cityInfo.name}, ${cityInfo.province}: find a Toyota, Honda, Nissan, Mazda, Subaru or Lexus donor car and call the yard.`;
 const canonical = `https://japanauto.ca/${city}/parts/`;
 
 const schemaLD = [
@@ -109,7 +109,7 @@ const schemaLD = [
 const subtitleHtml =
   totalDonors > 0
     ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${featuredYards.length}+</span> junkyards · 9 makes covered`
-    : `9 makes covered · listings opening as ${cityInfo.name} junkyards onboard`;
+    : `9 makes · no ${cityInfo.name} donor cars listed yet`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" cityShort={cityShort} />
@@ -133,9 +133,9 @@ const subtitleHtml =
   <EducationalBlock
     heading="Why we don't list individual parts"
     paragraphs={[
-      "Finding the right used part for your car requires specific knowledge — the exact engine code, trim package, factory options. We don't ask you to filter through hundreds of part entries.",
-      `Instead, we show you which junkyards in ${cityInfo.name} have a donor car like yours. Pick a donor of your make, model, and generation. Call the junkyard.`,
-      "Their staff has the car in front of them, the right tools, and the parts databases. They'll find what you need in minutes.",
+      "Finding the right used part means knowing the exact engine code, trim package and factory options. We don't make you dig through hundreds of part entries.",
+      `We show you which ${cityInfo.name} junkyards have a donor car like yours. Pick one that matches your make, model and generation, then call the yard.`,
+      "Yard staff have the car on the lot, the tools to pull the part and the interchange databases. They can usually find what you need in minutes.",
     ]}
   />
 
@@ -157,7 +157,7 @@ const subtitleHtml =
           Featured junkyards in {cityInfo.name}
         </h2>
         <p class="t-body-s ink-muted" style="margin-top:4px;margin-bottom:16px;font-size:13px;color:var(--color-ink-muted)">
-          Long-time inventory partners with active donor inventory. Featured selection launches as more junkyards onboard.
+          Yards with live donor inventory. This list fills in as more junkyards join.
         </p>
       </div>
       {featuredYards.length > 0 ? (
@@ -189,7 +189,7 @@ const subtitleHtml =
       ) : (
         <div class="card" style="margin:0 16px;padding:24px;text-align:center">
           <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px;margin:0 0 12px">
-            Salvage yards are onboarding — every yard featured here is a real,
+            No {cityInfo.name} yards featured yet. Every yard shown here will be a real,
             licensed business with live donor inventory.
           </p>
           <a href="/dealer/signup/" class="btn btn-secondary btn-sm" style="display:inline-flex">
@@ -226,10 +226,10 @@ const subtitleHtml =
       About used Japanese car parts in {cityInfo.name}
     </h2>
     <p style="margin:0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
-      Salvage yards in {cityInfo.name} source donor cars from regional insurance write-offs, end-of-life trade-ins, and JDM importers. Most yards specialize in two or three Japanese brands and stock late-model donors as inventory turns.
+      {cityInfo.name} salvage yards get their donor cars from regional insurance write-offs, end-of-life trade-ins and JDM importers. Most focus on two or three Japanese brands and restock late-model donors as cars sell.
     </p>
     <p style="margin:12px 0 0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
-      Warranty norms in {cityInfo.province}: 30-day warranty is standard on mechanical parts. Body panels and interior trim are typically as-is. Most {cityInfo.name} yards ship within {cityInfo.province} for free or low-cost; cross-Canada shipping is available for smaller items via Canada Post or Purolator.
+      Expect a 30-day warranty on mechanical parts; body panels and interior trim usually sell as-is. Most {cityInfo.name} yards ship within {cityInfo.province} for free or at low cost, and smaller items can go anywhere in Canada by Canada Post or Purolator.
     </p>
   </section>
 
@@ -238,7 +238,7 @@ const subtitleHtml =
   {totalDonors === 0 && (
     <section style="padding:24px 16px 0">
       <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">
-        No donor cars listed yet in {cityInfo.name} — featured junkyards are launching their inventory now.
+        No donor cars listed in {cityInfo.name} yet. Yards are still loading their inventory.
         Run a junkyard in {cityInfo.name}? <a href="/dealer/signup/?type=salvage_yard" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
       </p>
     </section>

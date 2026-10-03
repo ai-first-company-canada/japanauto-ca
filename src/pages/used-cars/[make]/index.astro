@@ -31,8 +31,8 @@ const cityCards = TIER_1_CITIES.map((c) => ({
 
 const title = `Used ${brand.name} cars across Canada — japanauto.ca`;
 const description = brandListings > 0
-  ? `Used ${brand.name} cars in ${TIER_1_CITIES.length} major Canadian cities. ${brandListings} live listing${brandListings === 1 ? '' : 's'} from AMVIC-licensed dealers, every VIN checked.`
-  : `Used ${brand.name} cars across Canada's major cities. Live listings from AMVIC-licensed dealers appear as partners onboard — every VIN checked.`;
+  ? `Used ${brand.name} cars in ${TIER_1_CITIES.length} major Canadian cities. ${brandListings} live listing${brandListings === 1 ? '' : 's'} from provincially licensed dealers, every VIN checked.`
+  : `Used ${brand.name} cars from licensed dealers in Toronto, Montreal, Vancouver, Calgary, Edmonton and Ottawa. Browse by city; every VIN is checked.`;
 const canonical = `https://japanauto.ca/used-cars/${make}/`;
 
 const faqLd = faqPage(brand.faqs.map((f) => f.q), brand.faqs.map((f) => f.a));
@@ -63,8 +63,8 @@ const schemaLD = [
 ];
 
 const subtitleHtml = brandListings > 0
-  ? `<span class="num">${brandListings}</span> live ${brand.name} listing${brandListings === 1 ? '' : 's'} from <span class="num">${brandDealers}</span> AMVIC-licensed dealer${brandDealers === 1 ? '' : 's'}`
-  : `Live ${brand.name} listings appear here as AMVIC-licensed dealers onboard across <span class="num">${TIER_1_CITIES.length}</span> Canadian cities`;
+  ? `<span class="num">${brandListings}</span> live ${brand.name} listing${brandListings === 1 ? '' : 's'} from <span class="num">${brandDealers}</span> licensed dealer${brandDealers === 1 ? '' : 's'}`
+  : `No live ${brand.name} listings yet · <span class="num">${TIER_1_CITIES.length}</span> Canadian cities`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" />
@@ -102,7 +102,7 @@ const subtitleHtml = brandListings > 0
                 <span class="num">{c.count.toLocaleString('en-US')}</span> cars
               </span>
             ) : (
-              <span class="t-caption" style="font-size:10px">Dealers onboarding</span>
+              <span class="t-caption" style="font-size:10px">No listings yet</span>
             )}
             <span class="t-caption t-mono" style="font-size:10px">{c.province}</span>
           </div>
@@ -111,7 +111,7 @@ const subtitleHtml = brandListings > 0
     </div>
   </section>
 
-  <AboutBrandSection title={brand.aboutTitle} paragraphs={brand.aboutParagraphs} />
+  <AboutBrandSection title={brand.aboutTitle} paragraphs={brand.aboutParagraphs} guide={{ href: `/brands/${make}/`, label: `Read our ${brand.name} buyer's guide` }} />
 
   <FaqSection items={brand.faqs} heading={`Common questions about ${brand.name}`} />
 </BaseLayout>

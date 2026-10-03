@@ -3,9 +3,9 @@ term: ABS
 slug: abs
 group: vehicle-tech
 priority: 2
-canonical_definition: "An Anti-lock Braking System (ABS) is an active safety system that prevents wheel lockup during hard braking by rapidly modulating brake-line pressure, allowing the driver to maintain steering control."
-tldr_draft: "ABS uses wheel-speed sensors and a hydraulic control unit to detect impending wheel lockup and pulse brake pressure up to 15 times per second. ABS shortens stopping distance on most surfaces and preserves steering authority during emergency braking. ABS has been mandatory on all new passenger vehicles sold in Canada since September 2011 under CMVSS 126, which also requires Electronic Stability Control."
-why_it_matters_in_canada: "On snow and ice, ABS may slightly lengthen stopping distance compared to a locked wheel pushing snow ahead of the tire, but it preserves steering — a critical trade-off in Canadian winter driving where avoidance manoeuvres matter more than raw stopping. ABS is the foundation layer for ESC, brake-force distribution, and most AWD torque-vectoring systems on Subaru, Acura, and Mitsubishi vehicles."
+canonical_definition: "An Anti-lock Braking System (ABS) is an active safety system that stops the wheels from locking under hard braking by rapidly modulating brake-line pressure, so the driver can still steer."
+tldr_draft: "ABS reads wheel-speed sensors and uses a hydraulic control unit to pulse brake pressure up to 15 times per second when a wheel is about to lock. On most surfaces it shortens stopping distance, and it keeps the car steerable in an emergency stop. Canada has no stand-alone ABS rule, but CMVSS 126 has required Electronic Stability Control on new light vehicles since September 1, 2011, and ESC works through the ABS hardware, so new cars since then have ABS."
+why_it_matters_in_canada: "On snow and ice, ABS can stop the car slightly later than a locked wheel pushing snow ahead of the tire. In exchange you keep steering, and in a Canadian winter the swerve usually matters more than the last metre of braking. ABS is also the base layer for ESC, brake-force distribution and most AWD torque-vectoring systems on Subaru, Acura and Mitsubishi vehicles."
 related_questions:
   - "Does ABS make my car stop faster on snow?"
   - "Is ABS mandatory in Canada?"
@@ -17,38 +17,40 @@ related_terms:
 sources:
   - "https://laws-lois.justice.gc.ca/eng/regulations/c.r.c.,_c._1038/"
   - "https://en.wikipedia.org/wiki/Anti-lock_braking_system"
-author: Marc Tremblay
+  - "https://tc.canada.ca/sites/default/files/migrated/tsd_126_e_rev2.pdf"
+author: japanauto-editorial
 body_status: published
+last_reviewed: 2026-10-03
 ---
 
 ## What is ABS?
 
-Anti-lock Braking System is an active safety system that prevents the wheels from locking during hard braking. Wheel-speed sensors at each corner monitor rotation. When the system detects that a wheel is about to stop turning while the vehicle is still moving — the precise definition of a lock — a hydraulic control unit pulses brake-line pressure to that wheel up to fifteen times per second, releasing and reapplying so quickly the driver feels only a slight pulsing in the brake pedal.
+Anti-lock Braking System is an active safety system that keeps the wheels from locking during hard braking. A wheel-speed sensor at each corner watches rotation. If a wheel is about to stop turning while the car is still moving (that is what a lock is), a hydraulic control unit pulses brake-line pressure to that wheel up to fifteen times per second. It releases and reapplies so fast that the driver feels only a light pulsing in the pedal.
 
-The point of ABS is not, strictly, to stop faster. The point is to stop while still being able to steer. A locked wheel is a sliding wheel, and a sliding wheel cannot generate cornering force — which means a vehicle in full lock-up cannot be steered around an obstacle. ABS preserves the rolling state of the tire, which preserves the cornering force, which preserves the driver's ability to swerve around whatever was in front of them.
+Stopping shorter is a side benefit. The real job of ABS is letting you steer while you brake. A locked wheel slides, and a sliding tire produces no cornering force, so a car in full lock-up goes straight no matter where the wheel is pointed. ABS keeps the tire rolling. A rolling tire can still turn the car, and that is what lets a driver swerve around whatever appeared ahead.
 
-ABS is the foundational layer for almost every other active safety system on a modern Japanese vehicle. Electronic Stability Control, Traction Control, brake-force distribution, hill-start assist, and most AWD torque-vectoring systems all rely on the same wheel-speed sensors and hydraulic control unit that ABS uses.
+Almost every other active safety system on a modern Japanese vehicle is built on top of ABS. Electronic Stability Control, traction control, brake-force distribution, hill-start assist and most AWD torque-vectoring systems use the same wheel-speed sensors and the same hydraulic unit.
 
 ## Why it matters in Canada
 
-ABS has been mandatory on all new passenger vehicles sold in Canada since September 2011 under Canadian Motor Vehicle Safety Standard 126, the same regulation that mandates Electronic Stability Control. Every used Japanese vehicle on japanauto.ca has ABS as standard equipment. The question is not whether your prospective purchase has ABS — the question is whether the system is functioning correctly.
+Canadian Motor Vehicle Safety Standard 126 requires Electronic Stability Control on new light vehicles (4,536 kg GVWR or less) built on or after September 1, 2011. ESC brakes individual wheels through the ABS hydraulic unit, so any vehicle that meets CMVSS 126 has ABS. Nearly every used Japanese vehicle on japanauto.ca has it. So for a buyer, the useful check is whether the system on a given car actually works.
 
-There is a counter-intuitive Canadian winter consideration worth flagging. On deep snow or gravel, ABS may slightly lengthen stopping distance compared to a wheel that locks and pushes a wedge of snow ahead of the tire. That is not an argument against ABS — preserving steering authority in an avoidance manoeuvre matters more than the marginal stopping-distance gain — but it is the reason some experienced winter drivers describe ABS as feeling "longer" on packed snow. The system is working as designed.
+One winter quirk surprises people. On deep snow or gravel, ABS can stop the car a little later than a wheel that locks and pushes a wedge of snow ahead of the tire. Keeping steering control in an avoidance manoeuvre is worth more than that small gain, so this is no case against ABS. It does explain why some experienced winter drivers say ABS feels "longer" on packed snow. The system is doing what it was designed to do.
 
 ## Common questions
 
 ### Does ABS make my car stop faster on snow?
 
-Not necessarily. On dry pavement and most wet surfaces, ABS shortens stopping distance compared to a locked wheel. On deep snow or loose gravel, ABS may slightly lengthen stopping distance because a locked wheel can push a wedge of snow ahead of the tire that adds friction. The trade-off is that ABS preserves steering authority during emergency braking — you can steer around an obstacle while braking hard, which a locked-wheel vehicle cannot do. For Canadian winter driving, that preserved steering capability is more valuable than the marginal stopping-distance trade-off.
+Not always. On dry pavement and most wet surfaces, ABS stops the car shorter than a locked wheel would. On deep snow or loose gravel it can add a little distance, because a locked wheel builds a wedge of snow in front of the tire and that wedge adds friction. What you get back is steering: with ABS you can brake hard and still steer around an obstacle, which a car with locked wheels cannot do. In a Canadian winter, that is the better deal.
 
 ### Is ABS mandatory in Canada?
 
-Yes. Canadian Motor Vehicle Safety Standard 126 has required ABS as standard equipment on all new passenger vehicles sold in Canada since September 2011, paired with mandatory Electronic Stability Control. Vehicles built before that date may not have ABS — particularly entry trims of older Honda Fit, Toyota Yaris, and certain pre-2010 Mazda3 models. Any used Japanese vehicle from the 2012 model year forward sold new in Canada has ABS as standard.
+In effect, yes, though not by name. Canadian Motor Vehicle Safety Standard 126 is the Electronic Stability Control standard, and it has applied to new light vehicles built on or after September 1, 2011. ESC can't work without ABS hardware, so a Japanese vehicle built after that date for the Canadian market has ABS. Older vehicles may lack it, especially some entry-level trims from the 2000s, so check the specific car.
 
 ### What is the difference between ABS and ESC?
 
-ABS prevents wheel lockup during braking; ESC prevents loss of vehicle control during cornering or evasive manoeuvres. ESC uses the same wheel-speed sensors as ABS plus a yaw rate sensor to detect when the vehicle is rotating differently than the driver intends, then selectively applies individual wheel brakes (using the ABS hydraulic unit) and reduces engine power to bring the vehicle back to the intended path. CMVSS 126 mandates both systems on Canadian vehicles since September 2011.
+ABS stops the wheels locking under braking. ESC stops the car getting away from you in a corner or a sudden swerve. It uses the ABS wheel-speed sensors plus a yaw rate sensor to spot when the car is rotating differently from where the driver is steering. It then brakes individual wheels through the ABS hydraulic unit and cuts engine power until the car is back on line. CMVSS 126 has required ESC on new light vehicles since September 1, 2011, which in practice means ABS too.
 
 ### Why is my ABS warning light on?
 
-The ABS warning light indicates a fault in the ABS system that has caused the system to disable itself — usually a wheel-speed sensor failure (most common), a control unit fault, or low brake fluid. The base hydraulic brakes still function; only the anti-lock function is offline. A vehicle with the ABS light on will fail Ontario Safety Standards Certificate inspection and most provincial safety inspections in other provinces. Diagnose and repair before purchase or before continued driving in winter conditions where the anti-lock function matters most.
+The light means the system found a fault and switched itself off. The usual cause is a failed wheel-speed sensor; a control unit fault or low brake fluid are the other common ones. Normal hydraulic braking still works, but the anti-lock function is offline. A car showing the ABS light will fail an Ontario Safety Standards Certificate inspection and most safety inspections in other provinces. Get it diagnosed and fixed before you buy, and before driving it in winter, when anti-lock matters most.

@@ -92,7 +92,7 @@ export function renderShell(opts: ShellOptions, body: string): string {
         name: 'japanauto.ca',
         url: 'https://japanauto.ca',
         logo: 'https://japanauto.ca/logo.svg',
-        description: 'Canadian marketplace for used Japanese cars and parts donor cars',
+        description: 'Independent Canadian marketplace for used Japanese cars and salvage-yard donor cars, listing provincially licensed dealers (AMVIC, OMVIC, VSA, OPC) in Toronto, Montreal, Vancouver, Calgary, Edmonton, and Ottawa.',
         areaServed: { '@type': 'Country', name: 'Canada' },
       },
       {
@@ -108,12 +108,14 @@ export function renderShell(opts: ShellOptions, body: string): string {
   };
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en-CA">
 <head>
 ${SHELL_HEAD}
 <title>${esc(opts.title)}</title>
 <meta name="description" content="${esc(opts.description)}" />
 <link rel="canonical" href="${esc(opts.canonical)}" />
+<link rel="alternate" hreflang="en-ca" href="${esc(opts.canonical)}" />
+<link rel="alternate" hreflang="x-default" href="${esc(opts.canonical)}" />
 <meta property="og:title" content="${esc(opts.title)}" />
 <meta property="og:description" content="${esc(opts.description)}" />
 <meta property="og:url" content="${esc(opts.canonical)}" />

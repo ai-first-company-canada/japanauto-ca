@@ -9,7 +9,7 @@ import PageHeading from '../../components/sections/PageHeading.astro';
 import AboutBrandSection from '../../components/sections/AboutBrandSection.astro';
 import FaqSection, { type FaqItem } from '../../components/sections/FaqSection.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../data/brand-content';
-import { liveCounts } from '../../data/live-counts';
+import { liveCounts, snapshotLabel } from '../../data/live-counts';
 import { faqPage } from '../../lib/schema-graph';
 
 const brandRows = Object.entries(BRAND_CONTENT).map(([slug, b]) => ({
@@ -25,18 +25,18 @@ const cityCount = TIER_1_CITIES.length;
 const title = 'Used Japanese cars in Canada — japanauto.ca';
 const description = totalListings > 0
   ? `Used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi cars from local Canadian dealers. ${totalListings.toLocaleString('en-US')} listings across ${cityCount} cities.`
-  : 'Used Japanese cars — Toyota, Honda, Nissan, Mazda, Subaru and more — from licensed Canadian dealers. Live listings appear as local dealers onboard.';
+  : 'Used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti and Mitsubishi cars from licensed dealers in six Canadian cities. Browse by brand or city.';
 const canonical = 'https://japanauto.ca/used-cars/';
 
 const aboutParagraphs = [
-  'japanauto.ca aggregates used Japanese-car listings from independent dealerships in 6 major Canadian metros. We focus on the 9 brands that have sold meaningfully in Canada — no clutter from non-Japanese makes.',
-  'Every Alberta listing shows the dealer\'s AMVIC number; every car has a verified 17-digit VIN. Browse by brand to see national availability, or pick your city for local listings.',
+  'japanauto.ca collects used-car listings from independent dealerships in 6 major Canadian metros, for the 9 Japanese brands with real sales in Canada. Nothing else is listed.',
+  'Every Alberta listing shows the dealer\'s AMVIC number, and every car must have a valid 17-digit VIN. Browse by brand for national availability, or pick your city for local listings.',
 ];
 
 const faqs: FaqItem[] = [
   {
     q: 'Why japanauto.ca instead of a generic marketplace?',
-    a: 'We focus on Japanese makes only. Generic marketplaces show every car ever made; japanauto.ca lists only the 9 Japanese brands sold in Canada — Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi.',
+    a: 'Because it is Japanese makes only. A generic marketplace mixes in every brand; here you get the 9 Japanese brands sold in Canada and nothing else, so filters and price comparisons stay relevant.',
   },
   {
     q: 'Which brands does japanauto.ca cover?',
@@ -44,11 +44,11 @@ const faqs: FaqItem[] = [
   },
   {
     q: 'Which cities does japanauto.ca cover?',
-    a: 'Toronto, Montreal, Vancouver, Calgary, Edmonton, and Ottawa. These are the 6 Canadian metros where independent Japanese-car dealers have enough volume to support an aggregator.',
+    a: 'Toronto, Montreal, Vancouver, Calgary, Edmonton and Ottawa: the 6 Canadian metros with enough independent Japanese-car dealers to support an aggregator.',
   },
   {
     q: 'Are listings verified?',
-    a: 'Every Alberta dealer is AMVIC-verified. Every car has a 17-digit VIN that matches the windshield, doorjamb, and registration. Dealers in other provinces are checked against their respective licensing bodies.',
+    a: 'Alberta dealers are checked against the AMVIC registry. Every car needs a valid 17-digit VIN, and you should still confirm it matches the windshield, doorjamb and registration. Dealers in other provinces are checked with their own licensing body.',
   },
 ];
 
@@ -75,8 +75,8 @@ const schemaLD = [
 ];
 
 const subtitleHtml = totalListings > 0
-  ? `<span class="num">${totalListings.toLocaleString('en-US')}</span> listings across <span class="num">${brandCount}</span> brands and <span class="num">${cityCount}</span> Canadian cities · Updated today`
-  : `<span class="num">${brandCount}</span> brands across <span class="num">${cityCount}</span> Canadian cities · Live listings appear here as local dealers onboard`;
+  ? `<span class="num">${totalListings.toLocaleString('en-US')}</span> listings across <span class="num">${brandCount}</span> brands and <span class="num">${cityCount}</span> Canadian cities · ${snapshotLabel}`
+  : `<span class="num">${brandCount}</span> brands across <span class="num">${cityCount}</span> Canadian cities · no live listings yet`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" />
@@ -106,7 +106,7 @@ const subtitleHtml = totalListings > 0
         >
           <div class="t-h-s" style="font-size:14px;line-height:20px">{b.name}</div>
           <div class="t-caption" style="font-size:9px;color:var(--color-ink-muted)">
-            {b.count > 0 ? <><span class="num">{b.count}</span> listed</> : 'Dealers onboarding'}
+            {b.count > 0 ? <><span class="num">{b.count}</span> listed</> : 'No listings yet'}
           </div>
         </a>
       ))}

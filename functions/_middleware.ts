@@ -265,6 +265,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     for (const c of setCookies) headers.append("set-cookie", c);
   }
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
+  // Preview hosts: robots.txt alone doesn't keep a URL out of the index if it
+  // is linked from elsewhere — send noindex on every response too.
+  if (isPreviewHost) headers.set("x-robots-tag", "noindex, nofollow");
   headers.set(
     "content-security-policy",
     md.cspNonceUsed && md.cspNonce ? buildCsp(md.cspNonce) : CSP_STATIC,

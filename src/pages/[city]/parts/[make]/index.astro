@@ -1,4 +1,5 @@
 ---
+import { snapshotLabel } from '../../../../data/live-counts';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import Navbar from '../../../../components/sections/Navbar.astro';
 import MenuDrawer from '../../../../components/sections/MenuDrawer.astro';
@@ -38,7 +39,7 @@ const copy = makeCopyFor(make!, brand.name);
 const faqs = makeFaqs(brand.name);
 
 const title = `Used ${brand.name} parts in ${cityShort} — japanauto.ca`;
-const description = `Used ${brand.name} parts from salvage yards in ${cityInfo.name}. Donor cars at local junkyards — pick a model to find a donor, then call.`;
+const description = `Used ${brand.name} parts from salvage yards in ${cityInfo.name}, ${cityInfo.province}. Pick one of ${models.length} models, find a local donor car, then call the yard.`;
 const canonical = `https://japanauto.ca/${city}/parts/${make}/`;
 
 const schemaLD = [
@@ -93,8 +94,8 @@ const schemaLD = [
 
 const subtitleHtml =
   totalDonors > 0
-    ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> ${cityInfo.name} junkyards · Updated today`
-    : `Donor cars listing as ${cityInfo.name} junkyards onboard · Updated today`;
+    ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> ${cityInfo.name} junkyards · ${snapshotLabel}`
+    : `${models.length} ${brand.name} models · no ${cityInfo.name} donor cars listed yet`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" cityShort={cityShort} />
@@ -142,7 +143,7 @@ const subtitleHtml =
       </p>
     ))}
     <p style="margin:12px 0 0;font-size:15px;line-height:23px;color:var(--color-ink-default)">
-      In {cityInfo.name}, expect 30-day mechanical warranty as standard. Local pickup is the norm; cross-{cityInfo.province} shipping is available for smaller items via Canada Post and Purolator.
+      {cityInfo.name} yards usually give 30 days on mechanical parts. Most buyers pick up locally, and smaller items can be shipped across {cityInfo.province} by Canada Post or Purolator.
     </p>
   </section>
 
@@ -151,7 +152,7 @@ const subtitleHtml =
   {totalDonors === 0 && (
     <section style="padding:24px 16px 0">
       <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">
-        No {brand.name} donor cars listed yet in {cityInfo.name} — junkyards are launching their inventory now.
+        No {brand.name} donor cars listed in {cityInfo.name} yet. Yards are still loading their inventory.
         Run a junkyard in {cityInfo.name}? <a href="/dealer/signup/?type=salvage_yard" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
       </p>
     </section>

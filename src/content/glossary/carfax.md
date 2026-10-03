@@ -3,9 +3,9 @@ term: CarFax
 slug: carfax
 group: marketplace
 priority: 2
-canonical_definition: "CarFax Canada (formerly CarProof) is the dominant Canadian vehicle history report service, aggregating data from provincial registries, insurance claims, lien registries, police records, and odometer databases keyed to a vehicle's VIN."
-tldr_draft: "CarFax Canada reports cover Canadian registration history across all provinces, accident and insurance-claim records, lien encumbrances, odometer-rollback flags, US import/export markers, stolen-vehicle status, and recall information. CarFax acquired CarProof in 2015, making it the merged-leader Canadian provider. Reports cost roughly 40–55 CAD individually and are typically provided free by reputable used-car dealers."
-why_it_matters_in_canada: "CarFax Canada draws on data sources distinct from the US CarFax product — including ICBC (BC), SAAQ (Quebec), and IBC insurance data — so a US-only CarFax for a vehicle that has lived in Canada will miss most relevant history. Buyers cross-shopping between Canadian listings and US imports must obtain a Canadian CarFax to capture provincial records."
+canonical_definition: "CarFax Canada (formerly CarProof) is the leading Canadian vehicle history report service. It pulls together provincial registry, insurance claim, lien, police and odometer records under a vehicle's VIN."
+tldr_draft: "A CarFax Canada report covers registration history in every province, accident and insurance-claim records, liens, odometer-rollback flags, US import/export markers, stolen-vehicle status and recalls. IHS, which also owned CarFax, bought CarProof in December 2015, and the business was later rebranded CarFax Canada. Check carfax.ca for the current single-report price; many dealers hand one over free."
+why_it_matters_in_canada: "CarFax Canada uses different data from the US CarFax product, drawing on Canadian registration, insurance-claim and lien records. A US-only CarFax on a car that has lived in Canada will miss most of its history. If you are comparing Canadian listings with US imports, order the Canadian report to see provincial records."
 related_questions:
   - "Is CarFax Canada the same as US CarFax?"
   - "What does a CarFax Canada report show?"
@@ -17,40 +17,50 @@ related_terms:
   - "/glossary/lien/"
   - "/glossary/salvage-title/"
 sources:
+  - "https://canadianautodealer.ca/2015/12/carproof-sold-to-ihs-for-650-million/"
   - "https://www.carfax.ca/"
   - "https://en.wikipedia.org/wiki/Carfax"
-author: japanauto.ca editorial team
+author: japanauto-editorial
 body_status: published
+last_reviewed: 2026-10-03
 ---
 
 ## What is CarFax?
 
-CarFax Canada is the dominant Canadian vehicle history report service. It originated as CarProof, a Canadian-founded service that aggregated provincial registry data, insurance claim records, and lien encumbrance information into a single VIN-keyed report. CarFax (the larger US-based vehicle history company) acquired CarProof in 2015, rebranded the service CarFax Canada, and merged the underlying data sources. The result is a single report that draws on Canadian provincial sources and is the de facto standard for used-vehicle due diligence in Canada.
+CarFax Canada is the leading Canadian vehicle history report service. It began as CarProof, a Canadian-founded company that combined provincial registry data, insurance claim records and lien information into one report keyed to the VIN. In December 2015 CarProof was bought by IHS, the information company that also owned the US CarFax business, and it was later rebranded CarFax Canada. The report now draws on Canadian provincial sources and is the default due-diligence document for used vehicles in this country.
 
-A CarFax Canada report keyed to a vehicle's [VIN](/glossary/vin/) typically includes: registration history across all Canadian provinces (every owner the registry can identify), accident and insurance claim records (subject to privacy limits — minor non-claim repairs may not appear), lien encumbrances registered in provincial Personal Property Security Registries, odometer history with rollback flags, US import/export markers, stolen-vehicle status flags, recall information from Transport Canada, and any title brand history including [Salvage Title](/glossary/salvage-title/) status.
+A CarFax Canada report on a vehicle's [VIN](/glossary/vin/) usually shows:
 
-Reports cost roughly $40 to $55 CAD when ordered individually through carfax.ca. Most reputable Canadian dealers — particularly those licensed by [AMVIC](/glossary/amvic/), [OMVIC](/glossary/omvic/), or [VSA](/glossary/vsa/) — provide CarFax Canada reports free as part of their pre-sale disclosure documentation.
+- registration history in every province (each owner the registry can identify)
+- accident and insurance claim records, within privacy limits, so minor repairs done without a claim may be missing
+- liens registered in provincial Personal Property Security Registries
+- odometer history with rollback flags
+- US import/export markers and stolen-vehicle status
+- Transport Canada recall information
+- title brand history, including [Salvage Title](/glossary/salvage-title/) status
+
+Ordered on its own through carfax.ca, a report costs whatever carfax.ca currently lists, and bundles of several reports cost less per report. Many Canadian dealers, particularly those licensed by [AMVIC](/glossary/amvic/), [OMVIC](/glossary/omvic/) or [VSA](/glossary/vsa/), include one free in their pre-sale disclosure package.
 
 ## Why it matters in Canada
 
-The structural value of CarFax Canada specifically (versus the US CarFax product) is the Canadian data sources. ICBC accident claim data from British Columbia, SAAQ registration and accident data from Quebec, IBC industry-wide insurance claim aggregation, and provincial Personal Property Security Registry lien data are all Canadian-only sources that the US CarFax product cannot access. A vehicle that has spent its life in Canada will show essentially nothing on a US-only CarFax, which is why buyers cross-shopping between Canadian listings and US imports must obtain the Canadian product specifically.
+What you pay for with the Canadian version is Canadian data. Canadian provincial registration records, Canadian insurance-claim records and provincial lien checks are sources the US CarFax doesn't draw on in the same way. A car that has spent its whole life in Canada shows almost nothing on a US-only report. Anyone comparing Canadian listings against US imports needs the Canadian product.
 
-The limit of the system worth understanding: minor accidents repaired through a body shop without an insurance claim often never surface on any vehicle history report. CarFax accident dollar figures reflect insurance claim totals, not appraisal values, so a $3,000 cosmetic claim looks similar to a $3,000 minor structural repair. A clean CarFax is a strong positive signal but not a complete absence of accident history. A pre-purchase inspection by an independent mechanic plus a paint-thickness gauge check on body panels remains the necessary complement to a clean CarFax.
+There is a gap to keep in mind. A minor accident fixed at a body shop with no insurance claim often never reaches any history report. CarFax dollar figures are insurance claim totals, not appraisals, so a $3,000 cosmetic claim looks much like a $3,000 minor structural repair. A clean report is good news. It does not prove the car was never hit. Back it up with an independent mechanic's pre-purchase inspection and a paint-thickness gauge on the body panels.
 
 ## Common questions
 
 ### Is CarFax Canada the same as US CarFax?
 
-No. CarFax Canada (formerly CarProof, acquired in 2015) draws on Canadian-specific data sources — ICBC for British Columbia accident claims, SAAQ for Quebec registration and accident records, IBC insurance industry data, and provincial Personal Property Security Registries for lien information. US CarFax draws on US state DMV records and US insurance industry data and has limited or no visibility into Canadian provincial sources. A vehicle that has lived in Canada will show essentially nothing on a US-only CarFax. Buyers must obtain the Canadian product specifically for due diligence on Canadian-history vehicles.
+No. CarFax Canada (formerly CarProof, bought by IHS in 2015) uses Canadian sources: provincial registration data, Canadian insurance-claim records, and lien searches against provincial registries. US CarFax relies on state DMV records and US insurance data and sees little or nothing from Canadian provinces. Run a car with Canadian history through the US product and you will get an almost empty report. Order the Canadian one.
 
 ### What does a CarFax Canada report show?
 
-A typical CarFax Canada report includes registration history across all Canadian provinces, accident and insurance claim records (subject to privacy limits and what insurers report), lien encumbrances registered in provincial Personal Property Security Registries, odometer history with rollback flags, US import/export markers, stolen-vehicle status, Transport Canada recall information, and title brand history including [Salvage Title](/glossary/salvage-title/) status. The report is keyed to the vehicle's [VIN](/glossary/vin/) and is the most comprehensive single document available for Canadian used-vehicle due diligence.
+Registration history across all provinces, accident and insurance claim records (limited by privacy rules and by what insurers report), liens in provincial Personal Property Security Registries, odometer history with rollback flags, US import/export markers, stolen-vehicle status, Transport Canada recalls, and title brand history including [Salvage Title](/glossary/salvage-title/) status. It is keyed to the [VIN](/glossary/vin/). No other single document gives a Canadian used-car buyer this much in one place.
 
 ### Should I trust a clean CarFax?
 
-A clean CarFax is a strong positive signal but not a complete absence of accident history. The system has structural blind spots: minor accidents repaired through a body shop without an insurance claim often never surface on any history report. Cosmetic damage repaired privately, particularly on Japanese imports that may have spent time in jurisdictions without comprehensive accident reporting, may also be invisible. A clean CarFax should be paired with a pre-purchase inspection by an independent mechanic and a paint-thickness gauge check on body panels for complete due diligence.
+Treat it as a good sign, not a guarantee. Minor accidents repaired at a body shop without an insurance claim often never show up on any history report. Damage fixed privately can also be invisible, especially on Japanese imports that spent time somewhere with weak accident reporting. Pair the report with a pre-purchase inspection by an independent mechanic and a paint-thickness gauge check on the panels.
 
 ### How much does a CarFax cost in Canada?
 
-A single CarFax Canada report ordered through carfax.ca currently costs roughly $40 to $55 CAD as of 2026. Bulk packages are available at lower per-report rates for buyers comparing multiple vehicles. Most reputable Canadian dealers — particularly those licensed by [AMVIC](/glossary/amvic/), [OMVIC](/glossary/omvic/), or [VSA](/glossary/vsa/) — provide CarFax Canada reports free as part of their pre-sale disclosure documentation. For private-sale due diligence, ordering a CarFax independently (or asking the seller to do so) is recommended.
+Check carfax.ca for the current price of a single report; we don't quote a figure because it changes. Bulk packages bring the per-report price down if you are comparing several cars. Many dealers, particularly those licensed by [AMVIC](/glossary/amvic/), [OMVIC](/glossary/omvic/) or [VSA](/glossary/vsa/), give you the CarFax Canada report free with their pre-sale disclosure. On a private sale, order one yourself or ask the seller to.

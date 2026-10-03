@@ -18,28 +18,22 @@ const brands = ORDER
   .map((slug) => brandsRaw.find((b) => b.data.make === slug))
   .filter((b): b is NonNullable<typeof b> => b !== undefined);
 
-// Listing counts mirror the homepage stub data — Phase 5 swaps in D1 numbers.
-const COUNTS: Record<string, number> = {
-  toyota: 78, honda: 64, nissan: 52, mazda: 41, subaru: 36,
-  lexus: 28, acura: 22, infiniti: 17, mitsubishi: 14,
-};
-
 const HUB_FAQ: Array<{ q: string; a: string }> = [
   {
     q: 'Which Japanese brand is most reliable in Canada?',
-    a: 'Toyota and Honda routinely lead long-term reliability surveys for vehicles sold in Canada. Lexus consistently ranks at the top of the luxury segment. Mazda and Subaru follow closely, with Subaru particularly strong in AWD-required regions.',
+    a: 'Toyota and Honda usually top long-term reliability surveys for cars sold in Canada, and Lexus ranks first among luxury brands most years. Mazda and Subaru are close behind; Subaru does especially well where AWD is a must.',
   },
   {
     q: 'Are JDM imports legal in Canada?',
-    a: 'Yes, vehicles 15 years or older from the date of original manufacture can be imported into Canada under federal law. Provincial registration rules and Transport Canada compliance still apply. See our blog for a full walkthrough.',
+    a: 'Yes. Federal law allows import of vehicles 15 years or older, counted from the date of manufacture. Provincial registration rules and Transport Canada compliance still apply; our blog has a full walkthrough.',
   },
   {
     q: 'Which Japanese brands offer AWD on every model?',
-    a: 'Subaru is the only Japanese manufacturer that offers symmetrical AWD on every model sold in Canada (except the BRZ). Most Toyota, Honda, Nissan, Mazda, Lexus, Acura, Infiniti, and Mitsubishi crossovers and SUVs offer AWD as a trim option.',
+    a: 'Only Subaru: Symmetrical AWD is standard on every model it sells in Canada except the BRZ. At the other eight brands, AWD is a trim option on most crossovers and SUVs.',
   },
   {
     q: 'Where can I find used Japanese cars in my city?',
-    a: 'japanauto.ca aggregates listings from verified Canadian dealers and salvage yards across Tier-1 cities (Toronto, Montreal, Vancouver, Calgary, Edmonton, Ottawa). Use the city picker in the navbar to filter to your CMA.',
+    a: 'japanauto.ca collects listings from licensed dealers and salvage yards in Toronto, Montreal, Vancouver, Calgary, Edmonton and Ottawa. Pick your city in the navbar to see local listings only.',
   },
 ];
 
@@ -71,7 +65,7 @@ const schemaLD = [
 ---
 <BaseLayout
   title="Used Japanese car brands in Canada — japanauto.ca"
-  description="Research used Japanese cars across Canada — Toyota, Honda, Nissan, Mazda, Subaru, Lexus and more, with brand-by-brand reliability, hybrid value and AWD notes."
+  description="Research used Japanese cars across Canada: Toyota, Honda, Nissan, Mazda, Subaru, Lexus and more, with brand-by-brand reliability, hybrid value and AWD notes."
   canonical={url}
   schemaLD={schemaLD}
 >
@@ -87,7 +81,7 @@ const schemaLD = [
       Used Japanese car brands in Canada
     </h1>
     <p class="t-body-m ink-muted" style="font-size:14px;line-height:22px;max-width:680px">
-      Nine brands. Independent research, Canadian context — reliability data, hybrid value, AWD performance, and parts availability for every Japanese marque sold in Canada.
+      Reliability, hybrid value, AWD and parts availability for each of the nine Japanese brands sold in Canada, researched independently for Canadian buyers.
     </p>
   </section>
 
@@ -100,7 +94,7 @@ const schemaLD = [
           style="display:flex;flex-direction:column;justify-content:center;padding:18px;min-height:96px;gap:6px"
         >
           <span class="t-h-s" style="font-size:16px;line-height:22px;font-weight:600">{capitalize(b.data.make)}</span>
-          <span class="t-caption" style="font-size:10px;color:var(--color-ink-muted)">~{COUNTS[b.data.make] ?? 0} listed across Canada</span>
+          <span class="t-caption" style="font-size:10px;color:var(--color-ink-muted)">Reliability, AWD and parts notes</span>
         </a>
       ))}
     </div>

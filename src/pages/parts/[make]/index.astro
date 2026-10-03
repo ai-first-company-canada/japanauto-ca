@@ -1,4 +1,5 @@
 ---
+import { snapshotLabel } from '../../../data/live-counts';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Navbar from '../../../components/sections/Navbar.astro';
 import MenuDrawer from '../../../components/sections/MenuDrawer.astro';
@@ -29,7 +30,7 @@ const copy = makeCopyFor(make!, brand.name);
 const faqs = makeFaqs(brand.name);
 
 const title = `Used ${brand.name} parts in Canada — japanauto.ca`;
-const description = `Used ${brand.name} parts from Canadian salvage yards. Donor cars across major cities — pick a model to find a donor, then call the junkyard.`;
+const description = `Used ${brand.name} parts from Canadian salvage yards. Pick one of ${models.length} ${brand.name} models, find a donor car in your city, then call the junkyard.`;
 const canonical = `https://japanauto.ca/parts/${make}/`;
 
 const schemaLD = [
@@ -78,8 +79,8 @@ const schemaLD = [
 
 const subtitleHtml =
   totalDonors > 0
-    ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> junkyards · Updated today`
-    : 'Donor cars listing as junkyards onboard · Updated today';
+    ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> junkyards · ${snapshotLabel}`
+    : `${models.length} ${brand.name} models · no donor cars listed yet`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" />
@@ -132,7 +133,7 @@ const subtitleHtml =
   {totalDonors === 0 && (
     <section style="padding:24px 16px 0">
       <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px">
-        No donor cars listed yet for {brand.name} — junkyards are launching their inventory now.
+        No {brand.name} donor cars listed yet. Yards are still loading their inventory.
         Run a junkyard? <a href="/dealer/signup/?type=salvage_yard" style="color:var(--color-ink-strong);font-weight:600;text-decoration:underline;text-underline-offset:2px">List your inventory →</a>
       </p>
     </section>

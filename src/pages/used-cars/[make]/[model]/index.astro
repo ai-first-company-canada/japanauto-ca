@@ -11,7 +11,8 @@ import AboutBrandSection from '../../../../components/sections/AboutBrandSection
 import FaqSection from '../../../../components/sections/FaqSection.astro';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
 import { MODELS_BY_BRAND } from '../../../../data/models-stubs';
-import { liveCounts } from '../../../../data/live-counts';
+import { liveCounts, snapshotLabel } from '../../../../data/live-counts';
+import { LISTING_YEAR_MIN, generationsInWindow } from '../../../../lib/model-copy';
 
 export function getStaticPaths() {
   const paths: Array<{ params: { make: string; model: string } }> = [];
@@ -40,28 +41,34 @@ const citiesOnboarding = cityCards.filter((c) => c.count === 0);
 
 const title = `Used ${brand.name} ${modelInfo.name} across Canada — japanauto.ca`;
 const description = totalListings > 0
-  ? `Used ${brand.name} ${modelInfo.name} for sale across Canada — ${totalListings} live listing${totalListings === 1 ? '' : 's'} from AMVIC-licensed, VIN-checked local dealers.`
-  : `Used ${brand.name} ${modelInfo.name} across Canada — live listings from AMVIC-licensed dealers, added as local sellers onboard. Every listing is a real car.`;
+  ? `Used ${brand.name} ${modelInfo.name} for sale across Canada: ${totalListings} live listing${totalListings === 1 ? '' : 's'} from licensed, VIN-checked local dealers.`
+  : `Used ${brand.name} ${modelInfo.name} listings from licensed dealers in Toronto, Montreal, Vancouver, Calgary, Edmonton and Ottawa. Every car has a checked VIN.`;
 const canonical = `https://japanauto.ca/used-cars/${make}/${model}/`;
 
 const aboutTitle = `About the ${brand.name} ${modelInfo.name}`;
+const gens = generationsInWindow(make!, model!);
+const topCity = [...cityCards].sort((a, b) => b.count - a.count)[0]!;
 const aboutParagraphs = [
-  `japanauto.ca tracks used ${brand.name} ${modelInfo.name} listings from licensed Canadian dealers. Every listing is a real car — buyers compare by year, mileage, and trim against city-local pricing.`,
-  `Used ${modelInfo.name} listings cover the site's rolling 10-year eligibility window. Inventory is live and growing as AMVIC-licensed dealers onboard — pick a city below to browse local availability.`,
+  `This page collects used ${brand.name} ${modelInfo.name} listings from licensed dealers in ${TIER_1_CITIES.length} Canadian cities. Each one is a real car with its year, kilometres and trim, so you can compare it with what else is for sale locally.`,
+  gens
+    ? `Dealers can list model years ${LISTING_YEAR_MIN} and newer, which for the ${modelInfo.name} covers ${gens}. Pick a city below to see what is for sale there.`
+    : `Dealers can list model years ${LISTING_YEAR_MIN} and newer (a rolling 10-year limit). Pick a city below to see what is for sale there.`,
 ];
 
 const modelFaqs = [
   {
     q: `Is the ${brand.name} ${modelInfo.name} a good used buy?`,
-    a: `${brand.name} consistently leads its segment for resale value and long-term reliability. Inventory is live and growing as AMVIC-licensed dealers onboard — every ${modelInfo.name} listing is a real car from a licensed local seller.`,
+    a: `It can be. ${brand.name} has a good record for resale value and long-term reliability, but the individual car matters more than the badge: check the service history, the VIN report and open recalls, and get an independent inspection.`,
   },
   {
     q: `Which Canadian city has the most used ${brand.name} ${modelInfo.name}?`,
-    a: `That shifts as dealers onboard. Each city page below shows live ${modelInfo.name} availability for that market — every listing comes from a licensed local seller.`,
+    a: topCity.count > 0
+      ? `Right now it is ${topCity.name}, with ${topCity.count} live listing${topCity.count === 1 ? '' : 's'}. The city cards below show the current count for each market.`
+      : `None has live ${modelInfo.name} stock yet. The city cards below show the count for each market as dealers start listing.`,
   },
   {
     q: `What's the average price for a used ${brand.name} ${modelInfo.name}?`,
-    a: `Pricing depends on year, mileage, trim, and city. Pick a city below to see real asking prices from licensed dealers as live listings arrive.`,
+    a: `It depends on year, kilometres, trim and city, so a national average would hide more than it shows. Each city page lists dealers' actual asking prices.`,
   },
 ];
 
@@ -95,8 +102,8 @@ const schemaLD = [
 ];
 
 const subtitleHtml = totalListings > 0
-  ? `<span class="num">${totalListings}</span> ${modelInfo.name} listing${totalListings === 1 ? '' : 's'} across <span class="num">${citiesLive.length}</span> Canadian ${citiesLive.length === 1 ? 'city' : 'cities'} · Updated today`
-  : `Live ${modelInfo.name} listings appear here as local dealers onboard`;
+  ? `<span class="num">${totalListings}</span> ${modelInfo.name} listing${totalListings === 1 ? '' : 's'} across <span class="num">${citiesLive.length}</span> Canadian ${citiesLive.length === 1 ? 'city' : 'cities'} · ${snapshotLabel}`
+  : `No live ${modelInfo.name} listings yet · model years ${LISTING_YEAR_MIN}+`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" />
@@ -127,11 +134,11 @@ const subtitleHtml = totalListings > 0
 
   {citiesOnboarding.length > 0 && (
     <section style="padding:0 16px 32px">
-      <h2 class="sr-only">{`${brand.name} ${modelInfo.name} — cities where dealers are onboarding`}</h2>
+      <h2 class="sr-only">{`${brand.name} ${modelInfo.name}: cities with no listings yet`}</h2>
       {citiesLive.length === 0 && (
         <div class="card" style="padding:20px;margin-bottom:12px;text-align:left">
-          <h3 class="t-h-m" style="font-size:17px">New inventory is arriving</h3>
-          <p class="t-caption" style="margin-top:8px">Local dealers are onboarding — live listings appear here first.</p>
+          <h3 class="t-h-m" style="font-size:17px">No {modelInfo.name} listed yet</h3>
+          <p class="t-caption" style="margin-top:8px">Dealers in these cities are still being set up. Their cars will appear here first.</p>
           <a href="/dealer/signup/" class="t-caption" style="display:inline-block;margin-top:12px">List your inventory →</a>
         </div>
       )}
@@ -144,7 +151,7 @@ const subtitleHtml = totalListings > 0
           >
             <h3 class="t-h-m" style="font-size:17px">{c.name}</h3>
             <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;gap:8px">
-              <span class="t-caption" style="font-size:10px">Dealers onboarding</span>
+              <span class="t-caption" style="font-size:10px">No listings yet</span>
               <span class="t-caption t-mono" style="font-size:10px">{c.province}</span>
             </div>
           </a>
@@ -153,7 +160,7 @@ const subtitleHtml = totalListings > 0
     </section>
   )}
 
-  <AboutBrandSection title={aboutTitle} paragraphs={aboutParagraphs} />
+  <AboutBrandSection title={aboutTitle} paragraphs={aboutParagraphs} guide={{ href: `/brands/${make}/`, label: `Read our ${brand.name} buyer's guide` }} />
 
   <FaqSection
     items={modelFaqs}

@@ -1,69 +1,39 @@
 # japanauto.ca — Canadian used Japanese cars marketplace
-# Updated 2026-05-19
+# Updated 2026-10-03
+#
+# One group for every crawler. A crawler obeys only its most specific
+# matching group (RFC 9309), so separate named-bot groups with a bare
+# `Allow: /` silently dropped the private-path Disallows below. The named
+# bots stay listed as a documented allow-list, all inside this one group.
+# Cloudflare AI Crawl Control must stay OFF at the zone level, otherwise
+# AI bots are blocked at the edge regardless of this file.
 
 User-agent: *
+User-agent: Googlebot
+User-agent: Bingbot
+User-agent: YandexBot
+User-agent: DuckDuckBot
+User-agent: Applebot
+User-agent: Applebot-Extended
+User-agent: Google-Extended
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: CCBot
+User-agent: cohere-ai
+User-agent: MistralAI-User
+User-agent: Meta-ExternalAgent
+Content-Signal: search=yes, ai-input=yes, ai-train=no
 Allow: /
 Disallow: /dashboard/
 Disallow: /dealer/
 Disallow: /api/
 Disallow: /auth/
 
-# AI crawlers — explicit Allow (Cloudflare AI Crawl Control must be OFF
-# at the zone level, otherwise these get blocked at the edge despite this file)
-User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: anthropic-ai
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Perplexity-User
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-User-agent: AppleBot
-Allow: /
-
-User-agent: AppleBot-Extended
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: cohere-ai
-Allow: /
-
-User-agent: MistralAI-User
-Allow: /
-
-User-agent: Meta-ExternalAgent
-Allow: /
-
-# Search engines — explicit allow (overrides any future deny rule on *)
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: YandexBot
-Allow: /
-
-User-agent: DuckDuckBot
-Allow: /
-
-# Sitemaps
 Sitemap: https://japanauto.ca/sitemap.xml

@@ -3,9 +3,9 @@ term: i-MMD
 slug: i-mmd
 group: brand-specific-tech
 priority: 2
-canonical_definition: "i-MMD (intelligent Multi-Mode Drive), marketed in many regions as e:HEV, is Honda's two-motor hybrid powertrain that drives the wheels primarily via electric motor at most speeds, with the petrol engine acting as a generator or providing direct mechanical drive only at high cruising speeds."
-tldr_draft: "i-MMD/e:HEV uses a 2.0L Atkinson-cycle engine, a traction motor, and a generator motor. At low and moderate speeds the engine generates electricity that drives the traction motor (series mode); at steady highway speeds a clutch couples the engine directly to the wheels (engine drive mode). It is fitted to the Canadian-market Honda CR-V Hybrid, Accord Hybrid, and Civic Hybrid (returning for 2026)."
-why_it_matters_in_canada: "i-MMD is Honda's volume answer to Toyota Hybrid Synergy Drive in the Canadian market. Unlike Toyota's e-CVT, i-MMD uses an electronically controlled fixed-ratio clutch rather than a power-split planetary, which means the engine is mechanically decoupled at urban speeds — a meaningful efficiency advantage in Toronto and Montreal stop-and-go conditions."
+canonical_definition: "i-MMD (intelligent Multi-Mode Drive), marketed in many regions as e:HEV, is Honda's two-motor hybrid powertrain. An electric motor drives the wheels at most speeds, and the petrol engine either works as a generator or, at high cruising speeds, drives the wheels directly."
+tldr_draft: "i-MMD/e:HEV pairs a 2.0L Atkinson-cycle engine with a traction motor and a generator motor. At low and moderate speeds the engine makes electricity for the traction motor (series mode). At steady highway speeds a clutch couples the engine directly to the wheels (engine drive mode). In Canada it powers the CR-V Hybrid and Accord Hybrid, plus the Civic Hybrid, which returned for the 2025 model year."
+why_it_matters_in_canada: "i-MMD is Honda's volume answer to Toyota Hybrid Synergy Drive in Canada. Toyota's e-CVT uses a power-split planetary; i-MMD uses an electronically controlled fixed-ratio clutch instead, so the engine is mechanically decoupled at city speeds. That gives it a real efficiency edge in Toronto and Montreal stop-and-go traffic."
 related_questions:
   - "What is the difference between i-MMD and Toyota Hybrid Synergy Drive?"
   - "Is the Honda CR-V Hybrid in Canada an i-MMD?"
@@ -15,36 +15,38 @@ related_terms:
   - "/glossary/e-cvt/"
   - "/glossary/cvt/"
 sources:
+  - "https://hondanews.ca/en-CA/releases/release-1fd43e21075934b8810692be5207da76-return-of-civic-hybrid-marks-arrival-of-2025-civic-lineup-at-honda-dealerships"
   - "https://www.honda.ca/electrified"
   - "https://en.wikipedia.org/wiki/Honda_e:HEV"
-author: japanauto.ca editorial team
+author: japanauto-editorial
 body_status: published
+last_reviewed: 2026-10-03
 ---
 
 ## What is i-MMD?
 
-i-MMD stands for intelligent Multi-Mode Drive. It is Honda's two-motor hybrid powertrain, marketed in many regions outside North America as e:HEV. The system uses three primary components: a 2.0L Atkinson-cycle gasoline engine, a powerful traction motor that drives the wheels, and a generator motor that converts engine output to electricity.
+i-MMD stands for intelligent Multi-Mode Drive. It is Honda's two-motor hybrid powertrain, sold in many regions outside North America as e:HEV. The hardware comes down to three parts: a 2.0L Atkinson-cycle gasoline engine, a powerful traction motor that turns the wheels, and a generator motor that converts engine output into electricity.
 
-The "multi-mode" aspect of i-MMD refers to three distinct operating states. In EV mode at low speeds and light loads, the traction battery drives the traction motor directly without engine involvement. In hybrid (series) mode at moderate speeds, the gasoline engine generates electricity through the generator motor, and that electricity drives the traction motor; the engine is mechanically decoupled from the wheels and operates at its most efficient RPM regardless of vehicle speed. In engine drive mode at steady high-speed cruise (typically above 80 km/h), an electronically controlled clutch mechanically couples the engine directly to the wheels for the most efficient highway cruise.
+"Multi-mode" refers to three operating states. In EV mode, at low speeds and light loads, the traction battery runs the traction motor with the engine off. In hybrid (series) mode, at moderate speeds, the engine spins the generator motor and that electricity feeds the traction motor. The engine has no mechanical link to the wheels in this mode, so it can sit at its most efficient RPM whatever the road speed. In engine drive mode, at steady cruise (usually above 80 km/h), an electronically controlled clutch locks the engine directly to the wheels, which is the most efficient way to cover highway distance.
 
-The mechanical distinction from Toyota's [e-CVT](/glossary/e-cvt/) is the fixed-ratio clutch rather than a power-split planetary gearset. i-MMD does not use a planetary device to split engine torque continuously — instead, the engine is either fully decoupled (series mode and EV mode) or fully coupled at a fixed ratio (engine drive mode). The transition between modes is managed by software and is imperceptible to the driver.
+The mechanical difference from Toyota's [e-CVT](/glossary/e-cvt/) is that clutch. i-MMD has no planetary gearset splitting engine torque. The engine is either fully decoupled (series and EV modes) or fully coupled at one fixed ratio (engine drive mode). Software handles the switch between modes, and the driver can't feel it.
 
 ## Why it matters in Canada
 
-i-MMD is Honda's volume answer to Toyota Hybrid Synergy Drive in the Canadian market. The system is fitted to the current Honda CR-V Hybrid, Accord Hybrid, and the returning Civic Hybrid for 2026. The mechanical decoupling of the engine at urban speeds delivers a meaningful efficiency advantage in Toronto and Montreal stop-and-go conditions — at low speeds the engine operates at its peak-efficiency RPM as a generator rather than scaling RPM to match vehicle speed.
+i-MMD is Honda's volume answer to Toyota Hybrid Synergy Drive here. It goes into the current Honda CR-V Hybrid and Accord Hybrid, and into the Civic Hybrid that returned for the 2025 model year. Because the engine is decoupled at city speeds, it gains a real efficiency edge in Toronto and Montreal stop-and-go traffic. At low speeds the engine runs as a generator at its peak-efficiency RPM instead of revving up and down with road speed.
 
-The trade-off versus Toyota's [e-CVT](/glossary/e-cvt/) is that i-MMD has fewer total years of accumulated Canadian fleet data. Toyota's e-CVT has been in Canadian use since the early 2000s with hundreds of thousands of taxi-fleet examples logging 500,000+ km. i-MMD has been in Canadian use since roughly 2018 and is still building the long-term durability dataset. Early indications are favourable — no major service bulletins or failure modes have surfaced in Transport Canada's defects database — but the mechanical track record is shorter.
+The catch, compared with Toyota's [e-CVT](/glossary/e-cvt/), is a shorter record. Toyota's system has been on Canadian roads since the early 2000s, with a long taxi-fleet history behind it. i-MMD reached North America in the 2014 Accord Hybrid and only became a high-volume system here in recent years, so its long-term durability record is shorter. Before buying a used one, check for open recalls by VIN on Transport Canada's recall database and look for service records.
 
 ## Common questions
 
 ### What is the difference between i-MMD and Toyota Hybrid Synergy Drive?
 
-Toyota's [e-CVT](/glossary/e-cvt/) uses a single planetary gearset (the power-split device) to continuously blend engine and motor torque, with software varying the motor-generator speeds to produce continuous variability. Honda's i-MMD uses a fixed-ratio clutch instead — the engine is either fully decoupled (operating as a generator) or fully coupled to the wheels at a single ratio (engine drive mode at highway speeds). Toyota's system is mechanically more elegant and more proven over time. Honda's system is more efficient at steady highway cruise. Both produce similar real-world fuel economy in Canadian metropolitan use.
+Toyota's [e-CVT](/glossary/e-cvt/) uses one planetary gearset (the power-split device) to blend engine and motor torque continuously, with software varying the motor-generator speeds. Honda's i-MMD uses a fixed-ratio clutch: the engine is either decoupled and working as a generator, or coupled to the wheels at a single ratio in engine drive mode on the highway. Toyota's design is mechanically more elegant and has more years behind it. Honda's is more efficient at steady highway cruise. In Canadian city driving, their real-world fuel economy is close.
 
 ### Is the Honda CR-V Hybrid in Canada an i-MMD?
 
-Yes. The current Honda CR-V Hybrid sold in Canada uses the i-MMD two-motor hybrid system, fitted with a 2.0L Atkinson-cycle gasoline engine, a traction motor, and a generator motor. The hybrid trim is offered alongside the gasoline-only 1.5L L15 turbo trims. CR-V Hybrid fuel economy under NRCan combined ratings runs roughly 30 to 40 percent better than the gas equivalent in metropolitan use. The hybrid traction battery is warrantied by Honda Canada for 8 years or 160,000 kilometres.
+Yes. The current CR-V Hybrid sold in Canada runs the i-MMD two-motor system with a 2.0L Atkinson-cycle engine, a traction motor and a generator motor. Honda sells it alongside the gas-only trims, which use the 1.5L L15 turbo. On NRCan combined ratings, the hybrid uses roughly 30 to 40 percent less fuel than the gas version in city use. Honda Canada warranties the hybrid traction battery for 8 years or 160,000 kilometres.
 
 ### Is i-MMD a CVT?
 
-No, despite some marketing materials describing the driver-facing behaviour as CVT-like. i-MMD has no belt, no pulleys, and no power-split planetary gearset. It uses a fixed-ratio clutch that either fully couples the engine to the wheels (at highway speeds) or fully decouples the engine (at lower speeds, where the engine operates as a generator). The continuously variable feel from the driver's seat is produced by software-managed transitions between operating modes, not by mechanical ratio variation. This distinction matters for service: i-MMD does not require CVT fluid changes and does not have the wear concerns of a belt-and-pulley CVT.
+No, although some marketing describes how it feels to drive as CVT-like. i-MMD has no belt, no pulleys and no power-split planetary gearset. Its fixed-ratio clutch either couples the engine to the wheels (at highway speeds) or decouples it (at lower speeds, when the engine acts as a generator). The stepless feel comes from software managing the mode changes, with no mechanical ratio change involved. That matters at service time. i-MMD needs no CVT fluid changes and avoids the wear issues of a belt-and-pulley CVT.

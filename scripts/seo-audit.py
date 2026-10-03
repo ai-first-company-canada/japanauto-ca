@@ -281,6 +281,45 @@ def main():
             errors.append((where[0] + (f' (+{len(where)-1} more)' if len(where) > 1 else ''),
                            f'LAUNCH: dead internal link "{h}" (404 on {len(where)} page(s))'))
 
+    # ---- integrity + GEO gates (audit 2026-10-03) — always on ----
+    # Claims an answer engine would quote verbatim must be true. These are the
+    # regressions the 2026-10-03 SEO/GEO audit found on indexable pages.
+    NON_AB_CITY = ('toronto/', 'montreal/', 'vancouver/', 'ottawa/')
+    INTEGRITY = [
+        (re.compile(r'Updated today'), 'static page claims "Updated today" (build snapshot, not live)'),
+        (re.compile(r'\[verify'), 'editorial "[verify" marker rendered'),
+        (re.compile(r'150\+ dealers'), 'unbacked "150+ dealers" claim'),
+        (re.compile(r'~\d+ listed'), 'estimated "~N listed" count'),
+    ]
+    EMPTY_STATE = re.compile(r'No live [^<]{0,80} listings in [^<]{0,40} yet|No articles in this category yet')
+    for pg in pages:
+        if pg['noindex'] or pg['grp'] == '404':
+            continue
+        body = open(os.path.join(dist, pg['rel']), encoding='utf-8', errors='ignore').read()
+        for rx, msg in INTEGRITY:
+            if rx.search(body):
+                errors.append((pg['rel'], msg))
+        if EMPTY_STATE.search(visible_text(body)):
+            errors.append((pg['rel'], 'indexable page renders an empty inventory state (soft-404) — should be noindex'))
+        if pg['rel'].startswith(NON_AB_CITY) and 'AMVIC' in pg['desc']:
+            errors.append((pg['rel'], 'AMVIC (Alberta) named in a non-Alberta page description'))
+    # llms.txt must only point at built, indexable pages.
+    llms = os.path.join(dist, 'llms.txt')
+    if os.path.isfile(llms):
+        idx_urls = {p['own'] for p in pages if not p['noindex'] and p['own']}
+        for u in re.findall(r'\((https://japanauto\.ca/[^)\s]*)\)', open(llms, encoding='utf-8').read()):
+            if u not in idx_urls:
+                errors.append(('llms.txt', f'links to a missing or noindex page: {u}'))
+    else:
+        errors.append(('llms.txt', 'missing'))
+    # Every sitemap URL must be indexable (and exist).
+    smap = os.path.join(dist, 'sitemap-static.xml')
+    if os.path.isfile(smap):
+        idx_urls = {p['own'] for p in pages if not p['noindex'] and p['own']}
+        for u in re.findall(r'<loc>([^<]+)</loc>', open(smap, encoding='utf-8').read()):
+            if u not in idx_urls:
+                errors.append(('sitemap-static.xml', f'lists a missing or noindex URL: {u}'))
+
     # ---- report ----
     idxn = sum(1 for p in pages if not p['noindex'] and p['grp'] != '404')
     mode = ' · LAUNCH mode (demo-content & robots gates active)' if LAUNCH else ''

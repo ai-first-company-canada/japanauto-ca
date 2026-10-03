@@ -3,9 +3,9 @@ term: Lien
 slug: lien
 group: marketplace
 priority: 2
-canonical_definition: "A lien on a vehicle is a legal claim registered by a creditor — typically a bank, dealer financier, or judgment creditor — against the vehicle as security for an outstanding debt, which travels with the vehicle until discharged."
-tldr_draft: "Liens are registered in provincial Personal Property Security Registries (PPSR) — for example Ontario's PPSA, British Columbia's PPR, Alberta's PPR, and Quebec's RDPRM. If a buyer purchases a vehicle with an undischarged lien, the lienholder retains the right to repossess regardless of the buyer's good faith, unless the buyer obtained appropriate disclosure protection. Liens appear on a CarFax Canada report and on the Ontario UVIP."
-why_it_matters_in_canada: "Lien searches are the single most important pre-purchase legal check on a private Canadian used-vehicle sale. Each province has its own registry and a separate search fee (typically 8–25 CAD), and a multi-province search is recommended for any vehicle that has been registered outside its current province. Quebec's RDPRM operates differently from common-law PPSAs, requiring a French-language search."
+canonical_definition: "A lien on a vehicle is a legal claim that a creditor (typically a bank, dealer financier, or judgment creditor) registers against the vehicle as security for an outstanding debt. It stays attached to the vehicle until it is discharged."
+tldr_draft: "Liens are recorded in provincial Personal Property Security Registries (PPSR), for example Ontario's PPSA, British Columbia's PPR, Alberta's PPR and Quebec's RDPRM. If you buy a vehicle with an undischarged lien, the lienholder can still repossess it however honestly you bought it, unless you obtained appropriate disclosure protection. Liens show up on a CarFax Canada report and on the Ontario UVIP."
+why_it_matters_in_canada: "On a private used-vehicle sale in Canada, the lien search is the most important legal check you do before paying. Every province has its own registry and its own search fee, usually a modest one. If the vehicle was ever registered in another province, search there too. Quebec's RDPRM works under civil law rather than the common-law PPSAs, but it can be searched online in English or French by VIN."
 related_questions:
   - "How do I check if a used car has a lien in Canada?"
   - "What happens if I buy a car with a lien on it?"
@@ -17,44 +17,44 @@ related_terms:
   - "/glossary/vin/"
   - "/glossary/salvage-title/"
 sources:
+  - "https://www.rdprm.gouv.qc.ca/en/pages/english.html"
   - "https://www.ontario.ca/laws/statute/90p10"
   - "https://www.bcregistry.gov.bc.ca/ppr"
-author: japanauto.ca editorial team
-reviewer_role: "OMVIC-licensed advisor"
-last_reviewed: 2026-05-15
+author: japanauto-editorial
+last_reviewed: 2026-10-03
 body_status: published
 ---
 
 ## What is a lien?
 
-A lien on a vehicle is a legal claim registered by a creditor against that specific vehicle as security for an outstanding debt. The most common source is a bank or dealer financier — when a buyer finances a new or used vehicle through a loan, the lender registers a lien against the vehicle so they can repossess it if the borrower defaults. Other lien sources include unpaid mechanic invoices (mechanic's liens), unpaid taxes, judgment liens from court awards, and certain government claims.
+A lien on a vehicle is a legal claim a creditor registers against that specific vehicle as security for an unpaid debt. Most liens come from banks and dealer financiers. When someone buys a new or used car on a loan, the lender registers a lien so it can repossess the car if the borrower stops paying. Liens can also come from unpaid mechanic invoices (mechanic's liens), unpaid taxes, court judgments and certain government claims.
 
-The structurally important property of a lien is that it travels with the vehicle, not with the previous owner. If you buy a used vehicle that has an outstanding lien you did not discover, the lienholder retains the right to repossess that vehicle from you — even though you paid the seller in good faith. This is one of the most expensive ways to lose a used-vehicle purchase in Canada and it is the reason a lien search is the single most important pre-purchase legal due-diligence step on any private sale.
+What makes a lien dangerous is that it follows the vehicle, not the previous owner. Buy a used car with a lien you didn't find, and the lienholder can repossess it from you even though you paid the seller in good faith. Few mistakes on a Canadian used-car purchase cost more, which is why the lien search is the most important legal check you do before a private sale.
 
-Liens are registered in provincial Personal Property Security Registries. Ontario uses the Personal Property Security Registration (PPSR) under the PPSA. British Columbia uses the Personal Property Registry (PPR). Alberta also uses the PPR. Quebec uses the Register of Personal and Movable Real Rights (RDPRM), which operates under a different legal framework (Quebec civil law rather than common law) and requires a French-language search.
+Each province keeps its own Personal Property Security Registry. Ontario has the Personal Property Security Registration (PPSR) system under the PPSA. British Columbia has the Personal Property Registry (PPR), and Alberta also uses a PPR. Quebec runs the Register of Personal and Movable Real Rights (RDPRM). It works under Quebec civil law instead of common law, and its online search by VIN is available in English as well as French.
 
 ## Why it matters in Canada
 
-Lien searches matter most on private used-vehicle sales because dealer transactions in Canada are protected: an [AMVIC](/glossary/amvic/), [OMVIC](/glossary/omvic/), or [VSA](/glossary/vsa/)-licensed dealer is legally obligated to discharge any lien before transferring ownership and is liable to the buyer if they fail to do so. Private sellers have no equivalent obligation — many private sellers do not even know whether their vehicle has a lien against it, particularly in cases where a previous owner financed the vehicle and the lien was never discharged at sale.
+Private sales carry most of the lien risk because dealer sales in Canada come with protection. An [AMVIC](/glossary/amvic/)-, [OMVIC](/glossary/omvic/)- or [VSA](/glossary/vsa/)-licensed dealer must legally discharge any lien before transferring ownership, and is liable to you if it doesn't. A private seller has no such duty. Many don't even know there's a lien on their car, especially when an earlier owner financed it and the lien was never cleared at sale.
 
-The Ontario [UVIP](/glossary/uvip/) shows lien status as part of the mandatory private-sale disclosure. Outside Ontario, lien searches must be performed independently through the relevant provincial registry. Fees range from approximately $8 to $25 CAD per search depending on province and search type. Multi-province searches are recommended for any vehicle that has been registered in more than one province during its lifetime — a lien registered in Ontario does not automatically appear in a BC search even if the vehicle has since moved to British Columbia.
+In Ontario, the [UVIP](/glossary/uvip/) shows lien status as part of the mandatory private-sale disclosure. Everywhere else you have to search the provincial registry yourself. Fees run about $8 to $25 CAD per search, depending on province and search type. If the vehicle has been registered in more than one province, search each of them. A lien registered in Ontario won't show up in a BC search, even after the car has moved to British Columbia.
 
 ## Common questions
 
 ### How do I check if a used car has a lien in Canada?
 
-Order a search from the relevant provincial Personal Property Registry, keyed to the vehicle's [VIN](/glossary/vin/). Ontario uses the PPSR (search through ServiceOntario). British Columbia uses the PPR (search through BC Online or via a registered service provider). Alberta uses the Alberta PPR. Quebec uses the RDPRM (French-language search). Fees range from $8 to $25 CAD per search. A [CarFax Canada](/glossary/carfax/) report aggregates lien information across most provinces and is a useful starting point, but a direct provincial registry search is the legally authoritative source. The Ontario [UVIP](/glossary/uvip/) shows current Ontario lien status as part of the mandatory disclosure on private sales.
+Order a search from the provincial Personal Property Registry using the vehicle's [VIN](/glossary/vin/). In Ontario that's the PPSR, searched through ServiceOntario. British Columbia's PPR is searched through BC Online or a registered service provider. Alberta has the Alberta PPR, and Quebec the RDPRM (in English or French). Each charges a modest search fee; check the current fee on the registry's site. A [CarFax Canada](/glossary/carfax/) report pulls lien data from most provinces and is a good first look. The legally authoritative answer, though, comes from a direct provincial registry search. For Ontario private sales, the [UVIP](/glossary/uvip/) also shows current Ontario lien status as part of the mandatory disclosure.
 
 ### What happens if I buy a car with a lien on it?
 
-The lienholder retains the right to repossess the vehicle from you, regardless of your good faith as a buyer. If you have already paid the seller in full and the seller has disappeared or cannot or will not discharge the lien, your legal options are limited and expensive — civil suit against the seller (if locatable), claim against any provincial dealer compensation fund (only if the seller was a licensed dealer), or accepting the loss. This is the structurally most expensive way to lose a used-vehicle purchase in Canada and is the reason a lien search before payment is non-negotiable on a private sale.
+The lienholder can repossess the car from you, whatever your good faith. If you've already paid the seller in full and the seller has vanished, or can't or won't pay off the lien, your options are few and costly. You can sue the seller (if you can find them), claim against a provincial dealer compensation fund (only if the seller was a licensed dealer), or absorb the loss. That's why, on a private sale, you search for liens before any money changes hands.
 
 ### How much does a lien search cost?
 
-Provincial lien search fees range from approximately $8 to $25 CAD per search depending on the province and the type of search. Ontario PPSR searches through ServiceOntario run roughly $8 to $15. British Columbia PPR searches through BC Online run $7 to $15. Alberta PPR is similar. Quebec RDPRM searches start around $10. Multi-province search packages through CarFax Canada or specialized service providers can run $40 to $80 and provide cross-provincial coverage in a single transaction. For any vehicle that has been registered in more than one province during its lifetime, multi-province search is recommended.
+Each province sets its own fee, and a single VIN search is usually inexpensive, well under the cost of a tank of gas. Fees change, so check the current amount with ServiceOntario, BC Online, an Alberta registry agent or the RDPRM before you search. Multi-province packages from CarFax Canada or specialized providers cost more and cover several provinces at once. Use one for any vehicle that has been registered in more than one province.
 
 ### Does a CarFax show all liens?
 
-[CarFax Canada](/glossary/carfax/) aggregates lien information from multiple provincial Personal Property Security Registries and is a useful single-source starting point. It does not replace a direct provincial registry search, which is the legally authoritative source. Liens registered very recently — within the last few business days — may not yet appear in CarFax data. Liens registered in jurisdictions outside CarFax's data partnerships, including some specialized commercial liens, may also be missed. For high-value used purchases ($30,000+) or any private sale where the seller's identity is not well-documented, a direct provincial PPR/PPSR/RDPRM search is recommended in addition to CarFax.
+[CarFax Canada](/glossary/carfax/) collects lien data from several provincial Personal Property Security Registries and makes a handy single starting point. It is not a substitute for a direct provincial registry search, which is the legally authoritative record. A lien registered in the last few business days may not have reached CarFax yet. Liens from jurisdictions outside CarFax's data partnerships, including some specialized commercial liens, can also be missed. On a high-value purchase ($30,000+), or a private sale where you can't firmly establish who the seller is, run a direct provincial PPR/PPSR/RDPRM search on top of the CarFax.
 
-This information reflects regulations effective May 2026 and provincial sources cited above. For binding advice on a specific transaction, consult an OMVIC-licensed advisor, an AMVIC-licensed advisor in Alberta, or your provincial consumer protection office.
+Lien rules and registry fees here are current to May 2026. If a specific deal raises questions, a lawyer can give binding advice, and OMVIC (Ontario), AMVIC (Alberta), the VSA (BC) or the OPC (Quebec) can tell you how the rules apply to a licensed dealer.

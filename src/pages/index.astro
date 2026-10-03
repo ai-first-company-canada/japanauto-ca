@@ -15,7 +15,7 @@ import GlossaryHighlights, { type GlossaryTerm } from '../components/sections/Gl
 import FaqSection, { type FaqItem } from '../components/sections/FaqSection.astro';
 import SellCta from '../components/sections/SellCta.astro';
 import { TIER_1_CITIES } from '../data/brand-content';
-import { liveCounts } from '../data/live-counts';
+import { liveCounts, snapshotLabel } from '../data/live-counts';
 import {
   getRecentListingsNational,
   minPriceForCityModel,
@@ -91,7 +91,7 @@ const CITY_LINKS = TIER_1_CITIES.map((c) => ({
 const FAQ_ITEMS: FaqItem[] = [
   {
     q: 'Why are Japanese cars popular in Canada?',
-    a: 'Japanese-built cars consistently rank among the top for long-term reliability and resale value in Canadian conditions. Brands like Toyota, Honda and Subaru are over-represented in vehicles that pass 250,000 km without major repairs, which matters in a country where winter driving and long highway commutes are common.',
+    a: 'Mostly for reliability and resale value. Toyota, Honda and Subaru rank well in long-term reliability surveys, and their cars are over-represented among vehicles that pass 250,000 km without a major repair. That counts for a lot in a country of winter driving and long highway commutes.',
   },
   {
     q: 'Do I need an AMVIC-registered dealer in Alberta?',
@@ -99,19 +99,19 @@ const FAQ_ITEMS: FaqItem[] = [
   },
   {
     q: "What's the difference between OEM and aftermarket parts?",
-    a: "OEM (Original Equipment Manufacturer) parts are made by or for the original carmaker and match factory spec exactly. Aftermarket parts are made by third parties — they're usually cheaper and sometimes better, but quality varies. For safety-critical components like brakes and airbags, most owners stay with OEM.",
+    a: "OEM (Original Equipment Manufacturer) parts are made by or for the carmaker and match factory spec exactly. Aftermarket parts come from third parties. They're usually cheaper and occasionally better, but quality varies, so for brakes, airbags and other safety-critical parts most owners stick with OEM.",
   },
   {
     q: 'How do I check a VIN before buying?',
-    a: 'Run the 17-digit VIN through CarFax Canada or a similar history service. Check that the VIN on the windshield, doorjamb and registration all match. A VIN history can reveal accident reports, previous registrations across provinces, and any salvage or rebuilt title brands.',
+    a: 'Run the 17-digit VIN through CarFax Canada or a similar service, and check that the VIN on the windshield, doorjamb and registration is the same. The history report shows reported accidents, registrations in other provinces and any salvage or rebuilt brand.',
   },
   {
     q: 'What taxes apply when buying a used car in Canada?',
-    a: 'Tax depends on the province where you register the vehicle. Most provinces apply GST/HST or PST on top of the purchase price; Alberta has no provincial sales tax on private sales but charges 5% GST through dealers. Always confirm the total before you sign the bill of sale.',
+    a: 'It depends on the province where you register the car. Most add GST/HST or PST to the price. Alberta has no provincial sales tax, so a private sale there carries none, while dealers charge 5% GST. Check the all-in total before you sign the bill of sale.',
   },
   {
     q: 'Are salvage-title Japanese cars worth it?',
-    a: 'Sometimes — but go in with eyes open. A salvage or rebuilt title means the vehicle was once a total loss. Even after repair, resale value and insurability are lower. They can be reasonable for daily drivers if a qualified mechanic inspects the structural repairs first.',
+    a: 'Sometimes. A salvage or rebuilt title means the car was written off as a total loss once, and even after repair it is worth less and harder to insure. As a daily driver it can make sense, provided a qualified mechanic inspects the structural repairs before you buy.',
   },
 ];
 
@@ -152,7 +152,7 @@ const BLOG_ARTICLES: BlogArticle[] = chosen.map((c) => {
 
 const GLOSSARY_TERMS: GlossaryTerm[] = [
   { term: 'AMVIC', def: "Alberta's dealer licensing body." },
-  { term: 'AWD',   def: 'All-wheel drive — power to all four wheels.' },
+  { term: 'AWD',   def: 'All-wheel drive: power to all four wheels.' },
   { term: 'CVT',   def: 'Continuously variable transmission.' },
   { term: 'OEM',   def: 'Original Equipment Manufacturer parts.' },
   { term: 'JDM',   def: 'Japanese Domestic Market vehicles.' },
@@ -210,12 +210,12 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
       {nationalCount > 0 ? (
         <>
           <span class="num">{nationalCount.toLocaleString('en-US')}</span> used Japanese cars
-          from <span class="num">{nationalDealers}</span> {nationalDealers === 1 ? 'dealer' : 'dealers'} across {TIER_1_CITIES.length} Canadian cities · Updated today ·
+          from <span class="num">{nationalDealers}</span> {nationalDealers === 1 ? 'dealer' : 'dealers'} across {TIER_1_CITIES.length} Canadian cities · {snapshotLabel} ·
         </>
       ) : (
-        <>Live listings appear here as local dealers onboard ·</>
+        <>No live listings yet ·</>
       )}
-      <a href="/editorial-policy/" style="color:var(--color-ink-default);text-decoration:underline">every regulatory claim is fact-checked by a licensed advisor</a>
+      <a href="/editorial-policy/" style="color:var(--color-ink-default);text-decoration:underline">how we source and fact-check our guides</a>
     </p>
   </section>
 
@@ -229,7 +229,7 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
         >
           <div class="t-h-s" style="font-size:14px;line-height:20px">{b.name}</div>
           <div class="t-caption" style="font-size:9px;color:var(--color-ink-muted)">
-            {b.count > 0 ? `${b.count} listed` : 'Dealers onboarding'}
+            {b.count > 0 ? `${b.count} listed` : 'No listings yet'}
           </div>
         </a>
       ))}
@@ -260,10 +260,10 @@ const description = 'Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acur
       </header>
       <div class="card" style="padding:28px 24px;text-align:center">
         <p class="t-h-s" style="font-size:15px;line-height:21px;margin:0 0 6px">
-          New inventory is arriving
+          No cars listed yet
         </p>
         <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px;margin:0 0 14px">
-          Local dealers are onboarding — live listings appear here first.
+          Dealers in our six cities are still being set up. Their newest cars will show here first.
         </p>
         <a href="/dealer/signup/" class="btn btn-secondary btn-sm" style="display:inline-flex">
           List your inventory →

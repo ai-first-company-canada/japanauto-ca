@@ -89,40 +89,16 @@ export interface AuthorBio {
   role: string;
 }
 
-// Author lookup accepts BOTH the Phase 4.1 skeleton slug form
-// (`marc-tremblay`) and the Phase 4.2 content-factory display-name form
-// (`Marc Tremblay`). Falls back to the editorial collective when no key
-// matches so a missing/typo author never breaks rendering.
+// Every piece is credited to the editorial team as an organization. The
+// earlier per-person bylines (Marc Tremblay, Sarah Chen) were house
+// pseudonyms with invented bios; removed 2026-10-03 (owner decision) because
+// unverifiable experts on YMYL topics hurt trust more than they help. Add a
+// real person here, with a real bio page, when one exists.
 const AUTHOR_BIOS_BY_KEY: Record<string, AuthorBio> = {
-  'marc-tremblay': {
-    name: 'Marc Tremblay',
-    url: `${SITE}/editorial-team/#marc-tremblay`,
-    role: 'Senior Editor — Eastern Canada',
-  },
-  'marc tremblay': {
-    name: 'Marc Tremblay',
-    url: `${SITE}/editorial-team/#marc-tremblay`,
-    role: 'Senior Editor — Eastern Canada',
-  },
-  'sarah-chen': {
-    name: 'Sarah Chen',
-    url: `${SITE}/editorial-team/#sarah-chen`,
-    role: 'Senior Editor — Western Canada',
-  },
-  'sarah chen': {
-    name: 'Sarah Chen',
-    url: `${SITE}/editorial-team/#sarah-chen`,
-    role: 'Senior Editor — Western Canada',
-  },
   'japanauto-editorial': {
     name: 'japanauto.ca Editorial',
     url: `${SITE}/editorial-team/`,
-    role: 'Editorial Team',
-  },
-  'japanauto.ca editorial team': {
-    name: 'japanauto.ca Editorial',
-    url: `${SITE}/editorial-team/`,
-    role: 'Editorial Team',
+    role: 'Editorial team',
   },
 };
 
@@ -321,5 +297,7 @@ export function formatIsoDate(iso?: string): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+  // Bare `YYYY-MM-DD` parses as UTC midnight; format in UTC too, or a build
+  // machine west of Greenwich prints the previous day (off by one vs JSON-LD).
+  return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 }

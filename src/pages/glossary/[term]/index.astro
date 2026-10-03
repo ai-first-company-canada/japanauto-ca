@@ -97,7 +97,7 @@ const schemaLD = [
     <h1 class="t-display-l" style="font-size:30px;line-height:38px;margin-bottom:8px">{d.term}</h1>
     {d.last_reviewed && (
       <p class="t-body-s ink-muted" style="font-size:12px;line-height:18px;margin-bottom:16px">
-        Last reviewed {formatIsoDate(d.last_reviewed)}{d.reviewer_role ? ` · Reviewed by ${d.reviewer_role}` : ''}
+        Last reviewed {formatIsoDate(d.last_reviewed)}
       </p>
     )}
 

@@ -1,4 +1,5 @@
 ---
+import { snapshotLabel } from '../../data/live-counts';
 interface Props {
   cityName?: string;
   count?: number;
@@ -16,6 +17,6 @@ const countStr = count.toLocaleString('en-US');
     <span class="num">{countStr}</span>
     Japanese cars from
     <span class="num">{dealers}</span>
-    dealers in {cityName} · Updated today
+    dealers in {cityName} · {snapshotLabel}
   </p>
 </div>

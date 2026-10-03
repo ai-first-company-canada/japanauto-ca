@@ -81,12 +81,14 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ request, params
   const cityName = cityInfo?.name ?? listing.city;
   const cityProvince = cityInfo?.province ?? listing.province;
 
-  const drive = listing.drivetrain ? listing.drivetrain.toUpperCase() : 'AWD';
-  const transmission = listing.transmission
+  // Unknown spec fields are omitted, never defaulted: a blank drivetrain used
+  // to render (and mark up in Vehicle schema) as AWD, a blank body as Sedan.
+  const drive: string | null = listing.drivetrain ? listing.drivetrain.toUpperCase() : null;
+  const transmission: string | null = listing.transmission
     ? (listing.transmission === 'cvt' ? 'CVT' :
        listing.transmission === 'dct' ? 'DCT' :
-       listing.transmission === 'manual' ? 'Manual' : 'Auto')
-    : 'Auto';
+       listing.transmission === 'manual' ? 'Manual' : 'Automatic')
+    : null;
   const conditionLabel =
     listing.condition === 'used_excellent' ? 'Used — Excellent' :
     listing.condition === 'used_good'      ? 'Used — Good' :
@@ -123,17 +125,21 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ request, params
   const hasPhotos = realPhotoUrls.length > 0;
 
   const driveConfigSchema =
-    drive === 'AWD' ? 'https://schema.org/AllWheelDriveConfiguration' :
+    drive === 'AWD' || drive === '4WD' ? 'https://schema.org/AllWheelDriveConfiguration' :
     drive === 'FWD' ? 'https://schema.org/FrontWheelDriveConfiguration' :
-                      'https://schema.org/RearWheelDriveConfiguration';
+    drive === 'RWD' ? 'https://schema.org/RearWheelDriveConfiguration' :
+                      null;
 
-  const fuelLabel = listing.fuel_type
+  const fuelLabel: string | null = listing.fuel_type
     ? listing.fuel_type.charAt(0).toUpperCase() + listing.fuel_type.slice(1)
-    : 'Gasoline';
-  const bodyLabel =
+    : null;
+  const bodyLabel: string | null =
+    !listing.body_type ? null :
     listing.body_type === 'suv' || listing.body_type === 'crossover' ? 'SUV' :
-    listing.body_type === 'hatchback' ? 'Hatchback' :
-    listing.body_type === 'wagon' ? 'Wagon' : 'Sedan';
+    listing.body_type.charAt(0).toUpperCase() + listing.body_type.slice(1);
+  // "128,000 km · CVT · AWD" with unknown fields dropped.
+  const specLine = (...parts: (string | null)[]) => parts.filter(Boolean).join(' · ');
+  const specList = (...parts: (string | null)[]) => parts.filter(Boolean).join(', ');
 
   const description = listing.description ?? '';
   // Deterministic spec-sentence fallback (Feature 2): when the dealer wrote no
@@ -143,26 +149,25 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ request, params
     ? description.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
     : [
         `${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} for sale by ${dealer.name} in ${cityName}, ${cityProvince}.`,
-        `${fmt(listing.mileage)} km · ${transmission} · ${drive} · ${fuelLabel} · ${bodyLabel} · ${conditionLabel}.` +
+        `${specLine(`${fmt(listing.mileage)} km`, transmission, drive, fuelLabel, bodyLabel, conditionLabel)}.` +
           (negotiable ? ' Price is negotiable — contact the dealer directly.' : ' Contact the dealer directly to arrange a viewing.'),
       ];
 
   const canonical = `https://japanauto.ca/used-cars/listing/${listing.slug}/`;
   const title = `${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} — CA$${fmt(priceDollars)} — ${cityName}, ${cityProvince}`;
-  const metaDescription = `${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} for sale in ${cityName}, ${cityProvince}. ${fmt(listing.mileage)} km, ${transmission}, ${drive}. CA$${fmt(priceDollars)} from ${dealer.name}.`;
+  const metaDescription = `${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} for sale in ${cityName}, ${cityProvince}. ${specList(`${fmt(listing.mileage)} km`, transmission, drive)}. CA$${fmt(priceDollars)} from ${dealer.name}.`;
 
+  // Only answers that are true for this exact listing. (A "typical mileage"
+  // answer used to echo this car's own odometer back as the norm, and a
+  // reliability answer was the same sentence for every model.)
   const listingFaqs = [
     {
-      q: `How reliable is a ${makeRow.name} ${modelRow.name}?`,
-      a: `${makeRow.name} models including the ${modelRow.name} consistently rank top-tier for long-term reliability across Canadian conditions.`,
-    },
-    {
-      q: `What's the average mileage for a ${listing.year} ${modelRow.name}?`,
-      a: `Around ${fmt(Math.round(listing.mileage / 1000) * 1000)} km is typical for ${listing.year} examples.`,
+      q: `Who is selling this ${modelRow.name}?`,
+      a: `${dealer.name}, ${dealerDescriptor} in ${cityName}, ${cityProvince}. japanauto.ca lists the car but is not the seller: you deal with the dealer directly.`,
     },
     {
       q: 'Should I get a pre-purchase inspection?',
-      a: `Yes, on any used vehicle priced above CA$10,000. Expect to pay CA$150–CA$250 in ${cityName} at an independent shop.`,
+      a: `Yes, on any used vehicle priced above CA$10,000. Expect to pay CA$150–CA$300 at an independent shop in ${cityName}; auto-club inspections (AMA, BCAA, CAA) sit in the same range.`,
     },
   ];
 
@@ -177,10 +182,10 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ request, params
       model: modelRow.name,
       ...(trim ? { vehicleConfiguration: trim } : {}),
       mileageFromOdometer: { '@type': 'QuantitativeValue', value: listing.mileage, unitCode: 'KMT' },
-      vehicleTransmission: transmission,
-      driveWheelConfiguration: driveConfigSchema,
-      fuelType: fuelLabel,
-      bodyType: bodyLabel,
+      ...(transmission ? { vehicleTransmission: transmission } : {}),
+      ...(driveConfigSchema ? { driveWheelConfiguration: driveConfigSchema } : {}),
+      ...(fuelLabel ? { fuelType: fuelLabel } : {}),
+      ...(bodyLabel ? { bodyType: bodyLabel } : {}),
       ...(vinDecode?.engine ? {
         vehicleEngine: {
           '@type': 'EngineSpecification',
@@ -333,7 +338,7 @@ ${photoGalleryHtml}
     ${listing.year} ${esc(makeRow.name)} ${esc(modelRow.name)}${esc(trimSep)}
   </h1>
   <p style="margin-top:4px;font-size:14px;line-height:20px;color:var(--color-ink-default)">
-    ${fmt(listing.mileage)} km · ${esc(transmission)} · ${esc(drive)} · ${esc(cityName)}, ${esc(cityProvince)}
+    ${esc(specLine(`${fmt(listing.mileage)} km`, transmission, drive, `${cityName}, ${cityProvince}`))}
   </p>
 </section>
 
@@ -361,10 +366,10 @@ ${photoGalleryHtml}
         ['Make / model', `${makeRow.name} ${modelRow.name}${trimSep}`],
         ['Price', sold ? 'Sold' : `CA$${fmt(priceDollars)}${negotiable ? ' (negotiable)' : ''}`],
         ['Mileage', `${fmt(listing.mileage)} km`],
-        ['Transmission', transmission],
-        ['Drivetrain', drive],
-        ['Body', bodyLabel],
-        ['Fuel', fuelLabel],
+        ...(transmission ? [['Transmission', transmission]] : []),
+        ...(drive ? [['Drivetrain', drive]] : []),
+        ...(bodyLabel ? [['Body', bodyLabel]] : []),
+        ...(fuelLabel ? [['Fuel', fuelLabel]] : []),
         ...(vinDecode?.engine_label ? [['Engine', vinDecode.engine_label]] : []),
         ...(listing.vin ? [['VIN', listing.vin]] : []),
         ['Condition', conditionLabel],
@@ -433,8 +438,8 @@ ${showAmvic ? `<section style="padding:16px;margin:16px;background:var(--color-b
   <h2 class="t-h-s" style="font-size:18px;font-weight:600;margin:0 0 8px;color:var(--color-ink-strong)">Summary</h2>
   <p style="margin:0;font-size:14px;line-height:21px;color:var(--color-ink-default)">${esc(
     sold
-      ? `This ${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} (${fmt(listing.mileage)} km, ${transmission}, ${drive}) was sold by ${dealer.name} in ${cityName}, ${cityProvince}. Browse current ${makeRow.name} ${modelRow.name} listings for available alternatives.`
-      : `${dealer.name}, ${dealerDescriptor} in ${cityName}, ${cityProvince}, is selling this ${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} with ${fmt(listing.mileage)} km (${transmission}, ${drive}, ${fuelLabel.toLowerCase()}) for CA$${fmt(priceDollars)}${negotiable ? ', negotiable' : ''}. Contact the dealer directly by phone or email to ask questions or arrange a viewing — japanauto.ca does not handle transactions.`,
+      ? `This ${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} (${specList(`${fmt(listing.mileage)} km`, transmission, drive)}) was sold by ${dealer.name} in ${cityName}, ${cityProvince}. Browse current ${makeRow.name} ${modelRow.name} listings for available alternatives.`
+      : `${dealer.name}, ${dealerDescriptor} in ${cityName}, ${cityProvince}, is selling this ${listing.year} ${makeRow.name} ${modelRow.name}${trimSep} with ${fmt(listing.mileage)} km${specList(transmission, drive, fuelLabel?.toLowerCase() ?? null) ? ` (${specList(transmission, drive, fuelLabel?.toLowerCase() ?? null)})` : ''} for CA$${fmt(priceDollars)}${negotiable ? ', negotiable' : ''}. Contact the dealer directly by phone or email to ask questions or arrange a viewing — japanauto.ca does not handle transactions.`,
   )}</p>
 </section>
 

@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import { MODELS_BY_BRAND } from '../data/models-stubs';
 import { TIER_1_CITIES } from '../data/brand-content';
 import { BLOG_CATEGORIES } from '../lib/schema-graph';
+import { isIndexable } from '../lib/indexability';
 
 export const prerender = true;
 
@@ -31,20 +32,30 @@ function urlBlock(u: UrlEntry): string {
 
 export async function GET({ site }: APIContext) {
   const base = (site?.toString() ?? SITE).replace(/\/$/, '');
-  const today = new Date().toISOString().slice(0, 10);
 
   const urls: UrlEntry[] = [];
 
   // ---- Top hubs ------------------------------------------------------------
-  urls.push({ loc: `${base}/`, lastmod: today, changefreq: 'daily', priority: 1.0 });
-  urls.push({ loc: `${base}/used-cars/`, changefreq: 'hourly', priority: 0.8 });
-  urls.push({ loc: `${base}/parts/`, changefreq: 'hourly', priority: 0.8 });
+  // No build-date lastmod on hubs: a lastmod that moves on every deploy
+  // without a content change teaches crawlers to ignore the field.
+  urls.push({ loc: `${base}/`, changefreq: 'daily', priority: 1.0 });
+  urls.push({ loc: `${base}/used-cars/`, changefreq: 'daily', priority: 0.8 });
+  urls.push({ loc: `${base}/parts/`, changefreq: 'daily', priority: 0.8 });
   urls.push({ loc: `${base}/brands/`, changefreq: 'monthly', priority: 0.6 });
   urls.push({ loc: `${base}/blog/`, changefreq: 'weekly', priority: 0.6 });
   urls.push({ loc: `${base}/glossary/`, changefreq: 'monthly', priority: 0.6 });
   urls.push({ loc: `${base}/dealers/`, changefreq: 'daily', priority: 0.6 });
   urls.push({ loc: `${base}/editorial-team/`, changefreq: 'monthly', priority: 0.4 });
   urls.push({ loc: `${base}/editorial-policy/`, changefreq: 'monthly', priority: 0.4 });
+  urls.push({ loc: `${base}/about/`, changefreq: 'monthly', priority: 0.4 });
+  urls.push({ loc: `${base}/contact/`, changefreq: 'yearly', priority: 0.3 });
+  urls.push({ loc: `${base}/cities/`, changefreq: 'monthly', priority: 0.5 });
+  urls.push({ loc: `${base}/dealers/how-it-works/`, changefreq: 'monthly', priority: 0.4 });
+  urls.push({ loc: `${base}/dealers/pricing/`, changefreq: 'monthly', priority: 0.4 });
+  urls.push({ loc: `${base}/accessibility/`, changefreq: 'yearly', priority: 0.2 });
+  urls.push({ loc: `${base}/privacy/`, changefreq: 'yearly', priority: 0.2 });
+  urls.push({ loc: `${base}/terms/`, changefreq: 'yearly', priority: 0.2 });
+  urls.push({ loc: `${base}/cookies/`, changefreq: 'yearly', priority: 0.2 });
 
   // ---- /[city]/ city hubs
   for (const city of TIER_1_CITIES) {
@@ -145,9 +156,15 @@ export async function GET({ site }: APIContext) {
     });
   }
 
+  // Same rule as the robots meta in BaseLayout — a URL is listed iff indexable.
+  const kept: UrlEntry[] = [];
+  for (const u of urls) {
+    if (await isIndexable(new URL(u.loc).pathname)) kept.push(u);
+  }
+
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(urlBlock).join('\n')}
+${kept.map(urlBlock).join('\n')}
 </urlset>
 `;
 

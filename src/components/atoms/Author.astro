@@ -10,7 +10,6 @@ interface Props {
   name: string;
   role?: string;
   authorUrl?: string;
-  reviewerRole?: string;
   pubDate?: string;
   lastReviewed?: string;
 }
@@ -18,7 +17,6 @@ const {
   name,
   role,
   authorUrl,
-  reviewerRole,
   pubDate,
   lastReviewed,
 } = Astro.props;
@@ -48,11 +46,6 @@ const {
       {pubDate && <span>Published {formatIsoDate(pubDate)}</span>}
       {pubDate && lastReviewed && <span> · </span>}
       {lastReviewed && <span>Last reviewed {formatIsoDate(lastReviewed)}</span>}
-    </div>
-  )}
-  {reviewerRole && (
-    <div class="t-body-s ink-muted" style="font-size:11px;line-height:16px">
-      Fact-checked by {reviewerRole}
     </div>
   )}
 </aside>

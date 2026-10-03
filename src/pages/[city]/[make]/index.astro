@@ -10,7 +10,7 @@ import ModelsGridSection from '../../../components/sections/ModelsGridSection.as
 import AboutBrandSection from '../../../components/sections/AboutBrandSection.astro';
 import FaqSection from '../../../components/sections/FaqSection.astro';
 import CrossLinksBand from '../../../components/sections/CrossLinksBand.astro';
-import { BRAND_CONTENT, TIER_1_CITIES } from '../../../data/brand-content';
+import { BRAND_CONTENT, TIER_1_CITIES, DEALER_REGULATOR } from '../../../data/brand-content';
 import { getModelsForCity } from '../../../data/models-stubs';
 import { liveCounts } from '../../../data/live-counts';
 import { faqPage } from '../../../lib/schema-graph';
@@ -28,11 +28,12 @@ const brand = BRAND_CONTENT[make!]!;
 const cityInfo = TIER_1_CITIES.find((c) => c.slug === city)!;
 const models = getModelsForCity(make!, city!);
 const liveCount = liveCounts.cityBrand(city!, make!);
+const reg = DEALER_REGULATOR[cityInfo.province]!;
 
 const title = `Used ${brand.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
 const description = liveCount > 0
-  ? `Find used ${brand.name} cars in ${cityInfo.name}. ${liveCount} live ${brand.name} listing${liveCount === 1 ? '' : 's'} from AMVIC-licensed local dealers. VIN-checked.`
-  : `Find used ${brand.name} cars in ${cityInfo.name}. Inventory is live and growing as AMVIC-licensed local dealers onboard. Every listing is VIN-checked.`;
+  ? `Find used ${brand.name} cars in ${cityInfo.name}. ${liveCount} live ${brand.name} listing${liveCount === 1 ? '' : 's'} from ${reg.short}-licensed local dealers. VIN-checked.`
+  : `Used ${brand.name} cars in ${cityInfo.name}, ${cityInfo.province}: ${models.slice(0, 3).map((m) => m.name).join(', ')} and ${models.length - 3} other models from ${reg.short}-licensed local dealers, each with a checked VIN.`;
 const canonical = `https://japanauto.ca/${city}/${make}/`;
 
 const faqLd = faqPage(brand.faqs.map((f) => f.q), brand.faqs.map((f) => f.a));
@@ -70,7 +71,7 @@ const schemaLD = [
 
 const subtitleHtml = liveCount > 0
   ? `<span class="num">${liveCount}</span> used ${brand.name} ${liveCount === 1 ? 'car' : 'cars'} live from local dealers`
-  : 'Live listings appear here as local dealers onboard';
+  : `${models.length} ${brand.name} models · no ${cityInfo.name} listings yet`;
 ---
 <BaseLayout
   {title}
@@ -98,7 +99,7 @@ const subtitleHtml = liveCount > 0
 
   <ModelsGridSection models={models} brandSlug={make!} citySlug={city!} />
 
-  <AboutBrandSection title={brand.aboutTitle} paragraphs={brand.aboutParagraphs} />
+  <AboutBrandSection title={brand.aboutTitle} paragraphs={brand.aboutParagraphs} guide={{ href: `/brands/${make}/`, label: `Read our ${brand.name} buyer's guide` }} />
 
   <FaqSection items={brand.faqs} heading={`Common questions about ${brand.name}`} />
 

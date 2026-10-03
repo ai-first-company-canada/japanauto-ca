@@ -8,17 +8,17 @@ const { amvic = false } = Astro.props;
 
 const amvicCopy = amvic
   ? 'Alberta sellers checked against the public registry.'
-  : 'Alberta dealers AMVIC-verified. Other provinces vary by jurisdiction.';
+  : 'Alberta dealers are AMVIC-verified. Other provinces have their own regulator.';
 
 const plates: Array<{ ic: IconName; t: string; s: string }> = [
   {
     ic: 'layers',
     t: '9 Japanese brands only',
-    s: 'Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi. No clutter from non-Japanese listings.',
+    s: 'Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura, Infiniti, Mitsubishi. Nothing else.',
   },
   { ic: 'shield', t: 'AMVIC-verified dealers', s: amvicCopy },
-  { ic: 'qr',     t: 'VIN-checked listings',  s: 'Every car has a verified 17-digit VIN.' },
-  { ic: 'car',    t: 'From 150+ dealers per city', s: 'Multi-brand independent lots, all in one place.' },
+  { ic: 'qr',     t: 'VIN-checked listings',  s: 'Every car needs a valid 17-digit VIN to be listed.' },
+  { ic: 'car',    t: 'Cars and parts', s: 'Dealer listings and salvage-yard donor cars on one site.' },
 ];
 ---
 <section class="band-subtle" style="padding:48px 16px">

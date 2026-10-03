@@ -14,7 +14,7 @@ import PartsEntryPoint from '../../components/sections/PartsEntryPoint.astro';
 import FaqSection, { type FaqItem } from '../../components/sections/FaqSection.astro';
 import CrossLinksBand from '../../components/sections/CrossLinksBand.astro';
 import Icon from '../../components/atoms/Icon.astro';
-import { TIER_1_CITIES, BRAND_CONTENT } from '../../data/brand-content';
+import { TIER_1_CITIES, BRAND_CONTENT, DEALER_REGULATOR } from '../../data/brand-content';
 import { liveCounts } from '../../data/live-counts';
 import {
   getRecentListingsForCity,
@@ -32,6 +32,7 @@ const { city } = Astro.params;
 const cityInfo = TIER_1_CITIES.find((c) => c.slug === city)!;
 
 const plural = (n: number) => (n === 1 ? '' : 's');
+const reg = DEALER_REGULATOR[cityInfo.province]!;
 
 const BRAND_SLUGS = ['toyota','honda','nissan','mazda','subaru','lexus','acura','infiniti','mitsubishi'] as const;
 
@@ -78,27 +79,27 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     q: `How many used Japanese cars are listed in ${cityInfo.name}?`,
     a: totalCount > 0
-      ? `There are currently ${totalCount.toLocaleString('en-US')} live listing${plural(totalCount)} from ${dealerCount} local dealer${plural(dealerCount)} in the ${cityInfo.name} CMA. Every listing is a real car from a licensed local seller.`
-      : 'Inventory is live and growing as AMVIC-licensed dealers onboard — every listing is a real car from a licensed local seller.',
+      ? `${totalCount.toLocaleString('en-US')} live listing${plural(totalCount)} from ${dealerCount} local dealer${plural(dealerCount)} in the ${cityInfo.name} CMA. Each one is a real car from a ${reg.short}-licensed seller.`
+      : `None yet. ${cityInfo.name} dealers are still being set up, and their cars appear here as soon as they are listed. In ${reg.province}, dealers are licensed by ${reg.short}.`,
   },
   {
     q: `Which Japanese brand is most popular in ${cityInfo.name}?`,
-    a: `Toyota and Honda routinely lead used-car sales across all major Canadian metros. In ${cityInfo.name} specifically the Civic, Corolla and RAV4 are the highest-volume models year over year.`,
+    a: `Toyota and Honda, as in every major Canadian metro. In ${cityInfo.name} the Civic, Corolla and RAV4 are the models sold in the highest numbers year after year.`,
   },
   {
     q: 'Why are Japanese cars popular in Canada?',
-    a: 'Japanese-built cars consistently rank among the top for long-term reliability and resale value in Canadian conditions. Brands like Toyota, Honda and Subaru are over-represented in vehicles that pass 250,000 km without major repairs.',
+    a: 'Reliability and resale value, mostly. Toyota, Honda and Subaru rank well in long-term reliability surveys, and their cars are over-represented among vehicles that pass 250,000 km without a major repair.',
   },
   {
     q: 'How do I check a VIN before buying?',
-    a: 'Run the 17-digit VIN through CarFax Canada or a similar history service. Check that the VIN on the windshield, doorjamb and registration all match. A VIN history can reveal accident reports, previous registrations across provinces, and any salvage or rebuilt title brands.',
+    a: `Run the 17-digit VIN through CarFax Canada or a similar history service, and make sure the VIN on the windshield, doorjamb and registration match. The report shows accidents, registrations in other provinces and any salvage or rebuilt brand.${cityInfo.province === 'ON' ? ' In Ontario, a private seller must also give you a Used Vehicle Information Package (UVIP).' : ''}`,
   },
 ];
 
 const title = `Used Japanese cars and parts in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
 const description = totalCount > 0
   ? `Browse ${totalCount.toLocaleString('en-US')} live listing${plural(totalCount)} from ${dealerCount} licensed ${cityInfo.name} dealer${plural(dealerCount)} — used Toyota, Honda, Nissan, Mazda, Subaru and Lexus cars.`
-  : `Find used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura and Infiniti cars from local ${cityInfo.name} dealers. Live listings as licensed dealers onboard.`;
+  : `Used Toyota, Honda, Nissan, Mazda, Subaru, Lexus, Acura and Infiniti cars from ${reg.short}-licensed ${cityInfo.name} dealers, plus salvage-yard parts.`;
 const canonical = `https://japanauto.ca/${city}/`;
 
 const faqLd = faqPage(FAQ_ITEMS.map((f) => f.q), FAQ_ITEMS.map((f) => f.a));
@@ -125,7 +126,7 @@ const schemaLD = [
 
 const subtitleHtml = totalCount > 0
   ? `<span class="num">${totalCount.toLocaleString('en-US')}</span> Japanese car${plural(totalCount)} from <span class="num">${dealerCount}</span> local dealer${plural(dealerCount)} in ${cityInfo.name} · Live inventory`
-  : `Live listings appear here as local ${cityInfo.name} dealers onboard · Every listing is a real car from a licensed seller`;
+  : `No live listings yet · ${cityInfo.name} dealers are licensed by ${reg.short}`;
 ---
 <BaseLayout
   {title}
@@ -179,9 +180,9 @@ const subtitleHtml = totalCount > 0
         <h2 class="t-h-l">{`Latest Japanese cars in ${cityInfo.name}`}</h2>
       </header>
       <div class="card" style="padding:20px">
-        <p class="t-h-s" style="font-size:15px;line-height:21px;margin:0 0 6px">New inventory is arriving</p>
+        <p class="t-h-s" style="font-size:15px;line-height:21px;margin:0 0 6px">No cars listed yet</p>
         <p class="t-body-s ink-muted" style="font-size:13px;line-height:19px;margin:0 0 14px">
-          Local dealers are onboarding — live listings appear here first.
+          {cityInfo.name} dealers are still being set up. Their newest cars will show here first.
         </p>
         <a href="/dealer/signup/" class="btn btn-secondary btn-sm" style="display:inline-flex">
           List your inventory →

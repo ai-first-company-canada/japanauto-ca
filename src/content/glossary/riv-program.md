@@ -3,9 +3,9 @@ term: RIV Program
 slug: riv-program
 group: canadian-regulations
 priority: 2
-canonical_definition: "The Registrar of Imported Vehicles (RIV) is a Transport Canada programme that ensures vehicles imported into Canada meet federal safety standards under the Motor Vehicle Safety Act, including modifications, recall clearance, and federal inspection."
-tldr_draft: "RIV processes most vehicles imported into Canada. After Customs entry (Form 1), the importer pays the RIV fee (currently 325 CAD plus tax in most provinces), completes any required modifications (e.g., daytime running lights, child-tether anchors, metric instrument clusters), clears outstanding manufacturer recalls, and presents the vehicle at a designated inspection facility (typically Canadian Tire) for the federal Form 2 inspection."
-why_it_matters_in_canada: "RIV is the federal gatekeeper for every JDM import older than 15 years and most US imports. Canadian Tire is the dominant designated RIV inspection partner across Toronto, Montreal, Vancouver, Calgary, Edmonton, and Ottawa. Vehicles older than 15 years are exempt from many CMVSS modifications, which is why the 15-year rule is the practical threshold for JDM imports to Canada."
+canonical_definition: "The Registrar of Imported Vehicles (RIV) is the program Transport Canada uses to admit vehicles under 15 years old that were built for the US market, checking that they are modified and certified to Canadian safety standards under the Motor Vehicle Safety Act."
+tldr_draft: "RIV handles US-market vehicles under 15 years old coming into Canada. After customs entry (Form 1), the importer pays the RIV fee ($325 plus tax since August 2020) and makes any required modifications, such as daytime running lights. Outstanding manufacturer recalls must be cleared. Then the vehicle goes to an RIV inspection facility (usually a Canadian Tire) for the federal Form 2 inspection. Vehicles 15 years or older, including JDM imports, are not regulated at import and skip RIV."
+why_it_matters_in_canada: "RIV is the federal checkpoint for cars bought in the US that are less than 15 years old. JDM cars work differently: vehicles 15 years or older from the date of manufacture are not regulated under the Motor Vehicle Safety Act at import, so they don't go through RIV at all, and Japan-market cars under 15 years generally can't be imported. That's why 15 years is the practical threshold for bringing JDM cars into Canada."
 related_questions:
   - "How much does the RIV fee cost in Canada?"
   - "Do I need RIV for a 15-year-old JDM car?"
@@ -19,44 +19,46 @@ related_terms:
 sources:
   - "https://www.riv.ca/"
   - "https://tc.canada.ca/en/road-transportation/importing-vehicle"
-author: japanauto.ca editorial team
-reviewer_role: "RIV Canada-certified specialist"
-last_reviewed: 2026-05-15
+  - "https://tc.canada.ca/en/road-transportation/importing-vehicle/importing-older-vehicles-canada"
+  - "https://tc.canada.ca/en/road-transportation/importing-vehicle/frequently-asked-questions-importing-vehicles-purchased-countries-other-united-states"
+  - "https://www.livingstonintl.com/registrar-of-import-vehicles-riv-announces-increase-to-vehicle-import-fees/"
+author: japanauto-editorial
+last_reviewed: 2026-10-03
 body_status: published
 ---
 
 ## What is the RIV Program?
 
-The Registrar of Imported Vehicles, abbreviated RIV, is a Transport Canada programme that processes vehicles imported into Canada to ensure they meet federal safety standards under the Motor Vehicle Safety Act. The programme is operated by Livingston International under contract to Transport Canada and runs through designated inspection facilities — primarily Canadian Tire locations — across all major Canadian metropolitan areas.
+The Registrar of Imported Vehicles (RIV) is the Transport Canada program that admits vehicles under 15 years old that were built for the US market. It checks that they meet Canadian safety standards under the Motor Vehicle Safety Act. Livingston International runs it under contract to Transport Canada, and the inspections happen at designated facilities across the country. Most of those are Canadian Tire locations.
 
-The RIV process has several steps. First, the importer arranges customs entry through the Canada Border Services Agency, completing Form 1 (the Vehicle Import Form) at the port of entry. Customs collects applicable import duties (typically duty-free under CUSMA for US-origin vehicles), GST, and any provincial sales tax that applies at import. Second, the importer pays the RIV programme fee — currently $325 CAD plus tax in most provinces, though the figure has changed periodically and should be verified at the time of import. Third, the importer completes any required modifications: daytime running lights are the most common requirement on US imports, child-tether anchors on certain vehicles, and metric instrument cluster conversion on some pre-2000 imports. Fourth, the importer clears any outstanding manufacturer recalls applicable to the vehicle, verified by [VIN](/glossary/vin/) through the manufacturer's Canadian dealer network.
+The process runs in steps. First, the importer clears customs with the Canada Border Services Agency and completes Form 1 (the Vehicle Import Form) at the port of entry. Customs collects any import duty (US-built vehicles are typically duty-free under CUSMA), GST, and provincial sales tax where it applies at import. Second comes the RIV fee, $325 plus tax since August 2020. Check riv.ca before you import in case it has changed. Third, the importer makes any required modifications. On US vehicles the usual one is daytime running lights, and some need other work such as child-tether anchors. Fourth, any open manufacturer recalls must be cleared and confirmed by [VIN](/glossary/vin/).
 
-Finally, the vehicle is presented at a designated RIV inspection facility — typically a Canadian Tire — for the federal Form 2 inspection. The inspection verifies that the required modifications were completed correctly, that recalls have been cleared, and that the vehicle generally meets the relaxed CMVSS requirements that apply to imported vehicles 15+ years old.
+Last, the vehicle goes to an RIV inspection facility, usually a Canadian Tire, for the federal Form 2 inspection. The inspector confirms the modifications were done properly and the recalls cleared.
 
 ## Why it matters in Canada
 
-RIV is the federal gatekeeper for every [JDM](/glossary/jdm/) import older than 15 years and most US imports. Without successful completion of the RIV process, an imported vehicle cannot be provincially registered for road use anywhere in Canada. The 15-year threshold matters because vehicles older than fifteen years are exempt from many current CMVSS requirements — the practical reason Canada is one of the most permissive JDM import markets in North America compared to the US 25-year rule.
+RIV is the federal checkpoint for vehicles under 15 years old bought in the US. Until a vehicle like that has finished the RIV process, the province won't register it for road use.
 
-Canadian Tire is the dominant designated RIV inspection partner. Inspection facilities are available in Toronto, Montreal, Vancouver, Calgary, Edmonton, Ottawa, and most secondary Canadian cities. Booking lead times can run one to three weeks during peak import seasons (spring and summer), particularly in Vancouver where the Pacific port handles most JDM arrivals. Importers should book the RIV inspection appointment as soon as customs clearance is complete to minimize storage and demurrage charges.
+[JDM](/glossary/jdm/) imports follow a different rule. Transport Canada says vehicles more than 15 years old (other than buses built before 1971) are not regulated at the time of importation. Age is counted from the month and year of manufacture, not the model year, and the importer has to prove it to CBSA. A Japan-market car that has reached 15 years skips RIV entirely: no RIV fee, no Form 2 inspection, no federal modification list. A Japan-market car under 15 years generally can't be imported at all, because it wasn't built to Canadian standards. That's the practical reason Canada is so much more open to JDM imports than the US, which waits 25 years.
 
-The RIV inspection is separate from the [Provincial Safety Inspection](/glossary/provincial-safety-inspection/) required for road registration. Both are required for a JDM import to be road-legal. The RIV verifies federal compliance; the provincial inspection verifies mechanical roadworthiness in the registration province. Combined cost typically runs $400 to $700 plus repairs and modifications.
+Clearing customs doesn't guarantee a province will register the car. Transport Canada notes that some provinces won't license right-hand-drive vehicles or certain salvage-branded vehicles. The [Provincial Safety Inspection](/glossary/provincial-safety-inspection/) is still required in provinces that have one, whatever route the car took into the country.
 
 ## Common questions
 
 ### How much does the RIV fee cost in Canada?
 
-The RIV programme fee is currently $325 CAD plus applicable provincial tax (HST in Ontario, GST plus PST in BC, GST only in Alberta) at the time of inspection. The fee covers the inspection process, modifications verification, and recall clearance. Verify the current fee at riv.ca, as the figure has changed periodically over the programme's history. The total cost of the RIV process — fee plus modifications plus recall repairs — typically runs $400 to $1,200 depending on the vehicle's modification requirements and any open recalls. The RIV fee is separate from import duties, GST/HST, and the [Provincial Safety Inspection](/glossary/provincial-safety-inspection/) required for registration.
+The fee is $325 plus tax (GST plus PST or HST depending on the province of entry, GST plus QST in Quebec). It has been at that level since August 1, 2020. Confirm the current amount at riv.ca before you import. Modifications and recall repairs are extra and depend on the vehicle. Import duties, GST/HST and the [Provincial Safety Inspection](/glossary/provincial-safety-inspection/) are separate costs again.
 
 ### Do I need RIV for a 15-year-old JDM car?
 
-Yes, but the modification requirements are substantially relaxed. The 15-year threshold is the federal exemption from most current Canadian Motor Vehicle Safety Standards — meaning a [JDM](/glossary/jdm/) vehicle 15+ years old does not need to be brought up to current CMVSS for items like crash-test compliance, current emissions standards, or current safety equipment. The RIV inspection still applies and verifies that any required modifications were completed correctly. For a 2009 or older JDM import being processed in 2026, the typical modifications are minimal — often just daytime running lights and a recall verification. The full process still costs the standard RIV fee plus inspection.
+No. Transport Canada treats a vehicle 15 years or older (counted from its date of manufacture) as no longer regulated under the Motor Vehicle Safety Act at import, so a [JDM](/glossary/jdm/) car that old doesn't go through RIV and doesn't pay the RIV fee. You do need proof of the manufacture date for CBSA, such as the Japanese export certificate. If CBSA can't confirm the age, the car is assessed under the normal rules and can be refused. After customs, the province decides on registration, and the car still has to pass the provincial inspection where one applies.
 
 ### Where is the RIV inspection done?
 
-The RIV inspection is performed at designated inspection facilities, the largest network of which is Canadian Tire. Designated facilities operate in Toronto, Montreal, Vancouver, Calgary, Edmonton, Ottawa, and most secondary Canadian cities. The full list of designated facilities is available at riv.ca. Booking lead times run one to three weeks during peak import seasons, particularly in Vancouver where most JDM imports arrive at the Port of Vancouver. The inspection itself takes 30 to 60 minutes if no issues are found; failed items require repair and re-inspection at the same facility.
+At RIV-designated inspection facilities, and Canadian Tire has the biggest network. riv.ca lists the locations. Busy spring and summer import months can mean a wait for a booking. Failed items have to be fixed before the vehicle is re-inspected. Remember that only RIV vehicles (US-market, under 15 years old) need this inspection.
 
 ### Is the RIV the same as the provincial safety inspection?
 
-No. The RIV inspection is a federal inspection that verifies compliance with Transport Canada's import requirements — required modifications completed correctly, manufacturer recalls cleared, and CMVSS compliance to the level that applies to the vehicle's age. The [Provincial Safety Inspection](/glossary/provincial-safety-inspection/) is a separate inspection at a separate facility that verifies mechanical roadworthiness — brakes, suspension, steering, tires, lights, exhaust, structural condition. Both are required for a [JDM](/glossary/jdm/) import to be provincially registered for road use, and both have separate inspection fees and separate repair costs.
+No. The RIV inspection is federal. It checks Transport Canada's import requirements for US-market vehicles under 15 years old: modifications done correctly and manufacturer recalls cleared. The [Provincial Safety Inspection](/glossary/provincial-safety-inspection/) happens separately, at a provincially licensed facility, and checks mechanical roadworthiness (brakes, suspension, steering, tires, lights, exhaust, structure). A US import under 15 years needs both before registration. A 15-year-old [JDM](/glossary/jdm/) import skips RIV but still needs the provincial inspection where the province requires one.
 
-This information reflects regulations effective May 2026 and Transport Canada sources cited above. For binding advice on a specific import question, consult an RIV Canada-certified specialist or Transport Canada directly.
+Import rules on this page are current to October 2026, per the Transport Canada sources listed. Transport Canada (1-800-333-0371) or a licensed customs broker can give advice on a particular import.

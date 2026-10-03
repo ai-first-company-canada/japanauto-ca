@@ -42,19 +42,10 @@ const schemaLD = [
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     ...(d.pub_date ? { datePublished: d.pub_date } : {}),
     ...(d.last_reviewed ? { dateModified: d.last_reviewed } : (d.pub_date ? { dateModified: d.pub_date } : {})),
-    author: {
-      '@type': 'Person',
-      name: author.name,
-      url: author.url,
-    },
-    ...(d.reviewer_role
-      ? {
-          reviewedBy: {
-            '@type': 'Person',
-            name: d.reviewer_role,
-          },
-        }
-      : {}),
+    // Credited to the organization: no real, verifiable individual author or
+    // reviewer yet (owner decision 2026-10-03). Add Person + reviewedBy only
+    // for named people with checkable credentials.
+    author: { '@id': 'https://japanauto.ca/#organization' },
     publisher: { '@id': 'https://japanauto.ca/#organization' },
     articleSection: categoryLabel,
     keywords: [d.primary_keyword, ...d.secondary_keywords].join(', '),
@@ -99,7 +90,6 @@ const schemaLD = [
       name={author.name}
       role={author.role}
       authorUrl={author.url}
-      reviewerRole={d.reviewer_role}
       pubDate={d.pub_date}
       lastReviewed={d.last_reviewed}
     />

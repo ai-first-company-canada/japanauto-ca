@@ -8,11 +8,11 @@ interface Props {
 const { variant = 'full', href = '/dealers/list/' } = Astro.props;
 
 const heading = variant === 'full'
-  ? 'Reach 150+ Japanese-car buyers in your city, every week.'
-  : 'Reach Japanese-car buyers in your city, every week.';
+  ? 'Put your stock in front of used Japanese-car buyers in your city.'
+  : 'Put your stock in front of used Japanese-car buyers in your city.';
 const description = variant === 'full'
-  ? "One subscription. Unlimited listings. AMVIC-friendly onboarding. Dominate your CMA's used-Japanese-car search."
-  : 'One subscription. Unlimited listings. AMVIC-friendly onboarding.';
+  ? "One subscription, unlimited listings. We check your provincial dealer licence during onboarding."
+  : 'One subscription, unlimited listings, licence check at onboarding.';
 const padding = variant === 'full' ? '64px 16px' : '56px 16px';
 const headingSize = variant === 'full' ? 28 : 26;
 const headingLh = variant === 'full' ? 34 : 32;

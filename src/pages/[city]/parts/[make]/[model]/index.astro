@@ -1,4 +1,5 @@
 ---
+import { snapshotLabel } from '../../../../../data/live-counts';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import Navbar from '../../../../../components/sections/Navbar.astro';
 import MenuDrawer from '../../../../../components/sections/MenuDrawer.astro';
@@ -14,6 +15,7 @@ import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../../data/brand-content'
 import { MODELS_BY_BRAND } from '../../../../../data/models-stubs';
 import { generationsFor } from '../../../../../data/generations';
 import { modelFaqs } from '../../../../../data/parts-faqs';
+import { allGenerationsText, faceliftYears } from '../../../../../lib/model-copy';
 import { modelCopyFor } from '../../../../../data/parts-model-copy';
 
 export function getStaticPaths() {
@@ -35,7 +37,12 @@ const cityInfo = TIER_1_CITIES.find((c) => c.slug === city)!;
 const cityShort = `${cityInfo.name}, ${cityInfo.province}`;
 const generations = generationsFor(make!, model!);
 const copy = modelCopyFor(make!, model!, brand.name, modelInfo.name);
-const faqs = modelFaqs(brand.name, modelInfo.name, cityInfo.name);
+const faqs = modelFaqs(brand.name, modelInfo.name, cityInfo.name, {
+  generations: generations[0]?.code !== 'all'
+    ? generations.slice().reverse().map((g) => `${g.code} (${g.range})`).join(', ')
+    : allGenerationsText(make!, model!),
+  facelifts: faceliftYears(make!, model!),
+});
 
 // Donor count is 0 on launch — every generation block renders empty state.
 const generationBlocks = generations.map((g) => ({ ...g, count: 0, donors: [] as never[] }));
@@ -58,7 +65,7 @@ const otherCities = TIER_1_CITIES
   }));
 
 const title = `Used ${brand.name} ${modelInfo.name} parts in ${cityShort} — japanauto.ca`;
-const description = `Used ${brand.name} ${modelInfo.name} parts from salvage yards in ${cityInfo.name}. Donor cars grouped by generation — call the junkyard to find your part.`;
+const description = `Used ${brand.name} ${modelInfo.name} parts from ${cityInfo.name} salvage yards, with donor cars grouped by generation. Find a donor, then call the yard.`;
 const canonical = `https://japanauto.ca/${city}/parts/${make}/${model}/`;
 
 const schemaLD = [
@@ -110,8 +117,8 @@ const schemaLD = [
 
 const subtitleHtml =
   totalDonors > 0
-    ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> ${cityInfo.name} junkyards · Updated today`
-    : `Donor cars listing as ${cityInfo.name} junkyards onboard · Updated today`;
+    ? `<span class="num">${totalDonors}</span> donor cars at <span class="num">${yardCount}</span> ${cityInfo.name} junkyards · ${snapshotLabel}`
+    : `No ${cityInfo.name} donor cars listed yet · grouped by generation below`;
 ---
 <BaseLayout {title} {description} {canonical} {schemaLD}>
   <Navbar slot="navbar" cityShort={cityShort} />

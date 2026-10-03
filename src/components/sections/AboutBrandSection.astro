@@ -2,8 +2,11 @@
 interface Props {
   title: string;
   paragraphs: string[];
+  /** Link to the long-form brand guide (/brands/<make>/), the site's deepest
+   *  brand content, which otherwise gets almost no internal links. */
+  guide?: { href: string; label: string };
 }
-const { title, paragraphs } = Astro.props;
+const { title, paragraphs, guide } = Astro.props;
 ---
 <section class="band-subtle gutter" style="padding-block:40px">
   <h3 class="t-h-l" style="font-size:22px;margin-bottom:16px;letter-spacing:-0.01em">{title}</h3>
@@ -15,4 +18,9 @@ const { title, paragraphs } = Astro.props;
       {p}
     </p>
   ))}
+  {guide && (
+    <p class="t-body-m" style="font-size:15px;line-height:24px;margin:0">
+      <a href={guide.href} style="color:var(--color-ink-strong);text-decoration:underline">{guide.label}</a>
+    </p>
+  )}
 </section>
