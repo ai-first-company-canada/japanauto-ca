@@ -1,0 +1,61 @@
+---
+/**
+ * Answer capsule — the first ~100 words under the H1 on catalog pages: a
+ * direct, factual answer to "used {model} in {city}" for readers and answer
+ * engines (factory GEO rule: answer in the first 200 words). Optional price
+ * table from public market stats (Calgary pilot, src/lib/market.ts).
+ */
+import { fmtCad, fmtDate, MARKET_COMPUTED_ON, type ModelMarket } from '../../lib/market';
+
+interface Props {
+  /** Plain-text sentences, rendered as one paragraph each. */
+  paragraphs: string[];
+  market?: ModelMarket | null;
+  modelLabel?: string;
+  cityName?: string;
+}
+const { paragraphs, market, modelLabel, cityName } = Astro.props;
+const showPrivate = !!market?.rows.some((r) => r.private);
+---
+<section class="gutter" style="padding-block:16px 8px" data-answer-capsule>
+  {paragraphs.map((p) => (
+    <p class="t-body-m" style="font-size:15px;line-height:23px;margin:0 0 10px;color:var(--color-ink-default);text-wrap:pretty;max-width:720px">{p}</p>
+  ))}
+  {market && (
+    <figure style="margin:12px 0 0;max-width:720px">
+      <figcaption class="t-body-s ink-muted" style="font-size:13px;line-height:18px;margin-bottom:8px;color:var(--color-ink-strong);font-weight:600">
+        Used {modelLabel} asking prices in {cityName}
+      </figcaption>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;line-height:18px">
+          <thead>
+            <tr style="text-align:left;color:var(--color-ink-muted)">
+              <th scope="col" style="padding:6px 8px 6px 0;font-weight:500">Year</th>
+              <th scope="col" style="padding:6px 8px;font-weight:500">Dealer median</th>
+              <th scope="col" style="padding:6px 8px;font-weight:500">Middle half</th>
+              {showPrivate && <th scope="col" style="padding:6px 0 6px 8px;font-weight:500">Private median</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {market.rows.map((r) => (
+              <tr style="border-top:1px solid var(--color-divider)">
+                <th scope="row" style="padding:7px 8px 7px 0;font-weight:500;text-align:left">
+                  <span class="num">{r.year}</span>
+                  <span class="ink-muted" style="display:block;font-size:11px;font-weight:400;white-space:nowrap">{r.dealer.nExact} {r.dealer.nExact === 1 ? 'car' : 'cars'}</span>
+                </th>
+                <td class="num" style="padding:7px 8px;color:var(--color-ink-strong);font-weight:600">{fmtCad(r.dealer.p50)}</td>
+                <td class="num" style="padding:7px 8px;white-space:nowrap">{fmtCad(r.dealer.p25)}–{fmtCad(r.dealer.p75)}</td>
+                {showPrivate && <td class="num" style="padding:7px 0 7px 8px">{r.private ? fmtCad(r.private.p50) : '—'}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="t-body-s ink-muted" style="font-size:12px;line-height:17px;margin:8px 0 0">
+        Asking prices, not sale prices, from online listings in {cityName}: dealers as of <time datetime={MARKET_COMPUTED_ON.dealer ?? undefined}>{fmtDate(MARKET_COMPUTED_ON.dealer)}</time>{showPrivate && MARKET_COMPUTED_ON.private && <>, private sellers as of <time datetime={MARKET_COMPUTED_ON.private}>{fmtDate(MARKET_COMPUTED_ON.private)}</time></>}.
+        Each price covers the model year plus or minus one, so neighbouring rows overlap; the car count under each year is dealer listings of that exact year.
+        Trim, kilometres and condition are not accounted for. Shown only where at least 5 listings back the figure.
+      </p>
+    </figure>
+  )}
+</section>

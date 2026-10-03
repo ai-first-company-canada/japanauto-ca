@@ -11,6 +11,8 @@ import CatalogList from '../../../../components/sections/CatalogList.astro';
 import CatalogPagination from '../../../../components/sections/CatalogPagination.astro';
 import ModelCrossLinks from '../../../../components/sections/ModelCrossLinks.astro';
 import FaqSection from '../../../../components/sections/FaqSection.astro';
+import AnswerCapsule from '../../../../components/sections/AnswerCapsule.astro';
+import { modelMarket, fmtCad, fmtDate, MARKET_COMPUTED_ON, PROVINCE_FACTS } from '../../../../lib/market';
 import YearFilterDialog from '../../../../components/sections/YearFilterDialog.astro';
 import SortFilterDialog from '../../../../components/sections/SortFilterDialog.astro';
 import { BRAND_CONTENT, TIER_1_CITIES, DEALER_REGULATOR } from '../../../../data/brand-content';
@@ -43,6 +45,25 @@ const gens = generationsInWindow(make!, model!);
 const prices = [...catalog.boosted, ...catalog.organic].map((l) => l.price).filter((p) => p > 0);
 const priceMin = prices.length ? Math.min(...prices) : null;
 const priceMax = prices.length ? Math.max(...prices) : null;
+const market = modelMarket(city!, make!, model!);
+const prov = PROVINCE_FACTS[cityInfo.province]!;
+const label = `${brand.name} ${modelInfo.name}`;
+
+// Answer capsule: what years exist, what they cost here (Calgary pilot), who
+// licenses the seller and what tax applies. Every clause is data-backed.
+const capsule: string[] = [];
+capsule.push(gens
+  ? `Dealers can list a used ${label} from model year ${LISTING_YEAR_MIN} on, which covers the ${gens}.`
+  : `Dealers can list a used ${label} from model year ${LISTING_YEAR_MIN} on.`);
+if (market) {
+  const newest = market.rows[0]!;
+  const oldest = market.rows[market.rows.length - 1]!;
+  capsule.push(`${cityInfo.name} dealers currently advertise about ${market.dealerCars} used ${modelInfo.name}s from ${market.yearFrom}–${market.yearTo}. The median asking price is ${fmtCad(oldest.dealer.p50)} for a ${oldest.year} and ${fmtCad(newest.dealer.p50)} for a ${newest.year}.`);
+}
+capsule.push(`Buy from a dealer licensed by ${prov.regulator}. ${prov.tax}`);
+if (catalog.totalCount === 0) {
+  capsule.push(`No ${cityInfo.name} dealer has posted a ${modelInfo.name} on japanauto.ca yet.`);
+}
 
 const modelFaqs = [
   {
@@ -63,16 +84,22 @@ const modelFaqs = [
   },
   {
     q: `What's the typical price range for a used ${brand.name} ${modelInfo.name}?`,
-    a: priceMin !== null && priceMax !== null
+    a: market
+      ? `In ${cityInfo.name}, the median dealer asking price runs from ${fmtCad(market.rows[market.rows.length - 1]!.dealer.p50)} for a ${market.rows[market.rows.length - 1]!.year} to ${fmtCad(market.rows[0]!.dealer.p50)} for a ${market.rows[0]!.year}, based on online listings as of ${fmtDate(MARKET_COMPUTED_ON.dealer)}. Kilometres, trim and condition explain most of the spread within a year.`
+      : priceMin !== null && priceMax !== null
       ? `Right now ${cityInfo.name} dealers are asking CA$${priceMin.toLocaleString('en-US')} to CA$${priceMax.toLocaleString('en-US')} across ${prices.length} listing${prices.length === 1 ? '' : 's'}. Year, kilometres and trim explain most of the spread.`
       : `There are no ${cityInfo.name} listings to price against yet. Year, kilometres and trim move the price most; the national ${modelInfo.name} page shows other cities.`,
   },
 ];
 
-const title = `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
+const title = market
+  ? `Used ${label} Prices in ${cityInfo.name} by Year — japanauto.ca`
+  : `Used ${brand.name} ${modelInfo.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
 // Real counts only — zero inventory gets honest "onboarding" copy, never an
 // invented number (LAUNCH-CHECKLIST §1).
-const description = catalog.totalCount > 0
+const description = market && catalog.totalCount === 0
+  ? `Used ${label} asking prices in ${cityInfo.name}: median ${fmtCad(market.rows[market.rows.length - 1]!.dealer.p50)} (${market.rows[market.rows.length - 1]!.year}) to ${fmtCad(market.rows[0]!.dealer.p50)} (${market.rows[0]!.year}), by model year, from dealer listings.`
+  : catalog.totalCount > 0
   ? `${catalog.totalCount} used ${brand.name} ${modelInfo.name} listing${catalog.totalCount === 1 ? '' : 's'} in ${cityInfo.name}. ${reg.short}-licensed dealers, VIN-checked vehicles, prices in CA$.`
   : `Used ${brand.name} ${modelInfo.name} for sale in ${cityInfo.name} from ${reg.short}-licensed dealers. No live listings yet; cars appear here once local dealers post them.`;
 const canonical = `https://japanauto.ca/${city}/${make}/${model}/`;
@@ -125,6 +152,17 @@ const schemaLD = [
       addressCountry: 'CA',
     },
   },
+  ...(market ? [{
+    '@type': 'Dataset',
+    name: `Used ${label} asking prices in ${cityInfo.name}`,
+    description: `Median and interquartile asking prices of used ${label} dealer listings in ${cityInfo.name}, ${cityInfo.province}, by model year (each year aggregates model year ±1), with exact listing counts.`,
+    spatialCoverage: { '@type': 'Place', name: `${cityInfo.name}, ${cityInfo.province}, Canada` },
+    temporalCoverage: MARKET_COMPUTED_ON.dealer ?? undefined,
+    variableMeasured: ['median asking price (CAD)', '25th–75th percentile asking price (CAD)', 'listing count'],
+    creator: { '@id': 'https://japanauto.ca/#organization' },
+    isAccessibleForFree: true,
+    url: canonical,
+  }] : []),
   // The featured slot is a house ad (brand-site link, no price, no seller —
   // ADR-0013) and must not emit Offer markup. Paid featured_slots get their
   // own JSON-LD design when the D1 catalog wiring lands.
@@ -169,6 +207,8 @@ const visibleCount = catalog.boosted.length + catalog.organic.length;
     title={`Used ${brand.name} ${modelInfo.name} in ${cityShort}`}
     subtitle={subtitleHtml}
   />
+
+  <AnswerCapsule paragraphs={capsule} market={market} modelLabel={label} cityName={cityInfo.name} />
 
   <FilterPillBar />
 

@@ -9,6 +9,10 @@
  * link equity still flows, and flip to indexable on the first build after
  * inventory lands — no template change needed.
  *
+ * Exception (2026-10-03): a city × model page with a public price table
+ * (Calgary pilot, src/lib/market.ts) answers the query on its own, so it is
+ * indexable without listings; so is its city × make hub when any model has one.
+ *
  * BaseLayout derives the robots meta from the pathname, and the static
  * sitemap filters through the same function, so the two can never disagree.
  */
@@ -17,6 +21,7 @@ import { liveCounts } from '../data/live-counts';
 import { TIER_1_CITIES } from '../data/brand-content';
 import { MODELS_BY_BRAND } from '../data/models-stubs';
 import { BLOG_CATEGORIES, deriveBlogCategory } from './schema-graph';
+import { hasMarketTable } from './market';
 
 /** Minimum live listings before an inventory page is worth indexing. */
 export const MIN_INDEXABLE_LISTINGS = 1;
@@ -55,8 +60,13 @@ export async function isIndexable(pathname: string): Promise<boolean> {
   }
 
   if (CITY_SLUGS.has(s[0]!) && MAKE_SLUGS.has(s[1]!)) {
-    if (s.length === 2) return ok(liveCounts.cityBrand(s[0]!, s[1]!));
-    if (s.length === 3) return ok(liveCounts.cityModel(s[0]!, s[1]!, s[2]!));
+    if (s.length === 2) {
+      return ok(liveCounts.cityBrand(s[0]!, s[1]!))
+        || (MODELS_BY_BRAND[s[1]!] ?? []).some((m) => hasMarketTable(s[0]!, s[1]!, m.slug));
+    }
+    if (s.length === 3) {
+      return ok(liveCounts.cityModel(s[0]!, s[1]!, s[2]!)) || hasMarketTable(s[0]!, s[1]!, s[2]!);
+    }
   }
 
   if (s[0] === 'blog' && s.length === 2) {

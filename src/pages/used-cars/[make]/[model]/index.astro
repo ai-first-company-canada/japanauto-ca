@@ -9,6 +9,8 @@ import PageHeading from '../../../../components/sections/PageHeading.astro';
 import CityDirectoryGrid from '../../../../components/sections/CityDirectoryGrid.astro';
 import AboutBrandSection from '../../../../components/sections/AboutBrandSection.astro';
 import FaqSection from '../../../../components/sections/FaqSection.astro';
+import AnswerCapsule from '../../../../components/sections/AnswerCapsule.astro';
+import { modelMarket, fmtCad } from '../../../../lib/market';
 import { BRAND_CONTENT, TIER_1_CITIES } from '../../../../data/brand-content';
 import { MODELS_BY_BRAND } from '../../../../data/models-stubs';
 import { liveCounts, snapshotLabel } from '../../../../data/live-counts';
@@ -47,6 +49,17 @@ const canonical = `https://japanauto.ca/used-cars/${make}/${model}/`;
 
 const aboutTitle = `About the ${brand.name} ${modelInfo.name}`;
 const gens = generationsInWindow(make!, model!);
+
+// Answer capsule: generations in the listing window, plus the Calgary price
+// pilot as the one city with public market data so far.
+const calgary = modelMarket('calgary', make!, model!);
+const capsule: string[] = [gens
+  ? `A used ${brand.name} ${modelInfo.name} on japanauto.ca is model year ${LISTING_YEAR_MIN} or newer, which covers the ${gens}.`
+  : `A used ${brand.name} ${modelInfo.name} on japanauto.ca is model year ${LISTING_YEAR_MIN} or newer.`];
+if (calgary) {
+  const r0 = calgary.rows[calgary.rows.length - 1]!, r1 = calgary.rows[0]!;
+  capsule.push(`In Calgary, where we publish asking-price data, the median dealer ask runs from ${fmtCad(r0.dealer.p50)} for a ${r0.year} to ${fmtCad(r1.dealer.p50)} for a ${r1.year}.`);
+}
 const topCity = [...cityCards].sort((a, b) => b.count - a.count)[0]!;
 const aboutParagraphs = [
   `This page collects used ${brand.name} ${modelInfo.name} listings from licensed dealers in ${TIER_1_CITIES.length} Canadian cities. Each one is a real car with its year, kilometres and trim, so you can compare it with what else is for sale locally.`,
@@ -123,6 +136,13 @@ const subtitleHtml = totalListings > 0
     title={`${brand.name} ${modelInfo.name} across Canada`}
     subtitle={subtitleHtml}
   />
+
+  <AnswerCapsule paragraphs={capsule} />
+  {calgary && (
+    <p class="gutter t-body-s" style="margin:0 0 8px;font-size:14px">
+      <a href={`/calgary/${make}/${model}/`} style="color:var(--color-ink-strong);text-decoration:underline">{`${modelInfo.name} prices by year in Calgary`}</a>
+    </p>
+  )}
 
   {citiesLive.length > 0 && (
     <CityDirectoryGrid

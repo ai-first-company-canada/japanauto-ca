@@ -8,6 +8,9 @@ import Breadcrumb from '../../../components/atoms/Breadcrumb.astro';
 import PageHeading from '../../../components/sections/PageHeading.astro';
 import ModelsGridSection from '../../../components/sections/ModelsGridSection.astro';
 import AboutBrandSection from '../../../components/sections/AboutBrandSection.astro';
+import AnswerCapsule from '../../../components/sections/AnswerCapsule.astro';
+import { brandMarket, fmtCad, PROVINCE_FACTS } from '../../../lib/market';
+import { MODELS_BY_BRAND } from '../../../data/models-stubs';
 import FaqSection from '../../../components/sections/FaqSection.astro';
 import CrossLinksBand from '../../../components/sections/CrossLinksBand.astro';
 import { BRAND_CONTENT, TIER_1_CITIES, DEALER_REGULATOR } from '../../../data/brand-content';
@@ -29,11 +32,27 @@ const cityInfo = TIER_1_CITIES.find((c) => c.slug === city)!;
 const models = getModelsForCity(make!, city!);
 const liveCount = liveCounts.cityBrand(city!, make!);
 const reg = DEALER_REGULATOR[cityInfo.province]!;
+const prov = PROVINCE_FACTS[cityInfo.province]!;
+
+// Answer capsule: which models actually sell here (Calgary pilot market data)
+// and the licensing/tax facts for the province.
+const ranked = brandMarket(city!, make!, MODELS_BY_BRAND[make!] ?? []);
+const capsule: string[] = [];
+if (ranked.length > 0) {
+  const top = ranked.slice(0, 3).map((m) => {
+    const r = m.market.rows.find((x) => x.year === m.market.yearTo - 3) ?? m.market.rows[0]!;
+    return `${m.name} (about ${m.market.dealerCars} cars; median ask ${fmtCad(r.dealer.p50)} for a ${r.year})`;
+  });
+  capsule.push(`The most advertised used ${brand.name} models at ${cityInfo.name} dealers, model years ${ranked[0]!.market.yearFrom}–${ranked[0]!.market.yearTo}: ${top.join(', ')}. Each model page below has prices by year.`);
+} else {
+  capsule.push(`japanauto.ca covers ${models.length} ${brand.name} models in ${cityInfo.name}: ${models.map((m) => m.name).join(', ')}.`);
+}
+capsule.push(`Buy from a dealer licensed by ${prov.regulator}. ${prov.tax}`);
 
 const title = `Used ${brand.name} in ${cityInfo.name}, ${cityInfo.province} — japanauto.ca`;
 const description = liveCount > 0
   ? `Find used ${brand.name} cars in ${cityInfo.name}. ${liveCount} live ${brand.name} listing${liveCount === 1 ? '' : 's'} from ${reg.short}-licensed local dealers. VIN-checked.`
-  : `Used ${brand.name} cars in ${cityInfo.name}, ${cityInfo.province}: ${models.slice(0, 3).map((m) => m.name).join(', ')} and ${models.length - 3} other models from ${reg.short}-licensed local dealers, each with a checked VIN.`;
+  : `Used ${brand.name} cars in ${cityInfo.name}, ${cityInfo.province}: ${models.slice(0, 3).map((m) => m.name).join(', ')} and ${models.length - 3} other models from ${reg.short}-licensed local dealers.`;
 const canonical = `https://japanauto.ca/${city}/${make}/`;
 
 const faqLd = faqPage(brand.faqs.map((f) => f.q), brand.faqs.map((f) => f.a));
@@ -96,6 +115,8 @@ const subtitleHtml = liveCount > 0
     title={`${brand.name} models in ${cityInfo.name}`}
     subtitle={subtitleHtml}
   />
+
+  <AnswerCapsule paragraphs={capsule} />
 
   <ModelsGridSection models={models} brandSlug={make!} citySlug={city!} />
 

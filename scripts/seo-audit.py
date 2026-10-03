@@ -299,7 +299,10 @@ def main():
         for rx, msg in INTEGRITY:
             if rx.search(body):
                 errors.append((pg['rel'], msg))
-        if EMPTY_STATE.search(visible_text(body)):
+        # An empty listing grid is fine when the page answers with public
+        # market data instead (answer capsule with a price table).
+        has_market = re.search(r'data-answer-capsule[\s\S]*?<table', body) is not None
+        if EMPTY_STATE.search(visible_text(body)) and not has_market:
             errors.append((pg['rel'], 'indexable page renders an empty inventory state (soft-404) — should be noindex'))
         if pg['rel'].startswith(NON_AB_CITY) and 'AMVIC' in pg['desc']:
             errors.append((pg['rel'], 'AMVIC (Alberta) named in a non-Alberta page description'))

@@ -13,7 +13,7 @@
     "test": "vitest run",
     "audit:seo": "python3 scripts/seo-audit.py dist",
     "audit:launch": "LAUNCH=1 python3 scripts/seo-audit.py dist",
-    "predeploy": "node scripts/export-catalog-data.mjs && node scripts/check-migrations-journal.mjs && npm run typecheck && npm test && npm run build && npm run audit:seo && npm run audit:launch",
+    "predeploy": "node scripts/export-catalog-data.mjs && node scripts/export-market-data.mjs && node scripts/check-migrations-journal.mjs && npm run typecheck && npm test && npm run build && npm run audit:seo && npm run audit:launch",
     "deploy": "wrangler pages deploy dist --project-name japanauto",
     "astro": "astro"
   },

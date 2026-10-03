@@ -9,6 +9,7 @@ import { TIER_1_CITIES } from '../data/brand-content';
 import { MODELS_BY_BRAND } from '../data/models-stubs';
 import { isIndexable } from '../lib/indexability';
 import { SITE } from '../lib/markdown-alternates';
+import { modelMarket, fmtCad, fmtDate, MARKET_COMPUTED_ON } from '../lib/market';
 
 export const prerender = true;
 
@@ -34,6 +35,17 @@ export async function GET() {
     }
   }
 
+  // Calgary price pilot: one line per model page that carries a price table.
+  const prices: string[] = [];
+  for (const [make, models] of Object.entries(MODELS_BY_BRAND)) {
+    for (const m of models) {
+      const mk = modelMarket('calgary', make, m.slug);
+      if (!mk) continue;
+      const lo = mk.rows[mk.rows.length - 1]!, hi = mk.rows[0]!;
+      prices.push(`- [Used ${m.name} prices in Calgary](${SITE}/calgary/${make}/${m.slug}/): median dealer ask ${fmtCad(lo.dealer.p50)} (${lo.year}) to ${fmtCad(hi.dealer.p50)} (${hi.year}).`);
+    }
+  }
+
   const lines = [
     '# japanauto.ca',
     '',
@@ -48,6 +60,12 @@ export async function GET() {
     ...TIER_1_CITIES.map((c) => `- [${c.name}, ${c.province}](${SITE}/${c.slug}/): used Japanese cars in ${c.name}.`),
     ...inventory,
     '',
+    ...(prices.length ? [
+      `## Used-car asking prices in Calgary (as of ${fmtDate(MARKET_COMPUTED_ON.dealer)})`,
+      'Median and middle-half asking prices by model year from online dealer listings, with private-seller medians where the sample allows. Asking prices, not sale prices; each year covers the model year ±1.',
+      ...prices,
+      '',
+    ] : []),
     '## Brand guides',
     ...brands.map((b) => `- [${b.data.h1 ?? b.data.suggested_h1}](${SITE}/brands/${b.data.make}/): ${oneLine(b.data.meta_description)}`),
     '',

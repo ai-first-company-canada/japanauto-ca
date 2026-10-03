@@ -14,6 +14,8 @@ scraper project** (separate codebase, own Supabase) that crawls public
 marketplaces; japanauto pulls one aggregated view daily into D1 and never
 touches raw scraped lots.
 
+> **Superseded in part by [ADR 0021](../decisions/0021-public-market-prices-calgary-pilot.md) (2026-10-03):** Calgary dealer/private median and interquartile asking prices by model year are public on catalog pages. Everything below still applies to the rest of the data.
+
 **HARD PRIVACY INVARIANT:** this data is cabinet-only, Pro-only, listing-owner-
 only. Marketplace asking prices sit systematically below dealer retail —
 surfacing them to buyers would undercut the very dealers we host (owner
